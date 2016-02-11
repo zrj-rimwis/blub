@@ -109,7 +109,7 @@
 #define PATH_BOOT3_ALT	"/boot/loader"		/* /boot in root */
 #define PATH_KERNEL	"/boot/kernel/kernel"
 
-#define NOPT		12
+#define NOPT		14
 #define NDEV		3
 #define MEM_BASE	0x12
 #define MEM_EXT		0x15
@@ -128,12 +128,14 @@
 
 extern uint32_t _end;
 
-static const char optstr[NOPT] = { "VhaCgmnPprsv" };
+static const char optstr[NOPT] = { "VhaCcdgmnPprsv" };
 static const unsigned char flags[NOPT] = {
     RBX_VIDEO,
     RBX_SERIAL,
     RBX_ASKNAME,
     RBX_CDROM,
+    RBX_CONFIG,
+    RBX_KDB,
     RBX_GDB,
     RBX_MUTE,
     RBX_NOINTR,

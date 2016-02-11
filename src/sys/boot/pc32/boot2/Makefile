@@ -52,7 +52,8 @@ CFLAGS=	-Os \
 	-I${.CURDIR}/../btx/lib -I. \
 	-Wall -Waggregate-return -Wbad-function-cast -Wcast-align \
 	-Wmissing-declarations -Wmissing-prototypes -Wnested-externs \
-	-Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings
+	-Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings \
+	-Winline --param max-inline-insns-single=100
 
 DEBUG_FLAGS=
 

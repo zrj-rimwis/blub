@@ -74,6 +74,7 @@ struct preloaded_file *preloaded_files = NULL;
 static char *kld_ext_list[] = {
     ".ko",
     "",
+    ".debug",
     NULL
 };
 
