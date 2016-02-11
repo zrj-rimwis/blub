@@ -297,9 +297,9 @@ main(void)
      * Parse config file if present.  parse() will re-probe if necessary.
      */
     if (cmd[0]) {
-	printf("%s: %s", PATH_CONFIG, cmd);
 	if (parse())
 	    autoboot = 0;
+	    printf("%s: %s", PATH_CONFIG, cmd);
 	/* Do not process this command twice */
 	*cmd = 0;
     }
