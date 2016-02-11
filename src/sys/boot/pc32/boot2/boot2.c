@@ -107,7 +107,7 @@
 #define PATH_CONFIG	"/boot.config"
 #define PATH_BOOT3	"/loader"		/* /boot is dedicated */
 #define PATH_BOOT3_ALT	"/boot/loader"		/* /boot in root */
-#define PATH_KERNEL	"/kernel"
+#define PATH_KERNEL	"/boot/kernel/kernel"
 
 #define NOPT		12
 #define NDEV		3
