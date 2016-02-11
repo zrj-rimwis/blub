@@ -310,6 +310,7 @@ pxe_open(struct open_file *f, ...)
 
 		setenv("boot.nfsroot.server", inet_ntoa(rootip), 1);
 		setenv("boot.nfsroot.path", rootpath, 1);
+		setenv("dhcp.host-name", hostname, 1);
 
 		if (bootplayer.yip != INADDR_ANY &&
 		    bootplayer.yip != myip.s_addr) {
