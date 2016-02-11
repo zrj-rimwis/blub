@@ -33,7 +33,7 @@
 #include "libi386.h"
 #include "btxv86.h"
 
-vm_offset_t	memtop;
+vm_offset_t	memtop, memtop_copyin;
 u_int32_t	bios_basemem, bios_extmem, bios_howmem;
 
 #define SMAPSIG	0x534D4150
@@ -116,15 +116,7 @@ bios_getmem(void)
 	bios_extmem = (v86.eax & 0xffff) * 1024;
     }
 
-    /*
-     * Set memtop to actual top of memory
-     *
-     * This is broken because the boot loader generally needs more than 16MB
-     * now but the extmem usually calculates to ~14-16MB (which is the fully
-     * segmented limit).  Disk I/O will use bounce buffers.
-     *
-     * Hack it for now.
-     */
-    memtop = 0x100000 + bios_extmem;	/* XXX ignored */
-    memtop = 64 * 1024 * 1024;
+    /* Set memtop to actual top of memory */
+    memtop = memtop_copyin = 0x100000 + bios_extmem;
+
 }
