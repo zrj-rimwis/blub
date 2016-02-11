@@ -101,7 +101,7 @@ At this point, if an
 has not been tried, and if
 .Va autoboot_delay
 is not set to
-.Dq NO
+.Dq Li NO
 (not case sensitive), then an
 .Ic autoboot
 will be tried.
@@ -110,6 +110,22 @@ If the system gets past this point,
 will be set and
 .Nm
 will engage interactive mode.
+Please note that historically even when
+.Va autoboot_delay
+is set to
+.Dq Li 0
+user will be able to interrupt autoboot process by pressing some key
+on the console while kernel and modules are being loaded.
+In some
+cases such behaviour may be undesirable, to prevent it set
+.Va autoboot_delay
+to
+.Dq Li -1 ,
+in this case
+.Nm
+will engage interactive mode only if
+.Ic autoboot
+has failed.
 .Sh BUILTIN COMMANDS
 In
 .Nm ,
@@ -465,10 +481,12 @@ Number of seconds
 and
 .Ic menu
 will wait before booting.
-Default value is 10 seconds.
+If this variable is not defined,
+.Ic autoboot
+will default to 10 seconds.
 .Pp
 If set to
-.Dq NO ,
+.Dq Li NO ,
 no
 .Ic autoboot
 will be automatically attempted after processing
@@ -476,6 +494,22 @@ will be automatically attempted after processing
 though explicit
 .Ic autoboot Ns 's
 will be processed normally, defaulting to 10 seconds delay.
+.Pp
+If set to
+.Dq Li 0 ,
+no delay will be inserted, but user still will be able to interrupt
+.Ic autoboot
+process and escape into the interactive mode by pressing some key
+on the console while kernel and
+modules are being loaded.
+.Pp
+If set to
+.Dq Li -1 ,
+no delay will be inserted and
+.Nm
+will engage interactive mode only if
+.Ic autoboot
+has failed for some reason.
 .It Va boot_askname
 Instructs the kernel to prompt the user for the name of the root device
 when the kernel is booted.
