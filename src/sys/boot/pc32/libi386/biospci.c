@@ -36,6 +36,7 @@
 #include <bootstrap.h>
 #include <isapnp.h>
 #include <btxv86.h>
+#include "libi386.h"
 
 /*
  * Stupid PCI BIOS interface doesn't let you simply enumerate everything
@@ -203,7 +204,8 @@ struct pnphandler biospcihandler =
 static void
 biospci_enumerate(void)
 {
-    int			device_index, locator, devid;
+    int			device_index, err;
+    uint32_t		locator, devid;
     struct pci_class	*pc;
     struct pci_subclass *psc;
     struct pci_progif	*ppi;
@@ -235,34 +237,19 @@ biospci_enumerate(void)
 
 		/* Scan for matches */
 		for (device_index = 0; ; device_index++) {
-
 		    /* Look for a match */
-		    v86.ctl = V86_FLAGS;
-		    v86.addr = 0x1a;
-		    v86.eax = 0xb103;
-		    v86.ecx = (pc->pc_class << 16) + (psc->ps_subclass << 8) + ppi->pi_code;
-		    v86.esi = device_index;
-		    v86int();
-		    /* error/end of matches */
-		    if ((v86.efl & PSL_C) || (v86.eax & 0xff00))
+		    err = biospci_find_devclass((pc->pc_class << 16)
+			+ (psc->ps_subclass << 8) + ppi->pi_code,
+			device_index, &locator);
+		    if (err != 0)
 			break;
 
-		    /* Got something */
-		    locator = v86.ebx;
-
 		    /* Read the device identifier from the nominated device */
-		    v86.ctl = V86_FLAGS;
-		    v86.addr = 0x1a;
-		    v86.eax = 0xb10a;
-		    v86.ebx = locator;
-		    v86.edi = 0x0;
-		    v86int();
-		    /* error */
-		    if ((v86.efl & PSL_C) || (v86.eax & 0xff00))
+		    err = biospci_read_config(locator, 0, 2, &devid);
+		    if (err != 0)
 			break;
 
 		    /* We have the device ID, create a PnP object and save everything */
-		    devid = v86.ecx;
 		    biospci_addinfo(devid, pc, psc, ppi);
 		}
 	    }
@@ -294,4 +281,40 @@ biospci_addinfo(int devid, struct pci_class *pc, struct pci_subclass *psc, struc
     sprintf(desc,"0x%08x", devid);
     pnp_addident(pi, desc);
     pnp_addinfo(pi);
+}
+
+int
+biospci_find_devclass(uint32_t class, int index, uint32_t *locator)
+{
+	v86.ctl = V86_FLAGS;
+	v86.addr = 0x1a;
+	v86.eax = 0xb103;
+	v86.ecx = class;
+	v86.esi = index;
+	v86int();
+
+	/* error */
+	if ((v86.efl & PSL_C) || (v86.eax & 0xff00))
+		return (-1);
+
+	*locator = v86.ebx;
+	return (0);
+}
+
+int
+biospci_read_config(uint32_t locator, int offset, int width, uint32_t *val)
+{
+	v86.ctl = V86_FLAGS;
+	v86.addr = 0x1a;
+	v86.eax = 0xb108 + width;
+	v86.ebx = locator;
+	v86.edi = offset;
+	v86int();
+
+	 /* error */
+	if ((v86.efl & PSL_C) || (v86.eax & 0xff00))
+		return (-1);
+
+	*val = v86.ecx;
+	return (0);
 }
