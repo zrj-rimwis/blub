@@ -191,6 +191,7 @@ main(void)
      * set it.  If neither is specified or both are specified we leave the
      * console environment variable alone, defaulting to dual boot.
      */
+    bi_setboothowto(initial_howto);
     if (initial_howto & RB_MUTE) {
 	setenv("console", "nullconsole", 1);
     } else if ((initial_howto & (RB_VIDEO|RB_SERIAL)) != (RB_VIDEO|RB_SERIAL)) {
@@ -314,7 +315,7 @@ extract_currdev(void)
 
 	/*
 	 * If we are booted by an old bootstrap, we have to guess at the BIOS
-	 * unit number.  We will loose if there is more than one disk type
+	 * unit number.  We will lose if there is more than one disk type
 	 * and we are not booting from the lowest-numbered disk type
 	 * (ie. SCSI when IDE also exists).
 	 */
