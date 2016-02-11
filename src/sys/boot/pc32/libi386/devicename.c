@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/i386/libi386/devicename.c,v 1.6 2003/08/25 23:28:31 obrien Exp $
- * $DragonFly: src/sys/boot/pc32/libi386/devicename.c,v 1.4 2007/06/18 05:13:42 dillon Exp $
  */
 
 #include <stand.h>
@@ -35,7 +34,7 @@
 
 static int	i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path);
 
-/* 
+/*
  * Point (dev) at an allocated device specifier for the device matching the
  * path in (devspec). If it contains an explicit device specification,
  * use that.  If not, use the default device.
@@ -45,13 +44,13 @@ i386_getdev(void **vdev, const char *devspec, const char **path)
 {
     struct i386_devdesc **dev = (struct i386_devdesc **)vdev;
     int				rv;
-    
+
     /*
      * If it looks like this is just a path and no
      * device, go with the current device.
      */
-    if ((devspec == NULL) || 
-	(devspec[0] == '/') || 
+    if ((devspec == NULL) ||
+	(devspec[0] == '/') ||
 	(strchr(devspec, ':') == NULL)) {
 
 	if (((rv = i386_parsedev(dev, getenv("currdev"), NULL)) == 0) &&
@@ -59,7 +58,7 @@ i386_getdev(void **vdev, const char *devspec, const char **path)
 		*path = devspec;
 	return(rv);
     }
-    
+
     /*
      * Try to parse the device name off the beginning of the devspec
      */
@@ -78,7 +77,7 @@ i386_getdev(void **vdev, const char *devspec, const char **path)
  * For disk-type devices, the syntax is:
  *
  * disk<unit>[s<slice>][<partition>]:
- * 
+ *
  */
 static int
 i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
@@ -105,7 +104,7 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
     idev = malloc(sizeof(struct i386_devdesc));
     err = 0;
     np = (devspec + strlen(dv->dv_name));
-        
+
     switch(dv->dv_type) {
     case DEVT_NONE:			/* XXX what to do here?  Do we care? */
 	break;
@@ -198,7 +197,7 @@ i386_fmtdev(void *vdev)
     struct i386_devdesc	*dev = (struct i386_devdesc *)vdev;
     static char		buf[128];	/* XXX device length constant? */
     char		*cp;
-    
+
     switch(dev->d_type) {
     case DEVT_NONE:
 	strcpy(buf, "(no device)");
@@ -241,4 +240,3 @@ i386_setcurrdev(struct env_var *ev, int flags, const void *value)
     env_setenv(ev->ev_name, flags | EV_NOHOOK, value, NULL, NULL);
     return(0);
 }
-

@@ -45,7 +45,7 @@
  * interface.
  */
 
-struct pci_progif 
+struct pci_progif
 {
     int		pi_code;
     const char	*pi_name;
@@ -113,7 +113,7 @@ static struct pci_progif progif_parallel[] = {
 };
 
 
-struct pci_subclass 
+struct pci_subclass
 {
     int			ps_subclass;
     const char		*ps_name;
@@ -218,7 +218,7 @@ biospci_enumerate(void)
     biospci_version = v86.ebx & 0xffff;
     biospci_hwcap = v86.eax & 0xff;
 #if 0
-    printf("PCI BIOS %d.%d%s%s\n", 
+    printf("PCI BIOS %d.%d%s%s\n",
 	   bcd2bin((biospci_version >> 8) & 0xf), bcd2bin(biospci_version & 0xf),
 	   (biospci_hwcap & 1) ? " config1" : "", (biospci_hwcap & 2) ? " config2" : "");
 #endif
@@ -245,7 +245,7 @@ biospci_enumerate(void)
 
 		    /* Got something */
 		    locator = v86.ebx;
-		    
+
 		    /* Read the device identifier from the nominated device */
 		    v86.ctl = V86_FLAGS;
 		    v86.addr = 0x1a;
@@ -256,7 +256,7 @@ biospci_enumerate(void)
 		    /* error */
 		    if ((v86.efl & PSL_C) || (v86.eax & 0xff00))
 			break;
-		    
+
 		    /* We have the device ID, create a PnP object and save everything */
 		    devid = v86.ecx;
 		    biospci_addinfo(devid, pc, psc, ppi);
@@ -267,12 +267,11 @@ biospci_enumerate(void)
 }
 
 static void
-biospci_addinfo(int devid, struct pci_class *pc, struct pci_subclass *psc, struct pci_progif *ppi) 
+biospci_addinfo(int devid, struct pci_class *pc, struct pci_subclass *psc, struct pci_progif *ppi)
 {
     struct pnpinfo	*pi;
     char		desc[80];
-    
-    
+
     /* build the description */
     desc[0] = 0;
     if (ppi->pi_name != NULL) {

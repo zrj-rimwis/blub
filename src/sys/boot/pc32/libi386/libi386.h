@@ -36,9 +36,9 @@ struct i386_devdesc
 {
     struct devsw	*d_dev;
     int			d_type;
-    union 
+    union
     {
-	struct 
+	struct
 	{
 	    int		unit;
 	    int		slice;
@@ -50,7 +50,7 @@ struct i386_devdesc
 	    int		unit;
 	    void	*data;
 	} bioscd;
-	struct 
+	struct
 	{
 	    int		unit;		/* XXX net layer lives over these? */
 	} netif;

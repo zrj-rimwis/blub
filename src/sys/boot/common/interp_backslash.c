@@ -14,7 +14,6 @@
  * Routine for doing backslash elimination.
  *
  * $FreeBSD: src/sys/boot/common/interp_backslash.c,v 1.6 2003/08/25 23:30:41 obrien Exp $
- * $DragonFly: src/sys/boot/common/interp_backslash.c,v 1.3 2003/11/10 06:08:31 dillon Exp $
  */
 
 #include <stand.h>
@@ -106,11 +105,11 @@ backslash(char *str)
 		char val;
 
 		/* Three digit octal constant? */
-		if (*str >= '0' && *str <= '3' && 
+		if (*str >= '0' && *str <= '3' &&
 		    *(str + 1) >= '0' && *(str + 1) <= '7' &&
 		    *(str + 2) >= '0' && *(str + 2) <= '7') {
 
-		    val = (DIGIT(*str) << 6) + (DIGIT(*(str + 1)) << 3) + 
+		    val = (DIGIT(*str) << 6) + (DIGIT(*(str + 1)) << 3) +
 			DIGIT(*(str + 2));
 
 		    /* Allow null value if user really wants to shoot

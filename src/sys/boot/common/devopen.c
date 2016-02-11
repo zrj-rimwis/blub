@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/common/devopen.c,v 1.4 2003/08/25 23:30:41 obrien Exp $
- * $DragonFly: src/sys/boot/common/devopen.c,v 1.3 2003/11/10 06:08:31 dillon Exp $
  */
 
 #include <stand.h>
@@ -37,7 +36,7 @@
  * devdesc, others will replace it with their own and clear F_DEVDESC.
  */
 int
-devopen(struct open_file *f, const char *fname, const char **file) 
+devopen(struct open_file *f, const char *fname, const char **file)
 {
     struct devdesc	*dev;
     int			result;
@@ -46,7 +45,7 @@ devopen(struct open_file *f, const char *fname, const char **file)
 	/* point to device-specific data so that device open can use it */
 	f->f_flags |= F_DEVDESC;
 	f->f_devdata = dev;
-	if ((result = dev->d_dev->dv_open(f, dev)) == 0) { 		/* try to open it */
+	if ((result = dev->d_dev->dv_open(f, dev)) == 0) {		/* try to open it */
 	    /* reference the devsw entry from the open_file structure */
 	    f->f_dev = dev->d_dev;
 	} else {

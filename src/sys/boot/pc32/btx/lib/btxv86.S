@@ -14,7 +14,6 @@
  *
  *
  * $FreeBSD: src/sys/boot/i386/btx/lib/btxv86.s,v 1.3 1999/08/28 00:40:08 peter Exp $
- * $DragonFly: src/sys/boot/pc32/btx/lib/btxv86.S,v 1.4 2004/07/19 01:25:02 dillon Exp $
  */
 
 /*
@@ -62,7 +61,7 @@ __v86int:	popl __v86ret			# Save return address
 		call __v86_swap			# Load user registers
 		addl $0x4,%esp			# Discard pointer
 		pushl __v86ret			# Restore return address
-		ret 				# To user
+		ret				# To user
 
 		/*
 		 * Swap V86 and user registers.
@@ -73,11 +72,11 @@ __v86_swap:	xchgl %ebp,0x4(%esp,1)		# Swap pointer, EBP
 		xchgl %edx,V86_EDX(%ebp)	# Swap EDX
 		xchgl %ebx,V86_EBX(%ebp)	# Swap EBX
 		pushl %eax			# Save
-		pushf 				# Put eflags
+		pushf				# Put eflags
 		popl %eax			#  in EAX
 		xchgl %eax,V86_EFL(%ebp)	# Swap
 		pushl %eax			# Put EAX
-		popf 				#  in eflags
+		popf				#  in eflags
 		movl 0x8(%esp,1),%eax		# Load EBP
 		xchgl %eax,V86_EBP(%ebp)	# Swap
 		movl %eax,0x8(%esp,1)		# Save EBP
@@ -92,4 +91,3 @@ __v86_swap:	xchgl %ebp,0x4(%esp,1)		# Swap pointer, EBP
 		 */
 		.comm __v86,SIZ_V86
 		.comm __v86ret,4
-

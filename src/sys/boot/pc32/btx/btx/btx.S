@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2003,2004 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Matthew Dillon <dillon@backplane.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -17,7 +17,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -30,7 +30,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
  *
@@ -45,7 +45,6 @@
  * purpose.
  *
  * $FreeBSD: src/sys/boot/i386/btx/btx/btx.s,v 1.32 2002/10/08 18:19:02 jhb Exp $
- * $DragonFly: src/sys/boot/pc32/btx/btx/btx.S,v 1.8 2006/01/18 09:59:34 swildner Exp $
  */
 
 #include "../../bootasm.h"
@@ -188,30 +187,30 @@ init.0:		mov %bx,(%di)			# Store IP
  */
 		mov $MEM_BTX_IDT,%di
 		mov $idtctl,%si			# Control string
-init.1: 	lodsb				# Get entry
+init.1:		lodsb				# Get entry
 		cbw				#  count
 		xchg %ax,%cx			#  as word
 		jcxz init.4			# If done
 		lodsb				# Get segment
-		xchg %ax,%dx	 		#  P:DPL:type
+		xchg %ax,%dx			#  P:DPL:type
 		lodsw				# Get control
 		xchg %ax,%bx			#  set
 		lodsw				# Get handler offset
 		mov $SEL_SCODE,%dh		# Segment selector
-init.2: 	shr %bx				# Handle this int?
+init.2:		shr %bx				# Handle this int?
 		jnc init.3			# No
 		mov %ax,(%di)			# Set handler offset
 		mov %dh,0x2(%di)		#  and selector
 		mov %dl,0x5(%di)		# Set P:DPL:type
 		add $0x4,%ax			# Next handler
-init.3: 	lea 0x8(%di),%di		# Next entry
+init.3:		lea 0x8(%di),%di		# Next entry
 		loop init.2			# Till set done
 		jmp init.1			# Continue
 
 /*
  * Initialize TSS.
  */
-init.4: 	movb $_ESP0H,TSS_ESP0+1(%di)	# Set ESP0
+init.4:		movb $_ESP0H,TSS_ESP0+1(%di)	# Set ESP0
 		movb $SEL_SDATA,TSS_SS0(%di)	# Set SS0
 		movb $_TSSIO,TSS_MAP(%di)	# Set I/O bit map base
 /*
@@ -219,14 +218,14 @@ init.4: 	movb $_ESP0H,TSS_ESP0+1(%di)	# Set ESP0
  */
 		mov $0x2820,%bx			# Set protected mode
 		callw setpic			#  IRQ offsets
-		lidt idtdesc	 		# Set IDT
-		lgdt gdtdesc	 		# Set GDT
+		lidt idtdesc			# Set IDT
+		lgdt gdtdesc			# Set GDT
 		mov %cr0,%eax			# Switch to protected
 		or $0x01,%eax			#  mode
-		mov %eax,%cr0			#  
+		mov %eax,%cr0			#
 		ljmp $SEL_SCODE,$init.8		# To 32-bit code
 		.code32
-init.8: 	xorl %ecx,%ecx			# Zero
+init.8:		xorl %ecx,%ecx			# Zero
 		movb $SEL_SDATA,%cl		# To 32-bit
 		movw %cx,%ss			#  stack
 
@@ -248,7 +247,7 @@ init.8: 	xorl %ecx,%ecx			# Zero
  *
  * (must match stack specified in btxldr)
  */
-		movzwl %ss:BDA_MEM,%eax 	# Get free memory
+		movzwl %ss:BDA_MEM,%eax		# Get free memory
 		decl %eax			# Don't quite trust bios
 		shll $0xa,%eax			# To bytes
 #else
@@ -302,14 +301,14 @@ exit:		cli				# Disable interrupts
 /*
  * Restore the GDT in case we caught a kernel trap.
  */
-		lgdt %cs:gdtdesc	 	# Set GDT
+		lgdt %cs:gdtdesc		# Set GDT
 
 /*
  * To 16 bits.
  */
 		ljmpw $SEL_RCODE,$exit.1	# Reload CS
 		.code16
-exit.1: 	mov $SEL_RDATA,%cl		# 16-bit selector
+exit.1:		mov $SEL_RDATA,%cl		# 16-bit selector
 		mov %cx,%ss			# Reload SS
 		mov %cx,%ds			# Load
 		mov %cx,%es			#  remaining
@@ -322,12 +321,12 @@ exit.1: 	mov $SEL_RDATA,%cl		# 16-bit selector
 		dec %ax				# Switch to
 		mov %eax,%cr0			#  real mode
 		ljmp $0x0,$exit.2		# Reload CS
-exit.2: 	xor %ax,%ax			# Real mode segment
+exit.2:		xor %ax,%ax			# Real mode segment
 		mov %ax,%ss			# Reload SS
 		mov %ax,%ds			# Address data
 		mov $0x7008,%bx			# Set real mode
 		callw setpic			#  IRQ offsets
-		lidt ivtdesc	 		# Set IVT
+		lidt ivtdesc			# Set IVT
 
 /*
  * Reboot or await reset.
@@ -341,7 +340,7 @@ exit.3:		jz exit.3			# No
 /*
  * Set IRQ offsets by reprogramming 8259A PICs.
  */
-setpic: 	in $0x21,%al			# Save master
+setpic:		in $0x21,%al			# Save master
 		push %ax			#  IMR
 		in $0xa1,%al			# Save slave
 		push %ax			#  IMR
@@ -369,7 +368,7 @@ setpic: 	in $0x21,%al			# Save master
 /*
  * Exception jump table.
  */
-intx00: 	push $0x0			# Int 0x0: #DE
+intx00:		push $0x0			# Int 0x0: #DE
 		jmp ex_noc			# Divide error
 		push $0x1			# Int 0x1: #DB
 		jmp ex_noc			# Debug
@@ -395,19 +394,19 @@ intx00: 	push $0x0			# Int 0x0: #DE
 		jmp except			# General protection
 		push $0xe			# Int 0xe: #PF
 		jmp except			# Page fault
-intx10: 	push $0x10			# Int 0x10: #MF
+intx10:		push $0x10			# Int 0x10: #MF
 		jmp ex_noc			# Floating-point error
 
 /*
  * Save a zero error code.
  */
-ex_noc: 	pushl (%esp,1)			# Duplicate int no
+ex_noc:		pushl (%esp,1)			# Duplicate int no
 		movb $0x0,0x4(%esp,1)		# Fake error code
 
 /*
  * Handle exception.
  */
-except: 	cld				# String ops inc
+except:		cld				# String ops inc
 		pushl %ds			# Save
 		pushl %es			#  most
 		pusha				#  registers
@@ -455,7 +454,7 @@ reboot:		orb $0x1,btx_hdr+0x7		# Set the reboot flag
 /*
  * Protected Mode Hardware interrupt jump table.
  */
-intx20: 	push $0x8			# Int 0x20: IRQ0
+intx20:		push $0x8			# Int 0x20: IRQ0
 		jmp int_hw			# V86 int 0x8
 		push $0x9			# Int 0x21: IRQ1
 		jmp int_hw			# V86 int 0x9
@@ -491,7 +490,7 @@ intx20: 	push $0x8			# Int 0x20: IRQ0
 /*
  * Invoke real mode interrupt/function call from user mode with arguments.
  */
-intx31: 	pushl $-1			# Dummy int no for btx_v86
+intx31:		pushl $-1			# Dummy int no for btx_v86
 
 /*
  * Invoke real mode interrupt/function call from protected mode.
@@ -533,7 +532,7 @@ intx31: 	pushl $-1			# Dummy int no for btx_v86
  * -0x70 zero %ds (hardware int only)
  * -0x74 zero %es (hardware int only)
  */
-int_hw: 	cld				# String ops inc
+int_hw:		cld				# String ops inc
 		pusha				# Save gp regs
 		pushl %gs			# Save
 		pushl %fs			#  seg
@@ -636,7 +635,7 @@ intusr.7:	movl %cr0,%eax			# Leave
 intusr.8:	xorw %ax,%ax			# Reset %ds
 		movw %ax,%ds			#  and
 		movw %ax,%ss			#  %ss
-		lidt ivtdesc	 		# Set IVT
+		lidt ivtdesc			# Set IVT
 		popl %es			# Restore
 		popl %ds			#  seg
 		popl %fs			#  regs
@@ -678,8 +677,8 @@ rret_tramp:	movw $MEM_BTX_ESPR-0x08,%sp		# Reset stack pointer
 		xorw %ax,%ax			# Reset seg
 		movw %ax,%ds			#  regs
 		movw %ax,%es			#  (%ss is already 0)
-		lidt idtdesc	 		# Set IDT
-		lgdt gdtdesc	 		# Set GDT
+		lidt idtdesc			# Set IDT
+		lgdt gdtdesc			# Set GDT
 		mov %cr0,%eax			# Switch to protected
 		inc %ax				#  mode
 		mov %eax,%cr0			#
@@ -753,7 +752,7 @@ rret_tramp.3:	popl %es			# Restore
 /*
  * System Call.
  */
-intx30: 	cmpl $SYS_EXEC,%eax		# Exec system call?
+intx30:		cmpl $SYS_EXEC,%eax		# Exec system call?
 		jne intx30.1			# No
 		pushl %ss			# Set up
 		popl %es			#  all
@@ -774,45 +773,45 @@ intx30.1:	orb $0x1,%ss:btx_hdr+0x7	# Flag reboot
 /*
  * Dump structure [EBX] to [EDI], using format string [ESI].
  */
-dump.0: 	stosb				# Save char
+dump.0:		stosb				# Save char
 dump:		lodsb				# Load char
 		testb %al,%al			# End of string?
 		jz dump.10			# Yes
-		testb $0x80,%al 		# Control?
+		testb $0x80,%al			# Control?
 		jz dump.0			# No
 		movb %al,%ch			# Save control
 		movb $'=',%al			# Append
 		stosb				#  "="
 		lodsb				# Get offset
 		pushl %esi			# Save
-		movsbl %al,%esi 		# To
+		movsbl %al,%esi			# To
 		addl %ebx,%esi			#  pointer
 		testb $DMP_X16,%ch		# Dump word?
 		jz dump.1			# No
 		lodsw				# Get and
 		call hex16			#  dump it
-dump.1: 	testb $DMP_X32,%ch		# Dump long?
+dump.1:		testb $DMP_X32,%ch		# Dump long?
 		jz dump.2			# No
 		lodsl				# Get and
 		call hex32			#  dump it
-dump.2: 	testb $DMP_MEM,%ch		# Dump memory?
+dump.2:		testb $DMP_MEM,%ch		# Dump memory?
 		jz dump.8			# No
 		pushl %ds			# Save
 		testl $PSL_VM,0x50(%ebx)	# V86 mode?
 		jnz dump.3			# Yes
-		verr 0x4(%esi)	 		# Readable selector?
+		verr 0x4(%esi)			# Readable selector?
 		jnz dump.3			# No
 		ldsl (%esi),%esi		# Load pointer
 		jmp dump.4			# Join common code
-dump.3: 	lodsl				# Set offset
-		xchgl %eax,%edx 		# Save
+dump.3:		lodsl				# Set offset
+		xchgl %eax,%edx			# Save
 		lodsl				# Get segment
 		shll $0x4,%eax			#  * 0x10
 		addl %edx,%eax			#  + offset
-		xchgl %eax,%esi 		# Set pointer
-dump.4: 	movb $2,%dl			# Num lines
+		xchgl %eax,%esi			# Set pointer
+dump.4:		movb $2,%dl			# Num lines
 dump.4a:	movb $0x10,%cl			# Bytes to dump
-dump.5: 	lodsb				# Get byte and
+dump.5:		lodsb				# Get byte and
 		call hex8			#  dump it
 		decb %cl			# Keep count
 		jz dump.6a			# If done
@@ -820,7 +819,7 @@ dump.5: 	lodsb				# Get byte and
 		cmpb $0x8,%cl			# Half way?
 		je dump.6			# Yes
 		movb $' ',%al			# Use space
-dump.6: 	stosb				# Save separator
+dump.6:		stosb				# Save separator
 		jmp dump.5			# Continue
 dump.6a:	decb %dl			# Keep count
 		jz dump.7			# If done
@@ -832,14 +831,14 @@ dump.6b:	stosb				# Dump
 		decb %cl			#  spaces
 		jnz dump.6b
 		jmp dump.4a			# Next line
-dump.7: 	popl %ds			# Restore
-dump.8: 	popl %esi			# Restore
+dump.7:		popl %ds			# Restore
+dump.8:		popl %esi			# Restore
 		movb $0xa,%al			# Line feed
 		testb $DMP_EOL,%ch		# End of line?
 		jnz dump.9			# Yes
 		movb $' ',%al			# Use spaces
 		stosb				# Save one
-dump.9: 	jmp dump.0			# Continue
+dump.9:		jmp dump.0			# Continue
 dump.10:	stosb				# Terminate string
 		ret				# To caller
 
@@ -847,7 +846,7 @@ dump.10:	stosb				# Terminate string
  * Convert EAX, AX, or AL to hex, saving the result to [EDI].
  */
 hex32:		pushl %eax			# Save
-		shrl $0x10,%eax 		# Do upper
+		shrl $0x10,%eax			# Do upper
 		call hex16			#  16
 		popl %eax			# Restore
 hex16:		call hex16.1			# Do upper 8
@@ -856,7 +855,7 @@ hex8:		pushl %eax			# Save
 		shrb $0x4,%al			# Do upper
 		call hex8.1			#  4
 		popl %eax			# Restore
-hex8.1: 	andb $0xf,%al			# Get lower 4
+hex8.1:		andb $0xf,%al			# Get lower 4
 		cmpb $0xa,%al			# Convert
 		sbbb $0x69,%al			#  to hex
 		das				#  digit
@@ -868,7 +867,7 @@ hex8.1: 	andb $0xf,%al			# Get lower 4
  * Output zero-terminated string [ESI] to the console.
  */
 putstr.0:	call putchr			# Output char
-putstr: 	lodsb				# Load char
+putstr:		lodsb				# Load char
 		testb %al,%al			# End of string?
 		jnz putstr.0			# No
 		ret				# To caller
@@ -898,9 +897,9 @@ sio_init:	movw $SIO_PRT+0x3,%dx		# Data format reg
 /*
  * void sio_flush(void)
  */
-sio_flush.0:	call sio_getc.1 		# Get character
-sio_flush:	call sio_ischar 		# Check for character
-		jnz sio_flush.0 		# Till none
+sio_flush.0:	call sio_getc.1			# Get character
+sio_flush:	call sio_ischar			# Check for character
+		jnz sio_flush.0			# Till none
 		ret				# To caller
 
 /*
@@ -910,7 +909,7 @@ sio_putc:	movw $SIO_PRT+0x5,%dx		# Line status reg
 		xor %ecx,%ecx			# Timeout
 		movb $0x40,%ch			#  counter
 sio_putc.1:	inb (%dx),%al			# Transmitter
-		testb $0x20,%al 		#  buffer empty?
+		testb $0x20,%al			#  buffer empty?
 		loopz sio_putc.1		# No
 		jz sio_putc.2			# If timeout
 		movb 0x4(%esp,1),%al		# Get character
@@ -921,7 +920,7 @@ sio_putc.2:	ret $0x4			# To caller
 /*
  * int sio_getc(void)
  */
-sio_getc:	call sio_ischar 		# Character available?
+sio_getc:	call sio_ischar			# Character available?
 		jz sio_getc			# No
 sio_getc.1:	subb $0x5,%dl			# Receiver buffer reg
 		inb (%dx),%al			# Read character
@@ -939,7 +938,7 @@ sio_ischar:	movw $SIO_PRT+0x5,%dx		# Line status register
 /*
  * Output character AL to the serial console.
  */
-putchr: 	pusha				# Save
+putchr:		pusha				# Save
 		cmpb $10, %al			# is it a newline?
 		jne putchr.1			#  no?, then leave
 		push $13			# output a carriage
@@ -954,24 +953,24 @@ putchr.1:	pushl %eax			# Push the character
 /*
  * Output character AL to the console.
  */
-putchr: 	pusha				# Save
+putchr:		pusha				# Save
 		xorl %ecx,%ecx			# Zero for loops
 		movb $SCR_MAT,%ah		# Mode/attribute
 		movl $BDA_POS,%ebx		# BDA pointer
-		movw (%ebx),%dx 		# Cursor position
+		movw (%ebx),%dx			# Cursor position
 		movl $0xb8000,%edi		# Regen buffer (color)
 		cmpb %ah,BDA_SCR-BDA_POS(%ebx)	# Mono mode?
 		jne putchr.1			# No
 		xorw %di,%di			# Regen buffer (mono)
 putchr.1:	cmpb $0xa,%al			# New line?
 		je putchr.2			# Yes
-		xchgl %eax,%ecx 		# Save char
+		xchgl %eax,%ecx			# Save char
 		movb $SCR_COL,%al		# Columns per row
 		mulb %dh			#  * row position
 		addb %dl,%al			#  + column
 		adcb $0x0,%ah			#  position
 		shll %eax			#  * 2
-		xchgl %eax,%ecx 		# Swap char, offset
+		xchgl %eax,%ecx			# Swap char, offset
 		movw %ax,(%edi,%ecx,1)		# Write attr:char
 		incl %edx			# Bump cursor
 		cmpb $SCR_COL,%dl		# Beyond row?
@@ -989,7 +988,7 @@ putchr.3:	cmpb $SCR_ROW,%dh		# Beyond screen?
 		rep				# Clear
 		stosw				#  line
 		movb $SCR_ROW-1,%dh		# Bottom line
-putchr.4:	movw %dx,(%ebx) 		# Update position
+putchr.4:	movw %dx,(%ebx)			# Update position
 		popa				# Restore
 		ret				# To caller
 #endif
@@ -998,7 +997,7 @@ putchr.4:	movw %dx,(%ebx) 		# Update position
 /*
  * Real Mode Hardware interrupt jump table.
  */
-intr20: 	push $0x8			# Int 0x20: IRQ0
+intr20:		push $0x8			# Int 0x20: IRQ0
 		jmp int_hwr			# V86 int 0x8
 		push $0x9			# Int 0x21: IRQ1
 		jmp int_hwr			# V86 int 0x9
@@ -1033,7 +1032,7 @@ intr20: 	push $0x8			# Int 0x20: IRQ0
 /*
  * Reflect hardware interrupts in real mode.
  */
-int_hwr: 	push %ax			# Save
+int_hwr:	push %ax			# Save
 		push %ds			# Save
 		push %bp			# Save
 		mov %sp,%bp			# Address stack frame
@@ -1087,7 +1086,7 @@ ivtdesc:	.word 0x400-0x0-1,0x0,0x0	# IVT
 /*
  * IDT construction control string.
  */
-idtctl: 	.byte 0x10,  0x8e		# Int 0x0-0xf
+idtctl:		.byte 0x10,  0x8e		# Int 0x0-0xf
 		.word 0x7dfb,intx00		#  (exceptions)
 		.byte 0x10,  0x8e		# Int 0x10
 		.word 0x1,   intx10		#  (exception)
@@ -1102,7 +1101,7 @@ idtctl: 	.byte 0x10,  0x8e		# Int 0x0-0xf
 /*
  * Dump format string.
  */
-dmpfmt: 	.byte '\n'			# "\n"
+dmpfmt:		.byte '\n'			# "\n"
 		.ascii "int"			# "int="
 		.byte 0x80|DMP_X32,	   0x40 # "00000000  "
 		.ascii "err"			# "err="
@@ -1140,9 +1139,9 @@ dmpfmt: 	.byte '\n'			# "\n"
 		.byte 0x80|DMP_X16,	   0x14 # "0000  "
 		.ascii "ss"			# "ss="
 		.byte 0x80|DMP_X16|DMP_EOL,0x4	# "0000\n"
-		.ascii "cs:eip" 		# "cs:eip="
+		.ascii "cs:eip"			# "cs:eip="
 		.byte 0x80|DMP_MEM|DMP_EOL,0x48 # "00 00 ... 00 00\n"
-		.ascii "ss:esp" 		# "ss:esp="
+		.ascii "ss:esp"			# "ss:esp="
 		.byte 0x80|DMP_MEM|DMP_EOL,0x0	# "00 00 ... 00 00\n"
 		.asciz "BTX halted\n"		# End
 /*

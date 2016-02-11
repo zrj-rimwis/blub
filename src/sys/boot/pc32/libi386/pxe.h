@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/i386/libi386/pxe.h,v 1.6 2002/09/23 18:54:26 alfred Exp $
- * $DragonFly: src/sys/boot/pc32/libi386/pxe.h,v 1.3 2003/11/10 06:08:36 dillon Exp $
  */
 
 /*
@@ -60,7 +59,7 @@
 
 #define	MAC_STR		"%02x:%02x:%02x:%02x:%02x:%02x"
 #define	MAC_ARGS(mac)					\
-	mac[0], mac[1], mac[2], mac[3], mac[4], mac[5] 
+	mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
 
 #define	PXENFSROOTPATH	"/pxeroot"
 
@@ -104,7 +103,7 @@ typedef struct {
 	uint16_t	UNDIDataSize;	/* UNDI Data segment size (bytes) */
 	SEGSEL_t	UNDICodeSeg;	/* UNDI Code segment address */
 	uint16_t	UNDICodeSize;	/* UNDI Code segment size (bytes) */
-	SEGOFF16_t	PXEPtr;		/* SEG:OFF to !PXE struct, 
+	SEGOFF16_t	PXEPtr;		/* SEG:OFF to !PXE struct,
 					   only present when Version > 2.1 */
 } PACKED pxenv_t;
 
@@ -167,7 +166,7 @@ typedef struct {
 	MAC_ADDR	McastAddr[MAXNUM_MCADDR];
 } PACKED t_PXENV_UNDI_MCAST_ADDRESS;
 
-#define	PXENV_UNDI_RESET_ADAPTER	0x0004		
+#define	PXENV_UNDI_RESET_ADAPTER	0x0004
 typedef struct {
 	PXENV_STATUS_t	Status;
 	t_PXENV_UNDI_MCAST_ADDRESS R_Mcast_Buf;
@@ -468,7 +467,7 @@ typedef struct {
 } PACKED t_PXENV_GET_CACHED_INFO;
 
 
-/* structure filled in by PXENV_GET_CACHED_INFO 
+/* structure filled in by PXENV_GET_CACHED_INFO
  * (how we determine which IP we downloaded the initial bootstrap from)
  * words can't describe...
  */

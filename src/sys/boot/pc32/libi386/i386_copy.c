@@ -24,11 +24,10 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/i386/libi386/i386_copy.c,v 1.10 2003/08/25 23:28:31 obrien Exp $
- * $DragonFly: src/sys/boot/pc32/libi386/i386_copy.c,v 1.3 2003/11/10 06:08:36 dillon Exp $
  */
 
 /*
- * MD primitives supporting placement of module data 
+ * MD primitives supporting placement of module data
  *
  * XXX should check load address/size against memory top.
  */
@@ -58,7 +57,7 @@ i386_copyout(const vm_offset_t src, void *dest, const size_t len)
 	errno = EFBIG;
 	return(-1);
     }
-    
+
     bcopy(PTOV(src), dest, len);
     return(len);
 }

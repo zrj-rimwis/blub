@@ -46,15 +46,15 @@ struct file_format i386_elf = { elf32_loadfile, elf32_exec };
 struct file_format i386_elf_obj = { elf32_obj_loadfile, elf32_obj_exec };
 
 /*
- * There is an ELF kernel and one or more ELF modules loaded.  
- * We wish to start executing the kernel image, so make such 
+ * There is an ELF kernel and one or more ELF modules loaded.
+ * We wish to start executing the kernel image, so make such
  * preparations as are required, and do so.
  */
 static int
 elf32_exec(struct preloaded_file *fp)
 {
     struct file_metadata	*md;
-    Elf_Ehdr 			*ehdr;
+    Elf_Ehdr			*ehdr;
     vm_offset_t			entry, bootinfop, modulep, kernend;
     int				boothowto, err, bootdev;
 

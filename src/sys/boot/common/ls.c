@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/common/ls.c,v 1.11 2003/08/25 23:30:41 obrien Exp $
- * $DragonFly: src/sys/boot/common/ls.c,v 1.5 2008/09/02 17:21:12 dillon Exp $
  */
 
 #include <sys/param.h>
@@ -56,12 +55,12 @@ command_ls(int argc, char *argv[])
 {
     int		fd;
     struct stat	sb;
-    struct 	dirent *d;
+    struct	dirent *d;
     char	*buf, *path;
     char	lbuf[128];		/* one line */
     int		result, ch;
     int		verbose;
-	
+
     result = CMD_OK;
     fd = -1;
     verbose = 0;
@@ -148,7 +147,7 @@ ls_getdir(char **pathp)
 	sprintf(command_errbuf, "bad path '%s'", path);
 	goto out;
     }
-    
+
     fd = rel_open(cp, NULL, O_RDONLY);
     if (fd < 0) {
 	sprintf(command_errbuf, "open '%s' failed: %s", path, strerror(errno));

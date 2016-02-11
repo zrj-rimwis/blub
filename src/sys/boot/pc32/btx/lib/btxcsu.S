@@ -13,7 +13,6 @@
  * purpose.
  *
  * $FreeBSD: src/sys/boot/i386/btx/lib/btxcsu.s,v 1.3 1999/08/28 00:40:07 peter Exp $
- * $DragonFly: src/sys/boot/pc32/btx/lib/btxcsu.S,v 1.6 2004/07/27 19:37:19 dillon Exp $
  */
 
 /*
@@ -31,7 +30,7 @@
 		/*
 		 * Client entry point.
 		 */
-_start: 
+_start:
 		pushl %eax			# Save base address
 		movl $_edata,%edi		# Clear BSS
 		movl $_end,%ecx

@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/common/console.c,v 1.6 2003/08/25 23:30:41 obrien Exp $
- * $DragonFly: src/sys/boot/common/console.c,v 1.5 2004/06/26 02:26:20 dillon Exp $
  */
 
 #include <stand.h>
@@ -41,11 +40,11 @@ static int	cons_find(const char *name);
 /*
  * Detect possible console(s) to use.  The first probed console
  * is marked active.  Also create the console variable.
- *	
+ *
  * XXX Add logic for multiple console support.
  */
 void
-cons_probe(void) 
+cons_probe(void)
 {
     int	cons;
     int	active;
@@ -56,11 +55,11 @@ cons_probe(void)
      */
     for (cons = 0; consoles[cons] != NULL; cons++) {
 	consoles[cons]->c_flags = 0;
- 	consoles[cons]->c_probe(consoles[cons]);
+	consoles[cons]->c_probe(consoles[cons]);
     }
 
     /*
-     * Get our console preference.  If there is no preference, all 
+     * Get our console preference.  If there is no preference, all
      * available consoles will be made active in parallel.  Otherwise
      * only the specified console is activated.
      */
@@ -98,11 +97,11 @@ getchar(void)
 {
     int		cons;
     int		rv;
-    
+
     /* Loop forever polling all active consoles */
     for(;;) {
 	for (cons = 0; consoles[cons] != NULL; cons++) {
-	    if ((consoles[cons]->c_flags & C_ACTIVEIN) && 
+	    if ((consoles[cons]->c_flags & C_ACTIVEIN) &&
 		((rv = consoles[cons]->c_in()) != -1)
 	    ) {
 		return(rv);
@@ -117,7 +116,7 @@ ischar(void)
     int		cons;
 
     for (cons = 0; consoles[cons] != NULL; cons++)
-	if ((consoles[cons]->c_flags & C_ACTIVEIN) && 
+	if ((consoles[cons]->c_flags & C_ACTIVEIN) &&
 	    (consoles[cons]->c_ready() != 0))
 		return(1);
     return(0);
@@ -160,7 +159,7 @@ void
 putchar(int c)
 {
     int		cons;
-    
+
 #ifdef COMCONSOLE_DEBUG
     if ((consoles[1]->c_flags & C_ACTIVEOUT) == 0) {
 	while ((isa_inb(0x3f8+5) & 0x20) == 0)	/* wait tx ready */
@@ -172,7 +171,7 @@ putchar(int c)
     /* Expand newlines */
     if (c == '\n')
 	putchar('\r');
-    
+
     for (cons = 0; consoles[cons] != NULL; cons++) {
 	if (consoles[cons]->c_flags & C_ACTIVEOUT)
 	    consoles[cons]->c_out(c);
@@ -183,13 +182,13 @@ static int
 cons_find(const char *name)
 {
     int		cons;
-    
+
     for (cons = 0; consoles[cons] != NULL; cons++)
 	if (!strcmp(consoles[cons]->c_name, name))
 	    return(cons);
     return(-1);
 }
-    
+
 
 /*
  * Select a console.
@@ -203,7 +202,7 @@ cons_set(struct env_var *ev, int flags, const void *value)
     int		cons, active;
 
     if ((value == NULL) || ((active = cons_find(value)) == -1)) {
-	if (value != NULL) 
+	if (value != NULL)
 	    printf("no such console '%s'\n", (char *)value);
 	printf("Available consoles:\n");
 	for (cons = 0; consoles[cons] != NULL; cons++)
@@ -214,7 +213,7 @@ cons_set(struct env_var *ev, int flags, const void *value)
     /* disable all current consoles */
     for (cons = 0; consoles[cons] != NULL; cons++)
 	consoles[cons]->c_flags &= ~(C_ACTIVEIN | C_ACTIVEOUT);
-    
+
     /* enable selected console */
     consoles[active]->c_flags |= C_ACTIVEIN | C_ACTIVEOUT;
     consoles[active]->c_init(0);

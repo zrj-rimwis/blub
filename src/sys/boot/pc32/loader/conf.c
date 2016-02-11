@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/i386/loader/conf.c,v 1.24 2003/08/25 23:28:32 obrien Exp $
- * $DragonFly: src/sys/boot/pc32/loader/conf.c,v 1.4 2005/09/03 23:52:49 dillon Exp $
  */
 
 #include <stand.h>
@@ -68,14 +67,14 @@ struct fs_ops *file_system[] = {
 #ifdef LOADER_TFTP_SUPPORT
     &tftp_fsops,
 #endif
-#ifdef LOADER_NFS_SUPPORT 
+#ifdef LOADER_NFS_SUPPORT
     &nfs_fsops,
 #endif
     NULL
 };
 
 /* Exported for i386 only */
-/* 
+/*
  * Sort formats so that those that can detect based on arguments
  * rather than reading the file go first.
  */
@@ -92,8 +91,8 @@ struct file_format *file_formats[] = {
     NULL
 };
 
-/* 
- * Consoles 
+/*
+ * Consoles
  *
  * We don't prototype these in libi386.h because they require
  * data structures from bootstrap.h as well.

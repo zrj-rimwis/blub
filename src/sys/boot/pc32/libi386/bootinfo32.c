@@ -148,8 +148,8 @@ bi_load32(char *args, int *howtop, int *bootdevp, vm_offset_t *bip, vm_offset_t 
 
     howto = bi_getboothowto(args);
 
-    /* 
-     * Allow the environment variable 'rootdev' to override the supplied device 
+    /*
+     * Allow the environment variable 'rootdev' to override the supplied device
      * This should perhaps go to MI code and/or have $rootdev tested/set by
      * MI code before launching the kernel.
      */
@@ -183,7 +183,7 @@ bi_load32(char *args, int *howtop, int *bootdevp, vm_offset_t *bip, vm_offset_t 
 
     case DEVT_NET:
 	    break;
-	    
+
     default:
 	printf("WARNING - don't know how to boot from device type %d\n", rootdev->d_type);
     }

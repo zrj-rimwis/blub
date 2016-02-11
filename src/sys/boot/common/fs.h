@@ -28,7 +28,6 @@
  *
  *	@(#)fs.h	8.13 (Berkeley) 3/21/95
  * $FreeBSD$
- * $DragonFly: src/sys/boot/common/fs.h,v 1.1 2003/11/10 06:08:31 dillon Exp $
  */
 
 #ifndef _UFS_FFS_FS_H_
@@ -56,7 +55,7 @@
  * the ``cgbase(fs, cg)'' macro.
  *
  * Depending on the architecture and the media, the superblock may
- * reside in any one of four places. For tiny media where every block 
+ * reside in any one of four places. For tiny media where every block
  * counts, it is placed at the very front of the partition. Historically,
  * UFS1 placed it 8K from the front to leave room for the disk label and
  * a small bootstrap. For UFS2 it got moved to 64K from the front to leave
@@ -77,7 +76,7 @@
 /*
  * Max number of fragments per block. This value is NOT tweakable.
  */
-#define MAXFRAG 	8
+#define MAXFRAG	8
 
 /*
  * Addresses stored in inodes are capable of addressing fragments
@@ -254,7 +253,7 @@ struct fs {
 	int32_t	 fs_dblkno;		/* offset of first data after cg */
 	int32_t	 fs_old_cgoffset;	/* cylinder group offset in cylinder */
 	int32_t	 fs_old_cgmask;		/* used to calc mod fs_ntrak */
-	int32_t  fs_old_time;		/* last time written */
+	int32_t	 fs_old_time;		/* last time written */
 	int32_t	 fs_old_size;		/* number of blocks in fs */
 	int32_t	 fs_old_dsize;		/* number of data blocks in fs */
 	int32_t	 fs_ncg;		/* number of cylinder groups */
@@ -294,7 +293,7 @@ struct fs {
 	int32_t	 fs_cgsize;		/* cylinder group size */
 	int32_t	 fs_spare2;		/* old fs_ntrak */
 	int32_t	 fs_old_nsect;		/* sectors per track */
-	int32_t  fs_old_spc;		/* sectors per cylinder */
+	int32_t	 fs_old_spc;		/* sectors per cylinder */
 	int32_t	 fs_old_ncyl;		/* cylinders in filesystem */
 	int32_t	 fs_old_cpg;		/* cylinders per group */
 	int32_t	 fs_ipg;		/* inodes per group */
@@ -302,17 +301,17 @@ struct fs {
 /* this data must be re-computed after crashes */
 	struct	csum fs_old_cstotal;	/* cylinder summary information */
 /* these fields are cleared at mount time */
-	int8_t   fs_fmod;		/* super block modified flag */
-	int8_t   fs_clean;		/* filesystem is clean flag */
-	int8_t 	 fs_ronly;		/* mounted read-only flag */
-	int8_t   fs_old_flags;		/* old FS_ flags */
+	int8_t	 fs_fmod;		/* super block modified flag */
+	int8_t	 fs_clean;		/* filesystem is clean flag */
+	int8_t	 fs_ronly;		/* mounted read-only flag */
+	int8_t	 fs_old_flags;		/* old FS_ flags */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 	u_char	 fs_volname[MAXVOLLEN];	/* volume name */
 	u_int64_t fs_swuid;		/* system-wide uid */
-	int32_t  fs_pad;		/* due to alignment of fs_swuid */
+	int32_t	 fs_pad;		/* due to alignment of fs_swuid */
 /* these fields retain the current block allocation info */
 	int32_t	 fs_cgrotor;		/* last cg searched */
-	void 	*fs_ocsp[NOCSPTRS];	/* padding; was list of fs_cs buffers */
+	void	*fs_ocsp[NOCSPTRS];	/* padding; was list of fs_cs buffers */
 	u_int8_t *fs_contigdirs;	/* # of contiguously allocated dirs */
 	struct	csum *fs_csp;		/* cg summary info buffer for fs_cs */
 	int32_t	*fs_maxcluster;		/* max cluster in each cyl group */
@@ -333,8 +332,8 @@ struct fs {
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
 	int32_t	 fs_save_cgsize;	/* save real cg size to use fs_bsize */
 	int32_t	 fs_sparecon32[26];	/* reserved for future constants */
-	int32_t  fs_flags;		/* see FS_ flags below */
-	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
+	int32_t	 fs_flags;		/* see FS_ flags below */
+	int32_t	 fs_contigsumsize;	/* size of cluster summary array */
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_old_inodefmt;	/* format of on-disk inodes */
 	u_int64_t fs_maxfilesize;	/* maximum representable file size */

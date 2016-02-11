@@ -8,7 +8,7 @@ BINDIR?=	/boot
 INSTALLFLAGS=	-b
 
 # Notes: the 'loader' client is brought in with a virtual base of (typically)
-# 0xa000 and a code offset of 0x0.  The btxldr is loaded at 0x200000 (?).  
+# 0xa000 and a code offset of 0x0.  The btxldr is loaded at 0x200000 (?).
 #
 # MEM_BTX_USR_ARG is not used in the boot2->loader stage, only in the
 # boot1->boot2 stage (XXX what about the use in cdboot and pxeboot?)
@@ -40,7 +40,7 @@ CFLAGS+=	-DLOADER_BZIP2_SUPPORT
 CFLAGS+=	-DLOADER_GZIP_SUPPORT
 .endif
 
-# Always add MI sources 
+# Always add MI sources
 .PATH:		${.CURDIR}/../../common
 .include	<${.CURDIR}/../../common/Makefile.inc>
 CFLAGS+=	-I${.CURDIR}/../../common

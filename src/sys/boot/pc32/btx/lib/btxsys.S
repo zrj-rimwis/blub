@@ -13,7 +13,6 @@
  * purpose.
  *
  * $FreeBSD: src/sys/boot/i386/btx/lib/btxsys.s,v 1.2 1999/08/28 00:40:07 peter Exp $
- * $DragonFly: src/sys/boot/pc32/btx/lib/btxsys.S,v 1.4 2004/07/19 01:25:02 dillon Exp $
  */
 
 /*
@@ -36,13 +35,11 @@
 		/*
 		 * System call: exit
 		 */
-__exit: 	xorl %eax,%eax			# BTX system
+__exit:		xorl %eax,%eax			# BTX system
 		int $INT_SYS			#  call 0x0
 
 		/*
 		 * System call: exec
 		 */
-__exec: 	movl $0x1,%eax			# BTX system
+__exec:		movl $0x1,%eax			# BTX system
 		int $INT_SYS			#  call 0x1
-
-

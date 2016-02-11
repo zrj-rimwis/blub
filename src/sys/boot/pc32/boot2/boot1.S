@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2003,2004 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Matthew Dillon <dillon@backplane.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -17,7 +17,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -30,7 +30,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
  *
@@ -45,12 +45,11 @@
  * purpose.
  *
  * $FreeBSD: src/sys/boot/i386/boot2/boot1.s,v 1.23 2003/08/22 01:59:28 imp Exp $
- * $DragonFly: src/sys/boot/pc32/boot2/boot1.S,v 1.10 2008/09/13 11:45:45 corecode Exp $
  */
 
 #include "../bootasm.h"
-	
-// Partition Constants 
+
+// Partition Constants
 		.set PRT_OFF,0x1be		// Partition offset
 		.set PRT_NUM,0x4		// Partitions
 		.set PRT_BSD,0xa5		// Partition type
@@ -105,7 +104,7 @@ bpb:		.word   512		// sector size (T)
 ebpb:		.byte	0		// BIOS physical drive number (W)
 
 		.org 0x25,0x90
-// 
+//
 // Trampoline used by boot2 to call read to read data from the disk via
 // the BIOS.  Call with:
 //
@@ -113,13 +112,13 @@ ebpb:		.byte	0		// BIOS physical drive number (W)
 // %es:(%bx)	- caddr_t - buffer to read data into
 // %dl		- byte    - drive to read from
 // %dh		- byte    - num sectors to read
-// 
+//
 
 xread:		push %ss			// Address
 		pop %ds				//  data
 //
 // Setup an EDD disk packet and pass it to read
-// 
+//
 xread.1:					// Starting
 		pushl $0x0			//  absolute
 		push %cx			//  block
@@ -134,7 +133,7 @@ xread.1:					// Starting
 		callw read			// Read from disk
 		lea 0x10(%bp),%sp		// Clear stack
 		lret				// To far caller
-// 
+//
 // Load the rest of boot2 and BTX up, copy the parts to the right locations,
 // and start it all up.
 //
@@ -142,7 +141,7 @@ xread.1:					// Starting
 //
 // Setup the segment registers to flat addressing (segment 0) and setup the
 // stack to end just below the start of our code.
-// 
+//
 // XXX note - our origin (start) points to the MEM_BIOS_LADDR.  We run
 // from there but boot2 later on calls xread at BOOT1_ORIGIN.
 //
@@ -155,7 +154,7 @@ main:		cld				// String ops inc
 //
 // Relocate ourself to BOOT1_ORIGIN.  Since %cx == 0, the inc %ch sets
 // %cx == 0x100 (256 words == 512 bytes).
-// 
+//
 		mov %sp,%si			// Source
 		mov $BOOT1_ORIGIN,%di		// Destination
 		incb %ch			// Word count
@@ -168,22 +167,22 @@ main:		cld				// String ops inc
 // Note, we can't use the fake partition entry (part4), as it may contain
 // garbage if this is a normal boot1 on a slice, verses a dangerously
 // dedicated disk.  Hardwire sector 0 to acquire the MBR
-// 
+//
 		xor %ax,%ax
 		xor %cx,%cx
 		cmpb $0x80,%dl			// Hard drive?
 		jb main.4			// No
 		movb $0x1,%dh			// Block count
 		callw nread_alt			// Read MBR
-		mov $0x1,%cx	 		// Two passes
-main.1: 	mov $BOOT2_LOAD_BUF+PRT_OFF,%si	// Partition table
+		mov $0x1,%cx			// Two passes
+main.1:		mov $BOOT2_LOAD_BUF+PRT_OFF,%si	// Partition table
 		movb $0x1,%dh			// Partition
-main.2: 	cmpb $PRT_BSD,0x4(%si)		// Our partition type?
+main.2:		cmpb $PRT_BSD,0x4(%si)		// Our partition type?
 		jne main.3			// No
 		jcxz main.5			// If second pass
 		testb $0x80,(%si)		// Active?
 		jnz main.5			// Yes
-main.3: 	add $0x10,%si	 		// Next entry
+main.3:		add $0x10,%si			// Next entry
 		incb %dh			// Partition
 		cmpb $0x1+PRT_NUM,%dh		// In table?
 		jb main.2			// Yes
@@ -192,13 +191,13 @@ main.3: 	add $0x10,%si	 		// Next entry
 //
 // If we get here, we didn't find any FreeBSD slices at all, so print an
 // error message and die.
-// 
+//
 		mov $msg_part,%si		// Message
 		jmp error			// Error
 //
 // Floppies use partition 0 of drive 0.
-// 
-main.4: 	xor %dx,%dx			// Partition:drive
+//
+main.4:		xor %dx,%dx			// Partition:drive
 //
 // Ok, we have a slice and drive in %dx now, so use that to locate and load
 // boot2.  %si references the start of the slice we are looking for, so go
@@ -217,14 +216,14 @@ main.4: 	xor %dx,%dx			// Partition:drive
 // it also runs from.  The boot2.bin binary starts right after the end of
 // BTX, so we have to figure out where the start of it is and then move the
 // binary to 0xc000.  Normally, BTX clients start at MEM_BTX_USR, or 0xa000,
-// but when we use btxld to create boot2, we use an entry point of 0x2000. 
+// but when we use btxld to create boot2, we use an entry point of 0x2000.
 // That entry point is relative to MEM_BTX_USR; thus boot2.bin starts
 // at 0xc000.
-// 
+//
 // MEM_BTX_USR_ARG will be overwritten by the disk read and the relocation
 // loop, so we must store the argument after completing said loops.
 //
-main.5: 	pushw %dx			// Save args
+main.5:		pushw %dx			// Save args
 		movb $NSECT,%dh			// Sector count
 #ifdef DISKLABEL64
 						// In disklabel64 boot2 starts
@@ -235,7 +234,7 @@ main.5: 	pushw %dx			// Save args
 		mov 0xa(%bx),%si		// Get BTX text length (btx.S)
 		add %bx,%si			// %si = start of boot2.bin
 						// %di = relocation target
-		mov $MEM_BTX_USR+BOOT2_VORIGIN,%di 
+		mov $MEM_BTX_USR+BOOT2_VORIGIN,%di
 		mov $MEM_BTX_ORG+(NSECT-1)*SIZ_SEC,%cx
 		sub %si,%cx			// %cx = Size of boot2 client
 		rep				// Relocate boot2
@@ -271,7 +270,7 @@ main.5: 	pushw %dx			// Save args
 		 * is legacy-free and simply doesn't have keyboard controller
 		 * and don't need enabling A20 at all.
 		 */
-seta20: 	cli				# Disable interrupts
+seta20:		cli				# Disable interrupts
 		xor %cx,%cx			# Clear
 seta20.1:	inc %cx				# Increment, overflow?
 		jz seta20.3			# Yes
@@ -288,24 +287,24 @@ seta20.2:	inb $0x64,%al			# Get status
 seta20.3:	sti				# Enable interrupts
 		retw				# To caller
 
-// 
+//
 // Trampoline used to call read from within boot1.
-// 
+//
 nread:
 		mov 0x8(%si),%ax		// Get
 		mov 0xa(%si),%cx		//  LBA
 nread_alt:
 		mov $BOOT2_LOAD_BUF,%bx		// Transfer buffer
 		push %cs			// Read from
-		callw xread.1	 		//  disk
+		callw xread.1			//  disk
 		jnc return			// If success, return
 		mov $msg_read,%si		// Otherwise, set the error
 						//  message and fall through to
 						//  the error routine
-// 
+//
 // Print out the error message pointed to by %ds:(%si) followed
 // by a prompt, wait for a keypress, and then reboot the machine.
-// 
+//
 error:		callw putstr			// Display message
 		mov $prompt,%si			// Display
 		callw putstr			//  prompt
@@ -313,25 +312,25 @@ error:		callw putstr			// Display message
 		int $0x16			//  keypress
 		movw $0x1234, BDA_BOOT		// Do a warm boot
 		ljmp $0xf000,$0xfff0		// reboot the machine
-// 
+//
 // Display a null-terminated string using the BIOS output.
-// 
-putstr.0:	mov $0x7,%bx	 		// Page:attribute
+//
+putstr.0:	mov $0x7,%bx			// Page:attribute
 		movb $0xe,%ah			// BIOS: Display
 		int $0x10			//  character
-putstr: 	lodsb				// Get char
+putstr:		lodsb				// Get char
 		testb %al,%al			// End of string?
 		jne putstr.0			// No
 
 //
 // Overused return code.  ereturn is used to return an error from the
 // read function.  Since we assume putstr succeeds, we (ab)use the
-// same code when we return from putstr. 
-// 
+// same code when we return from putstr.
+//
 ereturn:	movb $0x1,%ah			// Invalid
 		stc				//  argument
-return: 	retw				// To caller
-// 
+return:		retw				// To caller
+//
 // Reads sectors from the disk.  If EDD is enabled, then check if it is
 // installed and use it if it is.  If it is not installed or not enabled, then
 // fall back to using CHS.  Since we use a LBA, if we are using CHS, we have to
@@ -404,7 +403,7 @@ read.1:
 		rorb $0x2,%al			//  number
 		orb %ch,%al			// Merge
 		inc %ax				//  sector
-		xchg %ax,%cx	 		//  number
+		xchg %ax,%cx			//  number
 		movb %bh,%dh			// Head number
 		subb %ah,%al			// Sectors this track
 		mov 0x2(%bp),%ah		// Blocks to read
@@ -415,8 +414,8 @@ read.1:
 #else
 		movb $1,%al			//  one sector
 #endif
-read.2: 	mov $0x5,%di	 		// Try count
-read.3: 	les 0x4(%bp),%bx		// Transfer buffer
+read.2:		mov $0x5,%di			// Try count
+read.3:		les 0x4(%bp),%bx		// Transfer buffer
 		push %ax			// Save
 		movb $0x2,%ah			// BIOS: Read
 		int $0x13			//  from disk
@@ -426,24 +425,24 @@ read.3: 	les 0x4(%bp),%bx		// Transfer buffer
 		jz read.6			// No
 		xorb %ah,%ah			// BIOS: Reset
 		int $0x13			//  disk system
-		xchg %bx,%ax	 		// Block count
+		xchg %bx,%ax			// Block count
 		jmp read.3			// Continue
-read.4: 	movzbw %bl,%ax	 		// Sectors read
+read.4:		movzbw %bl,%ax			// Sectors read
 		add %ax,0x8(%bp)		// Adjust
 		jnc read.5			//  LBA,
-		incw 0xa(%bp)	 		//  transfer
-read.5: 	shlb %bl			//  buffer
+		incw 0xa(%bp)			//  transfer
+read.5:		shlb %bl			//  buffer
 		add %bl,0x5(%bp)		//  pointer,
 		sub %al,0x2(%bp)		//  block count
 		ja read.1			// If not done
-read.6: 	retw				// To caller
+read.6:		retw				// To caller
 
 // Messages
 
 msg_read:	.asciz "Read"
 msg_part:	.asciz "Boot"
 
-prompt: 	.asciz " error\r\n"
+prompt:		.asciz " error\r\n"
 
 flags:		.byte FLAGS			// Flags
 

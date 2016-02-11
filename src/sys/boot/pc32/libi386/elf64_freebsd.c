@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/i386/libi386/elf64_freebsd.c,v 1.14 2003/08/25 23:28:31 obrien Exp $
- * $DragonFly: src/sys/boot/pc32/libi386/elf64_freebsd.c,v 1.3 2008/08/25 16:58:41 dillon Exp $
  */
 
 #define __ELF_WORD_SIZE 64
@@ -64,15 +63,15 @@ u_int32_t entry_lo;
 extern int x86_64_tramp(void);
 
 /*
- * There is an ELF kernel and one or more ELF modules loaded.  
- * We wish to start executing the kernel image, so make such 
+ * There is an ELF kernel and one or more ELF modules loaded.
+ * We wish to start executing the kernel image, so make such
  * preparations as are required, and do so.
  */
 static int
 elf64_exec(struct preloaded_file *fp)
 {
     struct file_metadata	*md;
-    Elf_Ehdr 			*ehdr;
+    Elf_Ehdr			*ehdr;
     vm_offset_t			modulep, kernend;
     int				err;
     int				i;

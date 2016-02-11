@@ -1,5 +1,4 @@
 # $FreeBSD: src/sys/boot/i386/pxeldr/Makefile,v 1.9 2003/09/03 08:12:20 phk Exp $
-# $DragonFly: src/sys/boot/pc32/pxeldr/Makefile,v 1.5 2004/07/18 23:40:09 dillon Exp $
 
 ORG=		0x7c00
 

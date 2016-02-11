@@ -68,7 +68,6 @@ gdt:
 	.long	0x00000000		# %ds
 	.long	0x00008000
 gdtend:
-	
 	.text
 	.code32
 
@@ -96,7 +95,7 @@ x86_64_tramp:
 	movl	%cr0, %eax
 	orl	$CR0_PG, %eax
 	movl	%eax, %cr0
-	
+
 	/* Now we're in compatibility mode. set %cs for long mode */
 	movl	$VTOP(gdtdesc), %eax
 	movl	VTOP(entry_hi), %esi

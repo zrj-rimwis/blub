@@ -1,7 +1,7 @@
 # $FreeBSD: src/sys/boot/common/Makefile.inc,v 1.16 2003/06/26 03:51:57 peter Exp $
 
 SRCS+=	bcache.c boot.c commands.c console.c devopen.c
-SRCS+=	interp_backslash.c interp_parse.c ls.c misc.c 
+SRCS+=	interp_backslash.c interp_parse.c ls.c misc.c
 SRCS+=	module.c panic.c rel_open.c
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"

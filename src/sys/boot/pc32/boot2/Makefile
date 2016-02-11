@@ -36,8 +36,8 @@ REL1D = `${.OBJDIR}/bootasmdef.nx -d BOOT1_ORIGIN`
 ORG1 = `${.OBJDIR}/bootasmdef.nx MEM_BIOS_LADDR`
 ORG1D = `${.OBJDIR}/bootasmdef.nx -d MEM_BIOS_LADDR`
 
-# WARNING!  The ORG2 calculation is the origin of boot2.bin relative to 
-# the start of the BTX *USER* address space, not the start of physical 
+# WARNING!  The ORG2 calculation is the origin of boot2.bin relative to
+# the start of the BTX *USER* address space, not the start of physical
 # memory.
 #
 ORG2=	`${.OBJDIR}/bootasmdef.nx BOOT2_VORIGIN`
@@ -124,9 +124,9 @@ boot2$s.o: boot2$s.s
 boot2$s.h: boot1$s.out bootasmdef.nx
 	@echo "NOTE: boot2 using xread from boot1 at ${REL1}"
 	${NM} -t d ${.ALLSRC} | awk '/([0-9])+ T xread/ \
-	 	{ x = $$1 - ORG1; \
+		{ x = $$1 - ORG1; \
 		printf("#define XREADORG %#x\n", REL1 + x) }' \
-	 	ORG1=${ORG1D} REL1=${REL1D} > boot2$s.h
+		ORG1=${ORG1D} REL1=${REL1D} > boot2$s.h
 
 boot2$s: boot2$s.ldr boot2$s.bin ${BTX}/btx/btx
 	btxld -v -E ${ORG2} -f bin -b ${BTX}/btx/btx -l boot2$s.ldr \

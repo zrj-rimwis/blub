@@ -32,7 +32,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/common/panic.c,v 1.8 2006/09/29 20:57:38 ru Exp $
- * $DragonFly: src/sys/boot/common/panic.c,v 1.6 2006/12/18 23:12:29 dillon Exp $
  */
 
 #include <stand.h>

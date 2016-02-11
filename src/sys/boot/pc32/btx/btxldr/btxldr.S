@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2003,2004 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Matthew Dillon <dillon@backplane.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -17,7 +17,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -30,7 +30,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
  *
@@ -45,7 +45,6 @@
  * purpose.
  *
  * $FreeBSD: src/sys/boot/i386/btx/btxldr/Makefile,v 1.17 2004/04/27 19:45:16 ru Exp $
- * $DragonFly: src/sys/boot/pc32/btx/btxldr/btxldr.S,v 1.3 2004/07/19 23:30:34 dillon Exp $
  */
 
 /*
@@ -111,7 +110,7 @@ start:		cld				# String ops inc
 
 		/*
 		 * Load a new GDT.  XXX what does this do to running code
-		 * segments?  What if an interrupt occurs?  What if the 
+		 * segments?  What if an interrupt occurs?  What if the
 		 * segment registers are reloaded?
 		 */
 		lgdt gdtdesc
@@ -142,7 +141,7 @@ start.1:	movl (%ebx),%eax		# Get argument and
 		 * total arguments  == 0x60 bytes (USR_ARGOFFSET)
 		 */
 
-		movl $BOOTINFO_SIZE,%ecx 	# Allocate space
+		movl $BOOTINFO_SIZE,%ecx	# Allocate space
 		subl %ecx,%ebp			#  for bootinfo
 		movl 0x18(%esp,1),%esi		# Source: bootinfo
 		cmpl $0x0, %esi			# If the bootinfo pointer
@@ -157,7 +156,7 @@ start.1:	movl (%ebx),%eax		# Get argument and
 		call hexout			#  relocation
 		call putstr			#  message
 #endif
-start_null_bi:	movl $0x18,%ecx 		# Allocate space
+start_null_bi:	movl $0x18,%ecx			# Allocate space
 		subl %ecx,%ebp			#  for arguments
 		leal 0x4(%esp,1),%esi		# Source
 		movl %ebp,%edi			# Destination
@@ -245,7 +244,7 @@ start_null_bi:	movl $0x18,%ecx 		# Allocate space
 /*
  * Set up ELF-format client program.
  */
-		cmpl $0x464c457f,(%ebx) 	# ELF magic number?
+		cmpl $0x464c457f,(%ebx)		# ELF magic number?
 		je start.3			# Yes
 		movl $e_fmt,%esi		# Display error
 		call putstr			#  message
@@ -294,7 +293,7 @@ start.5:	popl %ecx			# Restore
 		popl %esi			#  registers
 		decl %edi			# Segments to do
 		je start.7			# If none
-start.6:	addl $0x20,%edx 		# To next entry
+start.6:	addl $0x20,%edx			# To next entry
 		loop start.4			# Till done
 start.7:
 #ifdef BTXLDR_VERBOSE
@@ -324,7 +323,7 @@ start.9:
 /*
  * Output message [ESI] followed by EAX in hex.
  */
-hexout: 	pushl %eax			# Save
+hexout:		pushl %eax			# Save
 		call putstr			# Display message
 		popl %eax			# Restore
 		pushl %esi			# Save
@@ -350,31 +349,31 @@ hexout.2:	decl %esi			# Adjust for inc
  * Output zero-terminated string [ESI] to the console.
  */
 putstr.0:	call putchr			# Output char
-putstr: 	lodsb				# Load char
+putstr:		lodsb				# Load char
 		testb %al,%al			# End of string?
 		jne putstr.0			# No
 		ret				# To caller
 /*
  * Output character AL to the console.
  */
-putchr: 	pusha				# Save
+putchr:		pusha				# Save
 		xorl %ecx,%ecx			# Zero for loops
 		movb $SCR_MAT,%ah		# Mode/attribute
 		movl $BDA_POS,%ebx		# BDA pointer
-		movw (%ebx),%dx 		# Cursor position
+		movw (%ebx),%dx			# Cursor position
 		movl $0xb8000,%edi		# Regen buffer (color)
 		cmpb %ah,BDA_SCR-BDA_POS(%ebx)	# Mono mode?
 		jne putchr.1			# No
 		xorw %di,%di			# Regen buffer (mono)
 putchr.1:	cmpb $0xa,%al			# New line?
 		je putchr.2			# Yes
-		xchgl %eax,%ecx 		# Save char
+		xchgl %eax,%ecx			# Save char
 		movb $SCR_COL,%al		# Columns per row
 		mulb %dh			#  * row position
 		addb %dl,%al			#  + column
 		adcb $0x0,%ah			#  position
 		shll %eax			#  * 2
-		xchgl %eax,%ecx 		# Swap char, offset
+		xchgl %eax,%ecx			# Swap char, offset
 		movw %ax,(%edi,%ecx,1)		# Write attr:char
 		incl %edx			# Bump cursor
 		cmpb $SCR_COL,%dl		# Beyond row?
@@ -392,14 +391,14 @@ putchr.3:	cmpb $SCR_ROW,%dh		# Beyond screen?
 		rep				# Clear
 		stosw				#  line
 		movb $SCR_ROW-1,%dh		# Bottom line
-putchr.4:	movw %dx,(%ebx) 		# Update position
+putchr.4:	movw %dx,(%ebx)			# Update position
 		popa				# Restore
 		ret				# To caller
 /*
  * Convert EAX, AX, or AL to hex, saving the result to [EDI].
  */
 hex32:		pushl %eax			# Save
-		shrl $0x10,%eax 		# Do upper
+		shrl $0x10,%eax			# Do upper
 		call hex16			#  16
 		popl %eax			# Restore
 hex16:		call hex16.1			# Do upper 8
@@ -408,7 +407,7 @@ hex8:		pushl %eax			# Save
 		shrb $0x4,%al			# Do upper
 		call hex8.1			#  4
 		popl %eax			# Restore
-hex8.1: 	andb $0xf,%al			# Get lower 4
+hex8.1:		andb $0xf,%al			# Get lower 4
 		cmpb $0xa,%al			# Convert
 		sbbb $0x69,%al			#  to hex
 		das				#  digit
@@ -432,13 +431,13 @@ gdtdesc:	.word gdt.1-gdt-1		# Limit
 /*
  * Messages.
  */
-m_logo: 	.asciz " \nBTX loader 1.00  "
-m_vers: 	.asciz "BTX version is \0\n"
+m_logo:		.asciz " \nBTX loader 1.00  "
+m_vers:		.asciz "BTX version is \0\n"
 e_fmt:		.asciz "Error: Client format not supported\n"
 #ifdef BTXLDR_VERBOSE
 m_mem:		.asciz "Starting in protected mode (base mem=\0)\n"
 m_esp:		.asciz "Arguments passed (esp=\0):\n"
-m_args: 	.asciz"<howto="
+m_args:		.asciz"<howto="
 		.asciz" bootdev="
 		.asciz" junk="
 		.asciz" "
@@ -447,9 +446,9 @@ m_args: 	.asciz"<howto="
 m_rel_bi:	.asciz "Relocated bootinfo (size=48) to \0\n"
 m_rel_args:	.asciz "Relocated arguments (size=18) to \0\n"
 m_rel_btx:	.asciz "Relocated kernel (size=\0) to \0\n"
-m_base: 	.asciz "Client base address is \0\n"
+m_base:		.asciz "Client base address is \0\n"
 m_elf:		.asciz "Client format is ELF\n"
-m_segs: 	.asciz "text segment: offset="
+m_segs:		.asciz "text segment: offset="
 		.asciz " vaddr="
 		.asciz " filesz="
 		.asciz " memsz=\0\n"
@@ -457,7 +456,7 @@ m_segs: 	.asciz "text segment: offset="
 		.asciz " vaddr="
 		.asciz " filesz="
 		.asciz " memsz=\0\n"
-m_done: 	.asciz "Loading complete\n"
+m_done:		.asciz "Loading complete\n"
 #endif
 /*
  * Uninitialized data area.

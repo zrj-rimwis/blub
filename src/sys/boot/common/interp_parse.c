@@ -7,14 +7,13 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * Jordan K. Hubbard
  * 29 August 1998
  *
  * The meat of the simple parser.
  *
  * $FreeBSD: src/sys/boot/common/interp_parse.c,v 1.10 2003/08/25 23:30:41 obrien Exp $
- * $DragonFly: src/sys/boot/common/interp_parse.c,v 1.3 2003/11/10 06:08:31 dillon Exp $
  */
 
 #include <stand.h>

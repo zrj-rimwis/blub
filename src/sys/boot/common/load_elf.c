@@ -50,7 +50,7 @@
 #endif
 
 typedef struct elf_file {
-    Elf_Phdr 	*ph;
+    Elf_Phdr	*ph;
     Elf_Ehdr	*ehdr;
     Elf_Sym	*symtab;
     Elf_Hashelt	*hashtab;
@@ -94,7 +94,7 @@ __elfN(loadfile)(char *filename, u_int64_t dest, struct preloaded_file **result)
 {
     struct preloaded_file	*fp, *kfp;
     struct elf_file		ef;
-    Elf_Ehdr 			*ehdr;
+    Elf_Ehdr			*ehdr;
     int				err;
     u_int			pad;
     ssize_t			bytes_read;
@@ -104,7 +104,7 @@ __elfN(loadfile)(char *filename, u_int64_t dest, struct preloaded_file **result)
     bzero(&ef, sizeof(struct elf_file));
 
     /*
-     * Open the image, read and validate the ELF header 
+     * Open the image, read and validate the ELF header
      */
     if (filename == NULL)	/* can't handle nameless */
 	return(EFTYPE);
@@ -171,8 +171,8 @@ __elfN(loadfile)(char *filename, u_int64_t dest, struct preloaded_file **result)
 	    err = EPERM;
 	    goto oerr;
 	}
-	/* 
-	 * Calculate destination address based on kernel entrypoint 	
+	/*
+	 * Calculate destination address based on kernel entrypoint
 	 */
 	dest = ehdr->e_entry;
 	if (dest == 0) {
@@ -187,7 +187,7 @@ __elfN(loadfile)(char *filename, u_int64_t dest, struct preloaded_file **result)
 	goto oerr;
     }
 
-    /* 
+    /*
      * Ok, we think we should handle this.
      */
     fp = file_alloc();
@@ -241,7 +241,7 @@ __elfN(loadfile)(char *filename, u_int64_t dest, struct preloaded_file **result)
     *result = (struct preloaded_file *)fp;
     err = 0;
     goto out;
-    
+
  ioerr:
     err = EIO;
  oerr:
@@ -262,7 +262,7 @@ __elfN(loadfile)(char *filename, u_int64_t dest, struct preloaded_file **result)
 static int
 __elfN(loadimage)(struct preloaded_file *fp, elf_file_t ef, u_int64_t off)
 {
-    int 	i;
+    int		i;
     u_int	j;
     Elf_Ehdr	*ehdr;
     Elf_Phdr	*phdr, *php;
@@ -576,7 +576,7 @@ fake_modname(const char *name)
 	    if (ep == name) {
 		sp = invalid_name;
 		ep = invalid_name + sizeof(invalid_name) - 1;
-	    } 
+	    }
     } else
 	ep = name + strlen(name);
     len = ep - sp;
@@ -590,7 +590,7 @@ fake_modname(const char *name)
 
 #if defined(__i386__) && __ELF_WORD_SIZE == 64
 struct mod_metadata64 {
-	int		md_version;	/* structure version MDTV_* */  
+	int		md_version;	/* structure version MDTV_* */
 	int		md_type;	/* type of entry MDT_* */
 	u_int64_t	md_data;	/* specific data */
 	u_int64_t	md_cval;	/* common string label */

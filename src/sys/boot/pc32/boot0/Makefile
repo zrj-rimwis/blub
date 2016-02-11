@@ -1,5 +1,4 @@
 # $FreeBSD: src/sys/boot/i386/boot0/Makefile,v 1.17 2002/09/17 01:48:54 peter Exp $
-# $DragonFly: src/sys/boot/pc32/boot0/Makefile,v 1.6 2008/07/06 17:17:01 mneumann Exp $
 
 PROG?=		boot0
 NOMAN=

@@ -15,7 +15,7 @@
 		set hint.acpi.0.disabled=1
 
 	Note that the ACPI autodetection sets a number of hints to
-	pass information to the ACPI module.  These should not be 
+	pass information to the ACPI module.  These should not be
 	overridden, or system behaviour will be undefined.
 
 	See acpi.4 man page (on booted system) for full description.

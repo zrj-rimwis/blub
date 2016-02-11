@@ -23,7 +23,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/i386/libi386/comconsole.c,v 1.10 2003/09/16 11:24:23 bde Exp $
- * $DragonFly: src/sys/boot/pc32/libi386/comconsole.c,v 1.9 2004/06/27 21:27:36 dillon Exp $
  */
 
 #include <stand.h>
@@ -64,7 +63,7 @@ struct console comconsole = {
 
 /*
  * Probe for a comconsole.  If the comport is not mapped at boot time (which
- * is often true on laptops), don't try to access it.  If we can't clear 
+ * is often true on laptops), don't try to access it.  If we can't clear
  * the input fifo, don't try to access it later.
  *
  * Normally the stage-2 bootloader will do this detection and hand us

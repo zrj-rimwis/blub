@@ -22,7 +22,6 @@
  * purpose.
  *
  * $FreeBSD: src/sys/boot/common/ufsread.c,v 1.12 2003/08/25 23:30:41 obrien Exp $
- * $DragonFly: src/sys/boot/common/ufsread.c,v 1.5 2008/09/13 11:46:28 corecode Exp $
  */
 
 #ifdef BOOT2

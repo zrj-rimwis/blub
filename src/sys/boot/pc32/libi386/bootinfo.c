@@ -38,7 +38,7 @@
  * Return a 'boothowto' value corresponding to the kernel arguments in
  * (kargs) and any relevant environment variables.
  */
-static struct 
+static struct
 {
     const char	*ev;
     int		mask;
@@ -61,7 +61,7 @@ bi_getboothowto(char *kargs)
     int		howto;
     int		active;
     int		i;
-    
+
     /* Parse kargs */
     howto = 0;
     if (kargs  != NULL) {
@@ -138,7 +138,7 @@ vm_offset_t
 bi_copyenv(vm_offset_t addr)
 {
     struct env_var	*ep;
-    
+
     /* traverse the environment */
     for (ep = environ; ep != NULL; ep = ep->ev_next) {
 	i386_copyin(ep->ev_name, addr, strlen(ep->ev_name));

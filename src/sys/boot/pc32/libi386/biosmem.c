@@ -89,7 +89,7 @@ bios_getmem(void)
 	v86.ctl = 0;
 	v86.addr = 0x12;		/* int 0x12 */
 	v86int();
-	
+
 	bios_basemem = (v86.eax & 0xffff) * 1024;
 	bios_howmem = 2;
     }
@@ -127,5 +127,4 @@ bios_getmem(void)
      */
     memtop = 0x100000 + bios_extmem;	/* XXX ignored */
     memtop = 64 * 1024 * 1024;
-}    
-
+}

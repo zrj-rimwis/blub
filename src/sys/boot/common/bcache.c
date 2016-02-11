@@ -141,9 +141,9 @@ write_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
 
     /* Populate the block cache with the new data */
     if (err == 0) {
-    	for (i = 0; i < nblk; i++) {
+	for (i = 0; i < nblk; i++) {
 	    bcache_insert(buf + (i * bcache_blksize),blk + i);
-    	}
+	}
     }
 
     return err;
@@ -152,7 +152,7 @@ write_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
 /*
  * Handle a read request; fill in parts of the request that can
  * be satisfied by the cache, use the supplied strategy routine to do
- * device I/O and then use the I/O results to populate the cache. 
+ * device I/O and then use the I/O results to populate the cache.
  */
 static int
 read_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
@@ -209,14 +209,14 @@ read_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
 	for (j = 0; j < p_size; j++)
 	    bcache_insert(p_buf + (j * bcache_blksize), p_blk + j);
     }
-    
+
  done:
     if ((result == 0) && (rsize != NULL))
 	*rsize = size;
     return(result);
 }
 
-/* 
+/*
  * Requests larger than 1/2 the cache size will be bypassed and go
  * directly to the disk.  XXX tune this.
  */
@@ -257,12 +257,12 @@ bcache_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
  * XXX the LRU algorithm will fail after 2^31 blocks have been transferred.
  */
 static void
-bcache_insert(caddr_t buf, daddr_t blkno) 
+bcache_insert(caddr_t buf, daddr_t blkno)
 {
     time_t	now;
     int		cand, ocount;
     u_int	i;
-    
+
     time(&now);
     cand = 0;				/* assume the first block */
     ocount = bcache_ctl[0].bc_count;
@@ -279,7 +279,7 @@ bcache_insert(caddr_t buf, daddr_t blkno)
 	    cand = i;
 	}
     }
-    
+
     DEBUG("insert blk %d -> %d @ %d # %d", blkno, cand, now, bcache_bcount);
     bcopy(buf, bcache_data + (bcache_blksize * cand), bcache_blksize);
     bcache_ctl[cand].bc_blkno = blkno;
@@ -289,7 +289,7 @@ bcache_insert(caddr_t buf, daddr_t blkno)
 
 /*
  * Look for a block in the cache.  Blocks more than BCACHE_TIMEOUT seconds old
- * may be stale (removable media) and thus are discarded.  Copy the block out 
+ * may be stale (removable media) and thus are discarded.  Copy the block out
  * if successful and return zero, or return nonzero on failure.
  */
 static int
@@ -297,7 +297,7 @@ bcache_lookup(caddr_t buf, daddr_t blkno)
 {
     time_t	now;
     u_int	i;
-    
+
     time(&now);
 
     for (i = 0; i < bcache_nblks; i++)
@@ -317,7 +317,7 @@ static void
 bcache_invalidate(daddr_t blkno)
 {
     u_int	i;
-    
+
     for (i = 0; i < bcache_nblks; i++) {
 	if (bcache_ctl[i].bc_blkno == blkno) {
 	    bcache_ctl[i].bc_count = -1;
@@ -334,7 +334,7 @@ static int
 command_bcache(int argc, char *argv[])
 {
     u_int	i;
-    
+
     for (i = 0; i < bcache_nblks; i++) {
 	printf("%08x %04x %04x|", bcache_ctl[i].bc_blkno, (unsigned int)bcache_ctl[i].bc_stamp & 0xffff, bcache_ctl[i].bc_count & 0xffff);
 	if (((i + 1) % 4) == 0)
@@ -343,4 +343,3 @@ command_bcache(int argc, char *argv[])
     printf("\n%u ops  %u bypasses  %u hits  %u misses  %u flushes\n", bcache_ops, bcache_bypasses, bcache_hits, bcache_misses, bcache_flushes);
     return(CMD_OK);
 }
-

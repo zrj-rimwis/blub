@@ -28,7 +28,7 @@ static void		pnp_discard(void);
 COMMAND_SET(pnpscan, "pnpscan", "scan for PnP devices", pnp_scan);
 
 static int
-pnp_scan(int argc, char *argv[]) 
+pnp_scan(int argc, char *argv[])
 {
     struct pnpinfo	*pi;
     int			hdlr;
@@ -119,7 +119,7 @@ struct pnpinfo *
 pnp_allocinfo(void)
 {
     struct pnpinfo	*pi;
-    
+
     pi = malloc(sizeof(struct pnpinfo));
     bzero(pi, sizeof(struct pnpinfo));
     STAILQ_INIT(&pi->pi_ident);
@@ -179,4 +179,3 @@ pnp_eisaformat(u_int8_t *data)
     idbuf[7] = 0;
     return(idbuf);
 }
-

@@ -13,7 +13,6 @@
  * purpose.
  *
  * $FreeBSD: src/sys/boot/i386/boot2/sio.s,v 1.4 1999/08/28 00:40:02 peter Exp $
- * $DragonFly: src/sys/boot/pc32/boot2/sio.S,v 1.8 2006/08/12 05:42:26 swildner Exp $
  */
 		.set SIO_PRT,SIOPRT		# Base port
 		.set SIO_FMT,SIOFMT		# 8N1
@@ -27,7 +26,7 @@
 
 		/*
 		 * int sio_init(void)
-		 * 
+		 *
 		 * returns non-zero if we couldn't init, which can happen if
 		 * the serial port is unmapped and the inb's all return
 		 * 0xFF (we fail to flush the input).
@@ -41,8 +40,8 @@ sio_init:	movw $SIO_PRT+0x3,%dx		# Data format reg
 		movw $SIO_PRT+0x2,%dx
 		movb $0x01,%al			# Enable FIFO
 
-		/* 
-		 * DISABLED - apparently many new laptops only implement 
+		/*
+		 * DISABLED - apparently many new laptops only implement
 		 * 8250s, this might crash them? XXX
 		 */
 		 /* outb %al,(%dx) */			# BASE+2
@@ -54,7 +53,7 @@ sio_init:	movw $SIO_PRT+0x3,%dx		# Data format reg
 		outb %al,(%dx)			# BASE+4
 		incl %edx			# BASE+5 Line status reg
 
-		/* 
+		/*
 		 * fall through to io_flush
 		 *
 		 * sio_flush: flush pending data in the serial port,
@@ -85,7 +84,7 @@ sio_putc.2:	ret
 		/*
 		 * int sio_getc(void)
 		 */
-sio_getc:	call sio_ischar 		# Character available?
+sio_getc:	call sio_ischar			# Character available?
 		jz sio_getc			# No
 sio_getc.1:	subb $0x5,%dl			# Receiver buffer reg
 		inb (%dx),%al			# Read character

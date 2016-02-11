@@ -24,9 +24,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	Id: probe_keyboard.c,v 1.13 1997/06/09 05:10:55 bde Exp
+ *	Id: probe_keyboard.c,v 1.13 1997/06/09 05:10:55 bde Exp
  * $FreeBSD: src/sys/boot/i386/libi386/vidconsole.c,v 1.19 2003/08/25 23:28:31 obrien Exp $
- * $DragonFly: src/sys/boot/pc32/libi386/vidconsole.c,v 1.4 2004/09/09 03:47:08 joerg Exp $
  */
 
 #include <stand.h>
@@ -84,13 +83,11 @@ struct console vidconsole = {
 static void
 vidc_probe(struct console *cp)
 {
-    
     /* look for a keyboard */
 #if KEYBOARD_PROBE
     if (probe_keyboard())
 #endif
     {
-	
 	cp->c_flags |= C_PRESENTIN;
     }
 
@@ -526,10 +523,10 @@ vidc_ischar(void)
 #define IO_KBD		0x060		/* 8042 Keyboard */
 
 /* selected defines from kbdio.h */
-#define KBD_STATUS_PORT 	4	/* status port, read */
-#define KBD_DATA_PORT		0	/* data port, read/write 
+#define KBD_STATUS_PORT		4	/* status port, read */
+#define KBD_DATA_PORT		0	/* data port, read/write
 					 * also used as keyboard command
-					 * and mouse command port 
+					 * and mouse command port
 					 */
 #define KBDC_ECHO		0x00ee
 #define KBDS_ANY_BUFFER_FULL	0x0001
@@ -540,7 +537,7 @@ vidc_ischar(void)
 static void
 delay7(void)
 {
-    /* 
+    /*
      * I know this is broken, but no timer is available yet at this stage...
      * See also comments in `delay1ms()'.
      */
@@ -566,7 +563,7 @@ delay1ms(void)
 	(void)inb(0x84);
 }
 
-/* 
+/*
  * We use the presence/absence of a keyboard to determine whether the internal
  * console can be used for input.
  *
@@ -591,7 +588,7 @@ probe_keyboard(void)
 
 	/* wait until the controller can accept a command */
 	for (wait = PROBE_MAXWAIT; wait > 0; --wait) {
-	    if (((i = inb(IO_KBD + KBD_STATUS_PORT)) 
+	    if (((i = inb(IO_KBD + KBD_STATUS_PORT))
                 & (KBDS_INPUT_BUFFER_FULL | KBDS_ANY_BUFFER_FULL)) == 0)
 		break;
 	    if (i & KBDS_ANY_BUFFER_FULL) {

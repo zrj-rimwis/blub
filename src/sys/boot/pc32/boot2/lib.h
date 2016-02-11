@@ -15,7 +15,6 @@
 
 /*
  * $FreeBSD: src/sys/boot/i386/boot2/lib.h,v 1.2 1999/08/28 00:40:02 peter Exp $
- * $DragonFly: src/sys/boot/pc32/boot2/lib.h,v 1.4 2004/06/27 08:00:46 dillon Exp $
  */
 
 int sio_init(void);	/* returns non-zero if init failed */

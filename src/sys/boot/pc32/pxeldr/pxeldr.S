@@ -14,7 +14,6 @@
  *
  *
  * $FreeBSD: src/sys/boot/i386/pxeldr/pxeldr.s,v 1.9 2003/09/03 08:12:20 phk Exp $
- * $DragonFly: src/sys/boot/pc32/pxeldr/pxeldr.S,v 1.5 2007/05/18 07:41:43 dillon Exp $
  */
 
 /*
@@ -119,7 +118,7 @@ start:		cld				# string ops inc
 #ifdef PROBE_KEYBOARD
 		/*
 		 * Look at the BIOS data area to see if we have an enhanced
-		 * keyboard.  If not, set the RBX_SERIAL bit in the howto 
+		 * keyboard.  If not, set the RBX_SERIAL bit in the howto
 		 * byte.
 		 */
 		testb $KEYBOARD_BIT, BDA_KEYBOARD # keyboard present?
@@ -240,7 +239,7 @@ putc:		movw $0x7,%bx			# attribute for output
 		 * is legacy-free and simply doesn't have keyboard controller
 		 * and don't need enabling A20 at all.
 		 */
-seta20: 	cli				# Disable interrupts
+seta20:		cli				# Disable interrupts
 		xor %cx,%cx			# Clear
 seta20.1:	inc %cx				# Increment, overflow?
 		jz seta20.3			# Yes

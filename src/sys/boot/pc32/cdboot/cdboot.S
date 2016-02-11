@@ -14,7 +14,6 @@
  *
  *
  * $FreeBSD: src/sys/boot/i386/cdboot/cdboot.s,v 1.9 2001/11/07 01:20:33 jhb Exp $
- * $DragonFly: src/sys/boot/pc32/cdboot/cdboot.S,v 1.8 2007/05/18 07:41:43 dillon Exp $
  */
 
 /*
@@ -25,7 +24,7 @@
  *
  * Basically, we first create a set of boot arguments to pass to the loaded
  * binary.  Then we attempt to load /boot/loader from the CD we were booted
- * off of. 
+ * off of.
  */
 
 #include "../bootasm.h"
@@ -272,7 +271,7 @@ pm_end:		sti				# Turn interrupts back on now
 		ljmp $0,$MEM_BTX_ENTRY		# Jump to the BTX entry point
 
 		/*
-		 * Lookup the file in the path at [SI] from the root 
+		 * Lookup the file in the path at [SI] from the root
 		 * directory.
 		 *
 		 * Trashes: All but BX
@@ -494,7 +493,7 @@ twiddle:	push %ax			# Save
 		 * is legacy-free and simply doesn't have keyboard controller
 		 * and don't need enabling A20 at all.
 		 */
-seta20: 	cli				# Disable interrupts
+seta20:		cli				# Disable interrupts
 		xor %cx,%cx			# Clear
 seta20.1:	inc %cx				# Increment, overflow?
 		jz seta20.3			# Yes
@@ -518,7 +517,7 @@ hex8:		pushl %eax			# Save
 		shrb $0x4,%al			# Do upper
 		call hex8.1			#  4
 		popl %eax			# Restore
-hex8.1: 	andb $0xf,%al			# Get lower 4
+hex8.1:		andb $0xf,%al			# Get lower 4
 		cmpb $0xa,%al			# Convert
 		sbbb $0x69,%al			#  to hex
 		das				#  digit
@@ -601,4 +600,3 @@ msg_load2big:	.asciz  "File too big\r\n"
 msg_timeout:	.asciz  "Drive not ready, retry\r\n"
 loader_path:	.asciz  "/BOOT/LOADER"
 twiddle_chars:	.ascii	"|/-\\"
-

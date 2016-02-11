@@ -40,7 +40,7 @@ static int page_file(char *filename);
 /*
  * Help is read from a formatted text file.
  *
- * Entries in the file are formatted as 
+ * Entries in the file are formatted as
 
 # Ttopic [Ssubtopic] Ddescription
 help
@@ -60,14 +60,14 @@ here
 COMMAND_SET(help, "help", "detailed help", command_help);
 
 static int
-help_getnext(int fd, char **topic, char **subtopic, char **desc) 
+help_getnext(int fd, char **topic, char **subtopic, char **desc)
 {
     char	line[81], *cp, *ep;
-    
+
     for (;;) {
 	if (fgetstr(line, 80, fd) < 0)
 	    return(0);
-	
+
 	if ((strlen(line) < 3) || (line[0] != '#') || (line[1] != ' '))
 	    continue;
 
@@ -104,7 +104,7 @@ static void
 help_emitsummary(char *topic, char *subtopic, char *desc)
 {
     int		i;
-    
+
     pager_output("    ");
     pager_output(topic);
     i = strlen(topic);
@@ -122,9 +122,8 @@ help_emitsummary(char *topic, char *subtopic, char *desc)
     pager_output("\n");
 }
 
-	    
 static int
-command_help(int argc, char *argv[]) 
+command_help(int argc, char *argv[])
 {
     char	buf[81];	/* XXX buffer size? */
     int		hfd, matched, doindex;
@@ -160,7 +159,7 @@ command_help(int argc, char *argv[])
     /* magic "index" keyword */
     doindex = !strcmp(topic, "index");
     matched = doindex;
-    
+
     /* Scan the helpfile looking for help matching the request */
     pager_open();
     while (help_getnext(hfd, &t, &s, &d)) {
@@ -217,7 +216,7 @@ command_commandlist(int argc, char *argv[])
 {
     struct bootblk_command	**cmdp;
     char str[81];
-    
+
     pager_open();
     printf("Available commands:\n");
     SET_FOREACH(cmdp, Xcommand_set) {
@@ -245,7 +244,7 @@ command_show(int argc, char *argv[])
     char		*cp;
 
     if (argc < 2) {
-	/* 
+	/*
 	 * With no arguments, print everything.
 	 */
 	pager_open();
@@ -277,7 +276,7 @@ static int
 command_set(int argc, char *argv[])
 {
     int		err;
-    
+
     if (argc != 2) {
 	command_errmsg = "wrong number of arguments";
 	return(CMD_ERROR);
@@ -293,7 +292,7 @@ command_set(int argc, char *argv[])
 COMMAND_SET(unset, "unset", "unset a kenv variable", command_unset);
 
 static int
-command_unset(int argc, char *argv[]) 
+command_unset(int argc, char *argv[])
 {
     if (argc != 2) {
 	command_errmsg = "wrong number of arguments";
@@ -312,7 +311,7 @@ command_echo(int argc, char *argv[])
 {
     char	*s;
     int		nl, ch;
-    
+
     nl = 0;
     optind = 1;
     optreset = 1;
@@ -356,14 +355,14 @@ command_read(int argc, char *argv[])
     char	*name;
     char	buf[256];		/* XXX size? */
     int		c;
-    
+
     timeout = -1;
     prompt = NULL;
     optind = 1;
     optreset = 1;
     while ((c = getopt(argc, argv, "p:t:")) != -1) {
 	switch(c) {
-	    
+
 	case 'p':
 	    prompt = optarg;
 	    break;
@@ -386,7 +385,7 @@ command_read(int argc, char *argv[])
 	return(CMD_ERROR);
     }
     name = (argc > 0) ? argv[0]: NULL;
-	
+
     if (prompt != NULL)
 	printf("%s", prompt);
     if (timeout >= 0) {
@@ -453,7 +452,7 @@ page_file(char *filename)
 	sprintf(command_errbuf, "error showing %s", filename);
 
     return result;
-}   
+}
 
 /*
  * List all disk-like devices
@@ -465,7 +464,7 @@ command_lsdev(int argc, char *argv[])
 {
     int		verbose, ch, i;
     char	line[80];
-    
+
     verbose = 0;
     optind = 1;
     optreset = 1;

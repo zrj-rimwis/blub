@@ -62,7 +62,7 @@ static pxenv_t	*pxenv_p = NULL;        /* PXENV+ */
 static pxe_t	*pxe_p   = NULL;	/* !PXE */
 static BOOTPLAYER	bootplayer;	/* PXE Cached information. */
 
-static int 	pxe_debug = 0;
+static int	pxe_debug = 0;
 static int	pxe_sock = -1;
 static int	pxe_opens = 0;
 static int	bugged_bios_pxe = 0;
@@ -123,12 +123,12 @@ struct netif_driver *netif_drivers[] = {
 };
 
 struct devsw pxedisk = {
-	"pxe", 
+	"pxe",
 	DEVT_NET,
 	pxe_init,
-	pxe_strategy, 
-	pxe_open, 
-	pxe_close, 
+	pxe_strategy,
+	pxe_open,
+	pxe_close,
 	noioctl,
 	pxe_print,
 	pxe_cleanup
@@ -148,9 +148,9 @@ pxe_enable(void *pxeinfo)
 	pxe_call = NULL;
 }
 
-/* 
+/*
  * return true if pxe structures are found/initialized,
- * also figures out our IP information via the pxe cached info struct 
+ * also figures out our IP information via the pxe cached info struct
  */
 static int
 pxe_init(void)
@@ -159,7 +159,7 @@ pxe_init(void)
 	int	counter;
 	uint8_t checksum;
 	uint8_t *checkptr;
-	
+
 	if(pxenv_p == NULL)
 		return (0);
 
@@ -171,16 +171,16 @@ pxe_init(void)
 
 	/* make sure the size is something we can handle */
 	if (pxenv_p->Length > sizeof(*pxenv_p)) {
-	  	printf("PXENV+ structure too large, ignoring\n");
+		printf("PXENV+ structure too large, ignoring\n");
 		pxenv_p = NULL;
 		return (0);
 	}
-	    
-	/* 
+
+	/*
 	 * do byte checksum:
 	 * add up each byte in the structure, the total should be 0
 	 */
-	checksum = 0;	
+	checksum = 0;
 	checkptr = (uint8_t *) pxenv_p;
 	for (counter = 0; counter < pxenv_p->Length; counter++)
 		checksum += *checkptr++;
@@ -190,7 +190,6 @@ pxe_init(void)
 		return (0);
 	}
 
-	
 	/*
 	 * PXENV+ passed, so use that if !PXE is not available or
 	 * the checksum fails.
@@ -215,7 +214,7 @@ pxe_init(void)
 			break;
 		}
 	}
-	
+
 	printf("\nPXE version %d.%d, real mode entry point ",
 	       (uint8_t) (pxenv_p->Version >> 8),
 	       (uint8_t) (pxenv_p->Version & 0xFF));
@@ -257,7 +256,7 @@ pxe_open(struct open_file *f, ...)
     char temp[FNAME_SIZE];
     int error = 0;
     int i;
-	
+
     va_start(args, f);
     devname = va_arg(args, char*);
     va_end(args);
@@ -400,7 +399,7 @@ pxe_cleanup(void)
 
 	pxe_call(PXENV_UNLOAD_STACK);
 
-#ifdef PXE_DEBUG	
+#ifdef PXE_DEBUG
 	if (pxe_debug && unload_stack_p->Status != 0)
 		printf("pxe_cleanup: UNLOAD_STACK failed %x\n",
 		    unload_stack_p->Status);
@@ -462,13 +461,13 @@ pxenv_call(int func)
 	if (pxe_debug)
 		printf("pxenv_call %x\n", func);
 #endif
-	
+
 	bzero(&v86, sizeof(v86));
 	bzero(data_buffer, sizeof(data_buffer));
 
 	__pxenvseg = pxenv_p->RMEntry.segment;
 	__pxenvoff = pxenv_p->RMEntry.offset;
-	
+
 	v86.ctl  = V86_ADDR | V86_CALLF | V86_FLAGS;
 	v86.es   = VTOPSEG(scratch_buffer);
 	v86.edi  = VTOPOFF(scratch_buffer);
@@ -485,13 +484,13 @@ bangpxe_call(int func)
 	if (pxe_debug)
 		printf("bangpxe_call %x\n", func);
 #endif
-	
+
 	bzero(&v86, sizeof(v86));
 	bzero(data_buffer, sizeof(data_buffer));
 
 	__bangpxeseg = pxe_p->EntryPointSP.segment;
 	__bangpxeoff = pxe_p->EntryPointSP.offset;
-	
+
 	v86.ctl  = V86_ADDR | V86_CALLF | V86_FLAGS;
 	v86.edx  = VTOPSEG(scratch_buffer);
 	v86.eax  = VTOPOFF(scratch_buffer);
@@ -573,7 +572,7 @@ sendudp(struct iodesc *h, void *pkt, size_t len)
 {
 	t_PXENV_UDP_WRITE *udpwrite_p = (t_PXENV_UDP_WRITE *)scratch_buffer;
 	bzero(udpwrite_p, sizeof(*udpwrite_p));
-	
+
 	udpwrite_p->ip             = h->destip.s_addr;
 	udpwrite_p->dst_port       = h->destport;
 	udpwrite_p->src_port       = h->myport;
@@ -607,7 +606,7 @@ readudp(struct iodesc *h, void *pkt, size_t len, time_t timeout)
 	t_PXENV_UDP_READ *udpread_p = (t_PXENV_UDP_READ *)scratch_buffer;
 	struct udphdr *uh;
 	struct ip *ip;
-	
+
 	uh = (struct udphdr *) pkt - 1;
 	ip = (struct ip *)uh - 1;
 again:

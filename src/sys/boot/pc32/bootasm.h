@@ -1,13 +1,13 @@
-/* 
+/*-
  * Copyright (c) 2004 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Matthew Dillon <dillon@backplane.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -17,7 +17,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -31,10 +31,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $DragonFly: src/sys/boot/pc32/bootasm.h,v 1.4 2004/07/27 19:37:15 dillon Exp $
  */
 
-/* 
+/*
  * Set the bootloader address set.
  *
  * UNSET - default backwards compatible boot blocks
@@ -81,7 +80,7 @@
 
 /*
  * NOTE: BOOT0_ORIGIN is extracted from this file and used in boot0/Makefile
- * 	 BOOT1_ORIGIN is extracted from this file and used in boot2/Makefile
+ *	 BOOT1_ORIGIN is extracted from this file and used in boot2/Makefile
  *
  *	 NOTE: boot0 has a variable space after its sector which contains
  *	 the fake partition and other variables.  ~128 bytes should be reserved
@@ -91,7 +90,7 @@
 #if !defined(BOOT_NEWBOOTLOADER)
 
 /************************************************************************
- *			STANDARD BOOTLOADER ADDRESS SET 		*
+ *			STANDARD BOOTLOADER ADDRESS SET			*
  ************************************************************************
  *
  *
@@ -175,7 +174,7 @@
 #define MEM_BTX_TBL	0x5000		/* (unchanged)		*/
 #define MEM_BTX_ZEND	0x7000		/* (unchanged)		*/
 
-#define MEM_BTX_ESP	0x7800		/* don't use 0x1000 		*/
+#define MEM_BTX_ESP	0x7800		/* don't use 0x1000		*/
 #define BOOT0_ORIGIN	0x7800		/* boot0 relocated		*/
 #define BOOT1_ORIGIN	0x7900		/* boot1 relocated (data only?) */
 #define MEM_ARG		0x7b00		/* cdboot/pxeboot disk/slice xfer */
@@ -211,7 +210,7 @@
 /****** MEM_BTX_TBL (16K) SUPPORT REMOVED ***********************/
 #define MEM_BTX_ZEND	0x6000		/* (unchanged)		*/
 
-#define MEM_BTX_ESP	0x7800		/* don't use 0x1000 		*/
+#define MEM_BTX_ESP	0x7800		/* don't use 0x1000		*/
 #define BOOT0_ORIGIN	0x7800		/* boot0 relocated		*/
 #define BOOT1_ORIGIN	0x7900		/* boot1 relocated (data only?) */
 #define MEM_ARG		0x7b00		/* cdboot/pxeboot disk/slice xfer */
@@ -229,4 +228,3 @@
 #error "BAD BOOT_NEWBOOTLOADER SETTING.  UNSET TO GET DEFAULT"
 
 #endif	/* BOOT_NEWBOOTLOADER */
-

@@ -25,12 +25,12 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/i386/libi386/bioscd.c,v 1.5 2003/08/25 23:28:31 obrien Exp $
- * $DragonFly: src/sys/boot/pc32/libi386/bioscd.c,v 1.6 2006/09/10 01:26:31 dillon Exp $
  */
+
 /*
  * BIOS CD device handling for CD's that have been booted off of via no
  * emulation booting as defined in the El Torito standard.
- * 
+ *
  * Ideas and algorithms from:
  *
  * - FreeBSD libi386/biosdisk.c
@@ -96,12 +96,12 @@ static int	bc_close(struct open_file *f);
 static void	bc_print(int verbose);
 
 struct devsw bioscd = {
-	"cd", 
-	DEVT_CD, 
+	"cd",
+	DEVT_CD,
 	bc_init,
-	bc_strategy, 
-	bc_open, 
-	bc_close, 
+	bc_strategy,
+	bc_open,
+	bc_close,
 	noioctl,
 	bc_print,
 	NULL
@@ -114,7 +114,7 @@ int
 bc_bios2unit(int biosdev)
 {
 	int i;
-    
+
 	DEBUG("looking for bios device 0x%x", biosdev);
 	for (i = 0; i < nbcinfo; i++) {
 		DEBUG("bc unit %d is BIOS device 0x%x", i, bcinfo[i].bc_unit);
@@ -132,13 +132,13 @@ bc_unit2bios(int unit)
 	return(-1);
 }
 
-/*    
+/*
  * We can't quiz, we have to be told what device to use, so this functoin
  * doesn't do anything.  Instead, the loader calls bc_add() with the BIOS
  * device number to add.
  */
 static int
-bc_init(void) 
+bc_init(void)
 {
 
 	return (0);
@@ -174,7 +174,7 @@ bc_print(int verbose)
 {
 	int i;
 	char line[80];
-    
+
 	for (i = 0; i < nbcinfo; i++) {
 		sprintf(line, "    cd%d: Device 0x%x\n", i,
 		    bcinfo[i].bc_sp.sp_devicespec);
@@ -185,7 +185,7 @@ bc_print(int verbose)
 /*
  * Attempt to open the disk described by (dev) for use by (f).
  */
-static int 
+static int
 bc_open(struct open_file *f, ...)
 {
 	va_list ap;
@@ -201,15 +201,15 @@ bc_open(struct open_file *f, ...)
 
 	return(0);
 }
- 
-static int 
+
+static int
 bc_close(struct open_file *f)
 {
 
 	return(0);
 }
 
-static int 
+static int
 bc_strategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf,
     size_t *rsize)
 {
@@ -243,14 +243,14 @@ bc_strategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf,
 		return (EIO);
 	}
 #ifdef BD_SUPPORT_FRAGS
-	DEBUG("bc_strategy: frag read %d from %d+%d to %p", 
+	DEBUG("bc_strategy: frag read %d from %d+%d to %p",
 	    fragsize, dblk, blks, buf + (blks * BIOSCD_SECSIZE));
 	if (fragsize && bc_read(unit, dblk + blks, 1, fragsize)) {
 		DEBUG("frag read error");
 		return(EIO);
 	}
 	bcopy(fragbuf, buf + (blks * BIOSCD_SECSIZE), fragsize);
-#endif	
+#endif
 	if (rsize)
 		*rsize = size;
 	return (0);
@@ -265,7 +265,7 @@ bc_read(int unit, daddr_t dblk, int blks, caddr_t dest)
 #ifdef DISK_DEBUG
 	int error;
 #endif
-    
+
 	/* Just in case some idiot actually tries to read -1 blocks... */
 	if (blks < 0)
 		return (-1);
@@ -288,7 +288,7 @@ bc_read(int unit, daddr_t dblk, int blks, caddr_t dest)
 			v86.edx = biosdev;
 			v86int();
 		}
-	    
+
 		packet[0] = 0x10;
 		packet[1] = blks;
 		packet[2] = VTOPOFF(dest);
@@ -308,14 +308,14 @@ bc_read(int unit, daddr_t dblk, int blks, caddr_t dest)
 		if (result == 0)
 			break;
 	}
-	
+
 #ifdef DISK_DEBUG
 	error = (v86.eax >> 8) & 0xff;
 #endif
 	DEBUG("%d sectors from %ld to %p (0x%x) %s", blks, dblk, dest,
 	    VTOP(dest), result ? "failed" : "ok");
 	DEBUG("unit %d  status 0x%x",  unit, error);
-	
+
 /*	hexdump(dest, (blks * BIOSCD_SECSIZE)); */
 	return(0);
 }

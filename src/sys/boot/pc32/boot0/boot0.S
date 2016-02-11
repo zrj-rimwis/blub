@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2003,2004 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Matthew Dillon <dillon@backplane.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -17,7 +17,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -30,7 +30,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
  *
@@ -59,8 +59,8 @@
 		 */
 		.set PRT_OFF,0x1be		# Partition table
 
-		.set TBL0SZ,0x3 		# Table 0 size
-		.set TBL1SZ,0xb 		# Table 1 size
+		.set TBL0SZ,0x3			# Table 0 size
+		.set TBL1SZ,0xb			# Table 1 size
 
 		.set MAGIC,0xaa55		# Magic: bootable
 		.set B0MAGIC,0xbb66		# Identification
@@ -77,13 +77,13 @@
 		 * with negative offsets from the end of the relocated sector
 		 * (%ebp).
 		 *
-		 * Note that %ebp is the base of our variable space and 
+		 * Note that %ebp is the base of our variable space and
 		 * points at the end of the sector (base + 0x200).  The
 		 * fake partition and menu option is thus stored in the
 		 * memory just after the boot0 sector.
 		 */
 		.set _NXTDRV,-0x48		# Next drive
-		.set _OPT,-0x47 		# Default option
+		.set _OPT,-0x47			# Default option
 		.set _SETDRV,-0x46		# Drive to force
 		.set _FLAGS,-0x45		# Flags
 		.set _TICKS,-0x44		# Timeout ticks
@@ -100,7 +100,7 @@
 		.code16				# This runs in real mode
 
 		/*
-		 * Initialise segments and registers to known values.  
+		 * Initialise segments and registers to known values.
 		 * segments start at 0.  The stack is immediately below the
 		 * address we were loaded to.
 		 */
@@ -110,7 +110,7 @@ start:		cld				# String ops inc
 		movw %ax,%ds			#  data
 		movw %ax,%ss			# Set up
 		movw $MEM_BIOS_LADDR,%sp	#  stack
-	
+
 		/*
 		 * Copy this code to the address it was linked for.
 		 * Base address after relocation is - 0x600.
@@ -123,7 +123,7 @@ start:		cld				# String ops inc
 
 		/*
 		 * Set address for variable space beyond code, and clear it.
-		 * Notice that this is also used to point to the values 
+		 * Notice that this is also used to point to the values
 		 * embedded in the block, by using negative offsets.
 		 */
 		movw %di,%bp			# Address variables
@@ -159,13 +159,13 @@ main:
 		testb %dl,%dl			# Drive number valid?
 		js main.2			# Possibly (0x80 set)
 
-main.1: 	movb _SETDRV(%bp),%dl		# Drive number to use
+main.1:		movb _SETDRV(%bp),%dl		# Drive number to use
 
 		/*
 		 * Whatever we decided to use, now store it into the fake
 		 * partition entry that lives in the data space above us.
 		 */
-main.2: 	movb %dl,_FAKE(%bp)		# Save drive number
+main.2:		movb %dl,_FAKE(%bp)		# Save drive number
 		callw putn			# To new line
 		pushw %dx			# Save drive number
 
@@ -186,7 +186,7 @@ main.2: 	movb %dl,_FAKE(%bp)		# Save drive number
 		 * end of loop test is at
 		 * main.5.
 		 */
-main.3: 	movb %ch,-0x4(%bx)		# Zero active flag (ch == 0)
+main.3:		movb %ch,-0x4(%bx)		# Zero active flag (ch == 0)
 		btw %dx,_FLAGS(%bp)		# Entry enabled?
 		jnc main.5			# No
 
@@ -216,17 +216,17 @@ main.3: 	movb %ch,-0x4(%bx)		# Zero active flag (ch == 0)
 		 * pointing at its first element which points to a "?".
 		 */
 		addw $TBL1SZ,%di		# Adjust
-main.4: 	movb (%di),%cl			# Partition
+main.4:		movb (%di),%cl			# Partition
 		addw %cx,%di			#  description
 		callw putx			# Display it
-main.5: 	incw %dx			# Next item 
+main.5:		incw %dx			# Next item
 		addb $0x10,%bl			# Next entry
 		jnc main.3			# Till done
 
 		/*
 		 * Passed a 256 byte boundary..
 		 * table is finished.
-		 * Add one to the drive number and check it is valid, 
+		 * Add one to the drive number and check it is valid,
 		 */
 		popw %ax			# Drive number
 		subb $0x80-0x1,%al		# Does next
@@ -253,17 +253,17 @@ main.5: 	incw %dx			# Next item
 		 * is part of the printed drive string so add 0x80 to indicate
 		 * end of string.
 		 */
-main.6: 	addb $'0'|0x80,%al		# Save next
+main.6:		addb $'0'|0x80,%al		# Save next
 		movb %al,_NXTDRV(%bp)		#  drive number
 		movw $drive,%di			# Display
 		callw putx			#  item
 
 		/*
-		 * Now that we've printed the drive (if we needed to), 
+		 * Now that we've printed the drive (if we needed to),
 		 * display a prompt.  Get ready for the input by noting the
 		 * time.
 		 */
-main.7: 	movw $prompt,%si		# Display
+main.7:		movw $prompt,%si		# Display
 		callw putstr			#  prompt
 		movb _OPT(%bp),%dl		# Display
 		decw %si			#  default
@@ -271,9 +271,9 @@ main.7: 	movw $prompt,%si		# Display
 		xorb %ah,%ah			# BIOS: Get
 		int $0x1a			#  system time
 		movw %dx,%di			# Ticks when
-		addw _TICKS(%bp),%di	 	#  timeout
+		addw _TICKS(%bp),%di		#  timeout
 
-		/* 
+		/*
 		 * Busy loop, looking for keystrokes but
 		 * keeping one eye on the time.
 		 */
@@ -296,7 +296,7 @@ main.8:
 		/*
 		 * If timed out or defaulting, come here.
 		 */
-main.9: 	movb _OPT(%bp),%al		# Load default
+main.9:		movb _OPT(%bp),%al		# Load default
 		jmp main.12			# Join common code
 
 		/*
@@ -354,7 +354,7 @@ main.11:
 		 * were printed.  Anything not printed is not an option.
 		 */
 main.12:	cbtw				# Option
-		btw %ax,_MNUOPT(%bp)	 	#  enabled?
+		btw %ax,_MNUOPT(%bp)		#  enabled?
 		jnc main.10			# No
 
 		/*
@@ -370,7 +370,7 @@ main.12:	cbtw				# Option
 		je main.13			# Yes
 		shlb $0x4,%al			# Point to
 		addw $partbl,%ax		#  selected
-		xchgw %bx,%ax	 		#  partition
+		xchgw %bx,%ax			#  partition
 		movb $0x80,(%bx)		# Flag active
 
 		/*
@@ -393,7 +393,7 @@ main.14:	popw %si			# Restore partition
 		movb _NXTDRV(%bp),%dl		# Next drive
 		subb $'0',%dl			#  number
 
-		/* 
+		/*
 		 * load  selected bootsector to the MEM_BIOS_LADDR location
 		 * in RAM.  If it fails to read or isn't marked bootable,
 		 * treat it as a bad selection.
@@ -414,7 +414,7 @@ main.15:	movw $MEM_BIOS_LADDR,%bx	# Address for read
 		/*
 		 * Display routines
 		 */
-putkey: 	
+putkey:
 #ifndef SIO
 		movb $'F',%al			# Display
 		callw putchr			#  'F'
@@ -436,23 +436,23 @@ puts:		callw putstr			# Display string
 
 putn:		movw $crlf,%si			# To next line
 
-putstr: 	lodsb				# Get byte
-		testb $0x80,%al 		# End of string?
+putstr:		lodsb				# Get byte
+		testb $0x80,%al			# End of string?
 		jnz putstr.2			# Yes
 putstr.1:	callw putchr			# Display char
 		jmp putstr			# Continue
-putstr.2:	andb $~0x80,%al 		# Clear MSB
+putstr.2:	andb $~0x80,%al			# Clear MSB
 
 #ifndef SIO
-putchr: 	
-		pusha 				# Save
-		movw $0x7,%bx	 		# Page:attribute
+putchr:
+		pusha				# Save
+		movw $0x7,%bx			# Page:attribute
 		movb $0xe,%ah			# BIOS: Display
 		int $0x10			#  character
-		popa 				# Restore
+		popa				# Restore
 		retw				# To caller
 #else /* SIO */
-putchr: 	
+putchr:
 		movb $0x01,%ah			# BIOS: Send
 bioscom:
 		pusha				# Save drive number
@@ -461,21 +461,21 @@ bioscom:
 		popa				# Restore drive number
 		retw				# To caller
 #endif
-		
+
 
 		/*
 		 * One-sector disk I/O routine
 		 *
-		 * Setup for both the packet and non-packet interfaces 
+		 * Setup for both the packet and non-packet interfaces
 		 * then select one or the other.
 		 *
-		 * Don't trust the BIOS to keep registers intact across 
+		 * Don't trust the BIOS to keep registers intact across
 		 * the call, use pusha/popa.
 		 */
-intx13: 	movb 0x1(%si),%dh		# (nonpkt) head
+intx13:		movb 0x1(%si),%dh		# (nonpkt) head
 		movw 0x2(%si),%cx		# (nonpkt) cylinder:sector
 		movb $0x1,%al			# (nonpkt) Sector count
-		pusha 				# save: do not trust the bios
+		pusha				# save: do not trust the bios
 		pushl $0x0			# (pkt) LBA address
 		pushl 0x8(%si)			# (pkt)
 		pushw %es			# (pkt) xfer buffer address
@@ -491,7 +491,7 @@ intx13.1:	int $0x13			# BIOS: Disk I/O
 		# WARNING: RETAIN CARRY AFTER BIOS CALL
 		movw %sp,%si
 		lea 16(%si),%sp			# cleanup the stack
-		popa 				# Restore registers
+		popa				# Restore registers
 		retw
 
 		/*
@@ -499,7 +499,7 @@ intx13.1:	int $0x13			# BIOS: Disk I/O
 		 */
 
 item:		.ascii "  ";	     .byte ' '|0x80
-prompt: 	.ascii "\nDefault:"; .byte ' '|0x80
+prompt:		.ascii "\nDefault:"; .byte ' '|0x80
 crlf:		.ascii "\r";	     .byte '\n'|0x80
 
 		/*
@@ -523,7 +523,7 @@ tables:
 		 * These are offsets that match the known names above and
 		 * point to the strings that will be printed.
 		 */
-		.byte os_misc-. 		# Unknown
+		.byte os_misc-.			# Unknown
 		.byte os_dos-.			# DOS
 		.byte os_dos-.			# DOS
 		.byte os_dos-.			# Windows
@@ -542,30 +542,30 @@ tables:
 		 * Russians but...)
 		 */
 os_misc:	.ascii "?";    .byte '?'|0x80
-os_dos: 	.ascii "DO";   .byte 'S'|0x80
+os_dos:		.ascii "DO";   .byte 'S'|0x80
 os_linux:	.ascii "Linu"; .byte 'x'|0x80
 os_dfbsd:	.ascii "DF/F"
-os_bsd: 	.ascii "BS";   .byte 'D'|0x80
+os_bsd:		.ascii "BS";   .byte 'D'|0x80
 
 		.org _DATA_OFF,0x90
 
 		.word B0MAGIC			# Magic number
 
 		/*
-		 * These values are sometimes changed before writing back 
+		 * These values are sometimes changed before writing back
 		 * to the drive.  Be especially careful that nxtdrv: must
 		 * come after drive:, as it is part of the same string.
 		 */
 drive:		.ascii "Drive "
-nxtdrv: 	.byte 0x0			# Next drive number
+nxtdrv:		.byte 0x0			# Next drive number
 opt:		.byte 0x0			# Option
-setdrv: 	.byte 0x80			# Drive to force
+setdrv:		.byte 0x80			# Drive to force
 flags:		.byte FLAGS			# Flags
 ticks:		.word TICKS			# Delay
 
 		/*
-		 * here is the 64 byte partition table that fdisk would 
+		 * here is the 64 byte partition table that fdisk would
 		 * fiddle with.
 		 */
-partbl: 	.fill 0x40,0x1,0x0		# Partition table
+partbl:		.fill 0x40,0x1,0x0		# Partition table
 		.word MAGIC			# Magic number

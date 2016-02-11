@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2003,2004 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Matthew Dillon <dillon@backplane.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -17,7 +17,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -30,7 +30,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
  *
@@ -82,12 +82,12 @@
 #define RBX_ASKNAME	0x0	/* -a */
 #define RBX_SINGLE	0x1	/* -s */
 #define RBX_DFLTROOT	0x5	/* -r */
-#define RBX_KDB 	0x6	/* -d */
+#define RBX_KDB		0x6	/* -d */
 #define RBX_CONFIG	0xa	/* -c */
 #define RBX_VERBOSE	0xb	/* -v */
 #define RBX_SERIAL	0xc	/* -h */
 #define RBX_CDROM	0xd	/* -C */
-#define RBX_GDB 	0xf	/* -g */
+#define RBX_GDB		0xf	/* -g */
 #define RBX_MUTE	0x10	/* -m */
 #define RBX_PAUSE	0x12	/* -p */
 #define RBX_NOINTR	0x1c	/* -n */
@@ -112,7 +112,7 @@
 #define NOPT		12
 #define NDEV		3
 #define MEM_BASE	0x12
-#define MEM_EXT 	0x15
+#define MEM_EXT		0x15
 #define V86_CY(x)	((x) & PSL_C)
 #define V86_ZR(x)	((x) & PSL_Z)
 

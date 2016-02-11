@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/boot/common/misc.c,v 1.8 2003/08/25 23:30:41 obrien Exp $
- * $DragonFly: src/sys/boot/common/misc.c,v 1.3 2003/11/10 06:08:31 dillon Exp $
  */
 
 #include <string.h>
@@ -55,7 +54,7 @@ unargv(int argc, char *argv[])
 	if (i < (argc - 1))
 	  strcat(cp, " ");
     }
-	  
+
     return(cp);
 }
 
@@ -67,7 +66,7 @@ strlenout(vm_offset_t src)
 {
     char	c;
     size_t	len;
-    
+
     for (len = 0; ; len++) {
 	archsw.arch_copyout(src++, &c, 1);
 	if (c == 0)
@@ -83,7 +82,7 @@ char *
 strdupout(vm_offset_t str)
 {
     char	*result, *cp;
-    
+
     result = malloc(strlenout(str) + 1);
     for (cp = result; ;cp++) {
 	archsw.arch_copyout(str++, cp, 1);
@@ -175,7 +174,7 @@ hexdump(caddr_t region, size_t len)
     pager_open();
     for (line = region; line < (region + len); line += 16) {
 	emit("%08lx  ", (long) line);
-	
+
 	for (x = 0; x < 16; x++) {
 	    if ((line + x) < (region + len)) {
 		emit("%02x ", *(u_int8_t *)(line + x));
