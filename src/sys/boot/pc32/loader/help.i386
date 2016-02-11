@@ -67,3 +67,10 @@
 	See also vfs.root.mountfrom variable, under `set tunables' help item.
 
 ################################################################################
+# Tsmap DDisplay BIOS SMAP table
+
+	smap
+
+	Displays the BIOS SMAP (system memory map) table.
+
+################################################################################
