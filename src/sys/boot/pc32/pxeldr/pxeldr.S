@@ -27,6 +27,7 @@
  * the loader.
  */
 #include "../bootasm.h"
+#include <sys/reboot.h>
 
 		/*
 		 * a.out header fields
@@ -43,10 +44,6 @@
 		 */
 		.set KARGS_FLAGS_PXE,0x2	# flag to indicate booting from
 						#  PXE loader
-		/*
-		 * Boot howto bits
-		 */
-		.set RB_SERIAL,0x1000		# serial console
 
 		/*
 		 * Segment selectors.
