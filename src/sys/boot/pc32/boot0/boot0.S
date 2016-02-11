@@ -60,7 +60,7 @@
 		.set PRT_OFF,0x1be		# Partition table
 
 		.set TBL0SZ,0x3			# Table 0 size
-		.set TBL1SZ,0xb			# Table 1 size
+		.set TBL1SZ,0xa			# Table 1 size
 
 		.set MAGIC,0xaa55		# Magic: bootable
 		.set B0MAGIC,0xbb66		# Identification
@@ -150,15 +150,20 @@ main:
 		callw bioscom
 #endif
 		/*
-		 * Check what flags were loaded with us, specifically, Use a
-		 * predefined Drive.  If what the bios gives us is bad, use
-		 * the '0' in the block instead, as well.
+		 * Check what flags were loaded with us, specifically if a
+		 * predefined drive number should be used.  If what the bios gives us is bad, use
+		 * the '0' in the block instead.
 		 */
-		testb $0x20,_FLAGS(%bp)		# Set number drive?
+		testb $0x20,_FLAGS(%bp)		# Set drive number?
 		jnz main.1			# Yes
 		testb %dl,%dl			# Drive number valid?
 		js main.2			# Possibly (0x80 set)
 
+		/*
+		 * Only update the boot-sector when there is a valid drive
+		 * number or the drive number is set manually.
+		 */
+		orb $0x40,_FLAGS(%bp)		# Disable updates
 main.1:		movb _SETDRV(%bp),%dl		# Drive number to use
 
 		/*
@@ -172,10 +177,10 @@ main.2:		movb %dl,_FAKE(%bp)		# Save drive number
 		/*
 		 * Start out with a pointer to the 4th byte of the first
 		 * table entry so that after 4 iterations it's beyond the
-		 * end of the sector.  and beyond a 256 byte boundary and
-		 * has overflowed 8 bits (see next comment).  (remember
+		 * end of the sector and beyond a 256 byte boundary and
+		 * has overflowed 8 bits (see next comment). Remember
 		 * that the table starts 2 bytes earlier than you would
-		 * expect as the bootable flag is after it in the block)
+		 * expect as the bootable flag is after it in the block.
 		 */
 		movw $(partbl+0x4),%bx		# Partition table (+4 - type)
 		xorw %dx,%dx			# Partition entry item number
@@ -205,18 +210,15 @@ main.3:		movb %ch,-0x4(%bx)		# Zero active flag (ch == 0)
 		/*
 		 * Now scan the table of known types
 		 */
-		movb $TBL1SZ,%cl		# Number of entries
-		repne				# Known
-		scasb				#  type?
-		jne main.4			# No
+		movb $TBL1SZ+1,%cl		# Number of entries
+		repne				# Locate
+		scasb				#  type
 
 		/*
-		 * If it matches get the matching element in the
-		 * next array. if it doesn't, we are already
-		 * pointing at its first element which points to a "?".
+		 * Get the matching element in the next array.
 		 */
-		addw $TBL1SZ,%di		# Adjust
-main.4:		movb (%di),%cl			# Partition
+		addw $TBL1SZ-1, %di		# Adjust
+		movb (%di),%cl			# Partition
 		addw %cx,%di			#  description
 		callw putx			# Display it
 main.5:		incw %dx			# Next item
@@ -224,9 +226,8 @@ main.5:		incw %dx			# Next item
 		jnc main.3			# Till done
 
 		/*
-		 * Passed a 256 byte boundary..
-		 * table is finished.
-		 * Add one to the drive number and check it is valid,
+		 * Passed a 256 byte boundary; the table is finished.
+		 * Add one to the drive number and check it is valid.
 		 */
 		popw %ax			# Drive number
 		subb $0x80-0x1,%al		# Does next
@@ -234,24 +235,23 @@ main.5:		incw %dx			# Next item
 		jb main.6			# Yes
 
 		/*
-		 * If not then if there is only one drive,
-		 * Don't display drive as an option.
+		 * If this is the only drive, don't display it as an option.
 		 */
 		decw %ax			# Already drive 0?
 		jz main.7			# Yes
 
 		/*
 		 * If it was illegal or we cycled through them,
-		 * then go back to drive 0.
+		 * go back to drive 0.
 		 */
 		xorb %al,%al			# Drive 0
 
 		/*
 		 * Whatever drive we selected, make it an ascii digit and
 		 * save it back to the "next drive" location in the loaded
-		 * block in case we want to save it for next time.  This also
-		 * is part of the printed drive string so add 0x80 to indicate
-		 * end of string.
+		 * block in case we want to save it later for next time.
+		 * This also is part of the printed drive string so add 0x80
+		 * to indicate end of string.
 		 */
 main.6:		addb $'0'|0x80,%al		# Save next
 		movb %al,_NXTDRV(%bp)		#  drive number
@@ -334,8 +334,7 @@ main.11:
 		je main.9			# Yes
 
 		/*
-		 * Otherwise check if legal
-		 * If not ask again.
+		 * Otherwise check if legal. If not ask again.
 		 */
 #ifndef SIO
 		subb $KEY_F1,%al		# Less F1 scan code
@@ -349,7 +348,7 @@ main.11:
 		ja main.10			# No
 
 		/*
-		 * We have a selection.  But if it's a bad selection go back
+		 * We have a selection.  If it's a bad selection go back
 		 * to complain.  The bits in MNUOPT were set when the options
 		 * were printed.  Anything not printed is not an option.
 		 */
@@ -365,7 +364,7 @@ main.12:	cbtw				# Option
 		lea _FAKE(%bp),%si		# Partition for write
 		movb (%si),%dl			# Drive number
 		movw %si,%bx			# Partition for read
-		cmpb $0x4,%al			# F5 pressed?
+		cmpb $0x4,%al			# F5/#5 pressed?
 		pushf				# Save
 		je main.13			# Yes
 		shlb $0x4,%al			# Point to
@@ -389,15 +388,14 @@ main.14:	popw %si			# Restore partition
 		 * If going to next drive, replace drive with selected one.
 		 * Remember to un-ascii it. Hey 0x80 is already set, cool!
 		 */
-		jne main.15			# If not F5
+		jne main.15			# If not F5/#5
 		movb _NXTDRV(%bp),%dl		# Next drive
 		subb $'0',%dl			#  number
 
 		/*
-		 * load  selected bootsector to the MEM_BIOS_LADDR location
+		 * Load selected bootsector to the MEM_BIOS_LADDR location
 		 * in RAM.  If it fails to read or isn't marked bootable,
 		 * treat it as a bad selection.
-		 * XXX what does %si carry?
 		 */
 main.15:	movw $MEM_BIOS_LADDR,%bx	# Address for read
 		movb $0x2,%ah			# Read sector
@@ -405,10 +403,8 @@ main.15:	movw $MEM_BIOS_LADDR,%bx	# Address for read
 		jc main.10			# If error
 		cmpw $MAGIC,0x1fe(%bx)		# Bootable?
 		jne main.10			# No
-		pushw %si			# Save
 		movw $crlf,%si			# Leave some
 		callw puts			#  space
-		popw %si			# Restore
 		jmp *%bx			# Invoke bootstrap
 
 		/*
@@ -517,13 +513,13 @@ tables:
 		 * These values indicate bootable types we know the names of.
 		 */
 		.byte 0x1, 0x6, 0x7, 0xb, 0xc, 0xe, 0x83
-		.byte 0x9f, 0xa5, 0xa6, 0xa9
+		.byte 0xa5, 0xa6, 0xa9
 
 		/*
 		 * These are offsets that match the known names above and
-		 * point to the strings that will be printed.
+		 * point to the strings that will be printed. os_misc will
+		 * be used if the search of the above table runs over.
 		 */
-		.byte os_misc-.			# Unknown
 		.byte os_dos-.			# DOS
 		.byte os_dos-.			# DOS
 		.byte os_dos-.			# Windows
@@ -531,10 +527,10 @@ tables:
 		.byte os_dos-.			# Windows
 		.byte os_dos-.			# Windows
 		.byte os_linux-.		# Linux
-		.byte os_bsd-.			# BSD/OS
 		.byte os_dfbsd-.		# DragonFly/FreeBSD
 		.byte os_bsd-.			# OpenBSD
 		.byte os_bsd-.			# NetBSD
+		.byte os_misc-.			# Unknown
 
 		/*
 		 * And here are the strings themselves. 0x80 or'd into a
