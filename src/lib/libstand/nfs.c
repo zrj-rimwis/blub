@@ -4,7 +4,7 @@
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -15,7 +15,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -174,7 +174,7 @@ nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
 		struct repl d;
 	} rdata;
 	size_t cc;
-	
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_getrootfh: %s\n", path);
@@ -243,7 +243,7 @@ nfs_lookupfh(struct nfs_iodesc *d, const char *name, struct nfs_iodesc *newfd)
 		struct repl d;
 	} rdata;
 	ssize_t cc;
-	
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("lookupfh: called\n");
@@ -310,7 +310,7 @@ nfs_readlink(struct nfs_iodesc *d, char *buf)
 
 	if (cc < 4)
 		return (EIO);
-	
+
 	if (rdata.d.errno)
 		return (ntohl(rdata.d.errno));
 
@@ -404,8 +404,8 @@ nfs_open(const char *upath, struct open_file *f)
 	char *path;
 
 #ifdef NFS_DEBUG
- 	if (debug)
- 	    printf("nfs_open: %s (rootpath=%s)\n", path, rootpath);
+	if (debug)
+	    printf("nfs_open: %s (rootpath=%s)\n", path, rootpath);
 #endif
 	if (!rootpath[0]) {
 		printf("no rootpath, no nfs\n");
@@ -453,18 +453,18 @@ nfs_open(const char *upath, struct open_file *f)
 			error = ENOTDIR;
 			goto out;
 		}
-		
+
 		/* allocate file system specific data structure */
 		newfd = malloc(sizeof(*newfd));
 		newfd->iodesc = currfd->iodesc;
 		newfd->off = 0;
-	
+
 		/*
 		 * Get next component of path name.
 		 */
 		{
 			int len = 0;
-			
+
 			ncp = cp;
 			while ((c = *cp) != '\0' && c != '/') {
 				if (++len > NFS_MAXNAMLEN) {
@@ -475,19 +475,19 @@ nfs_open(const char *upath, struct open_file *f)
 			}
 			*cp = '\0';
 		}
-		
+
 		/* lookup a file handle */
 		error = nfs_lookupfh(currfd, ncp, newfd);
 		*cp = c;
 		if (error)
 			goto out;
-		
+
 		/*
 		 * Check for symbolic link
 		 */
 		if (newfd->fa.fa_type == htonl(NFLNK)) {
 			int link_len, len;
-			
+
 			error = nfs_readlink(newfd, linkbuf);
 			if (error)
 				goto out;
@@ -503,7 +503,7 @@ nfs_open(const char *upath, struct open_file *f)
 
 			bcopy(cp, &namebuf[link_len], len + 1);
 			bcopy(linkbuf, namebuf, link_len);
-			
+
 			/*
 			 * If absolute pathname, restart at root.
 			 * If relative pathname, restart at parent directory.
@@ -517,10 +517,10 @@ nfs_open(const char *upath, struct open_file *f)
 
 			free(newfd);
 			newfd = NULL;
-			
+
 			continue;
 		}
-		
+
 		if (currfd != &nfs_root_node)
 			free(currfd);
 		currfd = newfd;
@@ -546,7 +546,7 @@ out:
 		f->f_fsdata = (void *)currfd;
 		return (0);
 	}
-		
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_open: %s lookupfh failed: %s\n",
@@ -573,7 +573,7 @@ nfs_close(struct open_file *f)
 	f->f_fsdata = NULL;
 	if (fp && fp != &nfs_root_node)
 		free(fp);
-	
+
 	return (0);
 }
 
@@ -589,7 +589,7 @@ nfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 	ssize_t cc;
 	char *addr = buf;
-	
+
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_read: size=%lu off=%d\n", (u_long)size,
@@ -693,7 +693,7 @@ nfs_readdir(struct open_file *f, struct dirent *d)
 	static n_long cookie = 0;
 	size_t cc;
 	n_long eof;
-	
+
 	struct {
 		n_long h[RPC_HEADER_WORDS];
 		struct nfs_readdir_args d;
@@ -711,7 +711,7 @@ nfs_readdir(struct open_file *f, struct dirent *d)
 		bcopy(fp->fh, args->fh, NFS_FHSIZE);
 		args->cookie = htonl(cookie);
 		args->count  = htonl(NFS_READDIRSIZE);
-		
+
 		cc = rpc_call(fp->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READDIR,
 			      args, sizeof(*args),
 			      rdata.d, sizeof(rdata.d));

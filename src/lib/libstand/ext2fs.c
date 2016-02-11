@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  *	$FreeBSD: src/lib/libstand/ext2fs.c,v 1.1.2.2 2001/03/05 06:26:07 kris Exp $
- *	$DragonFly: src/lib/libstand/ext2fs.c,v 1.2 2003/06/17 04:26:51 dillon Exp $
  */
 /*-
  * Copyright (c) 1993
@@ -56,30 +55,30 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *  
+ *
  *
  * Copyright (c) 1990, 1991 Carnegie Mellon University
  * All Rights Reserved.
  *
  * Author: David Golub
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -198,11 +197,11 @@ struct ext2fs_disk {
 	u_int32_t	fd_fincompat;	/* incompatible features */
 	u_int32_t	fd_frocompat;	/* read-only compatibilties */
 	u_int8_t	fd_uuid[16];	/* volume uuid */
-	char 		fd_volname[16];	/* volume name */
-	char 		fd_fsmnt[64];	/* name last mounted on */
+	char		fd_volname[16];	/* volume name */
+	char		fd_fsmnt[64];	/* name last mounted on */
 	u_int32_t	fd_bitmap;	/* compression bitmap */
 
-	u_int8_t	fd_nblkpa;	/* # of blocks to preallocate */	
+	u_int8_t	fd_nblkpa;	/* # of blocks to preallocate */
 	u_int8_t	fd_ndblkpa;	/* # of dir blocks to preallocate */
 };
 
@@ -231,7 +230,7 @@ struct ext2fs {
 #define fs_firstblk	fs_fd.fd_firstblk
 #define fs_bpg		fs_fd.fd_bpg
 #define fs_ipg		fs_fd.fd_ipg
-	    
+
 #define fs_bsize	fs_fc.fc_bsize
 #define fs_bshift	fs_fc.fc_bshift
 #define fs_bmask	fs_fc.fc_bmask
@@ -297,9 +296,9 @@ struct ext2dirent {
 
 struct file {
 	off_t		f_seekp;		/* seek pointer */
-	struct 		ext2fs *f_fs;		/* pointer to super-block */
-	struct 		ext2blkgrp *f_bg;	/* pointer to blkgrp map */
-	struct 		ext2dinode f_di;	/* copy of on-disk inode */
+	struct		ext2fs *f_fs;		/* pointer to super-block */
+	struct		ext2blkgrp *f_bg;	/* pointer to blkgrp map */
+	struct		ext2dinode f_di;	/* copy of on-disk inode */
 	int		f_nindir[NIADDR];	/* number of blocks mapped by
 						   indirect block at level i */
 	char		*f_blk[NIADDR];		/* buffer for indirect block
@@ -313,7 +312,7 @@ struct file {
 };
 
 /* forward decls */
-static int 	read_inode(ino_t inumber, struct open_file *f);
+static int	read_inode(ino_t inumber, struct open_file *f);
 static int	block_map(struct open_file *f, daddr_t file_block,
 		    daddr_t *disk_block_p);
 static int	buf_read_file(struct open_file *f, char **buf_p,
@@ -501,7 +500,7 @@ ext2fs_open(const char *upath, struct open_file *f)
 				error = block_map(f, (daddr_t)0, &disk_block);
 				if (error)
 					goto out;
-				
+
 				twiddle();
 				error = (f->f_dev->dv_strategy)(f->f_devdata,
 				    F_READ, fsb_to_db(fs, disk_block),
@@ -583,7 +582,7 @@ read_inode(ino_t inumber, struct open_file *f)
 
 out:
 	free(buf);
-	return (error);	 
+	return (error);
 }
 
 /*

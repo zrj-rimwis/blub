@@ -34,7 +34,6 @@
  *
  * @(#) Header: in_cksum.c,v 1.1 92/09/11 01:15:55 leres Exp  (LBL)
  * $FreeBSD: src/lib/libstand/in_cksum.c,v 1.1.1.1.6.1 2002/07/22 09:28:50 peter Exp $
- * $DragonFly: src/lib/libstand/in_cksum.c,v 1.3 2005/12/11 02:27:26 swildner Exp $
  */
 
 #include <sys/types.h>

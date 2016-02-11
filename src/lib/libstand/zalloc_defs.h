@@ -1,5 +1,5 @@
 /*
- * This module derived from code donated to the FreeBSD Project by 
+ * This module derived from code donated to the FreeBSD Project by
  * Matthew Dillon <dillon@backplane.com>
  *
  * Copyright (c) 1998 The FreeBSD Project
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/zalloc_defs.h,v 1.6 1999/08/28 00:05:35 peter Exp $
- * $DragonFly: src/lib/libstand/zalloc_defs.h,v 1.4 2008/06/05 18:01:49 swildner Exp $
  */
 
 /*
@@ -70,4 +69,3 @@ typedef struct Guard {
 #define GAMAGIC		0x55FF44FD
 
 #include "zalloc_protos.h"
-

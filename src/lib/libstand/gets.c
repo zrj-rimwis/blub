@@ -1,5 +1,4 @@
 /*	$NetBSD: gets.c,v 1.6 1995/10/11 21:16:57 pk Exp $	*/
-/* $DragonFly: src/lib/libstand/gets.c,v 1.2 2004/10/25 19:38:45 drhodus Exp $							*/
 
 /*-
  * Copyright (c) 1993

@@ -31,7 +31,6 @@
  *	@(#)if_ether.h	8.1 (Berkeley) 6/10/93
  *
  * $FreeBSD: src/lib/libstand/if_ether.h,v 1.1.1.1.6.1 2000/09/20 09:49:17 jkh Exp $
- * $DragonFly: src/lib/libstand/if_ether.h,v 1.2 2003/06/17 04:26:51 dillon Exp $
  */
 
 /*
@@ -94,7 +93,7 @@ struct	ether_header {
  * Ethernet Address Resolution Protocol.
  *
  * See RFC 826 for protocol description.  Structure below is adapted
- * to resolving internet addresses.  Field names used correspond to 
+ * to resolving internet addresses.  Field names used correspond to
  * RFC 826.
  */
 struct	ether_arp {

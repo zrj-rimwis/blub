@@ -1,5 +1,4 @@
 /*	$NetBSD: rarp.c,v 1.16 1997/07/07 15:52:52 drochner Exp $	*/
-/* $DragonFly: src/lib/libstand/rarp.c,v 1.3 2005/12/11 02:27:26 swildner Exp $							*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -65,19 +64,19 @@ rarp_getipaddress(int sock)
 		u_char header[ETHER_SIZE];
 		struct {
 			struct ether_arp arp;
-			u_char pad[18]; 	/* 60 - sizeof(arp) */
+			u_char pad[18];		/* 60 - sizeof(arp) */
 		} data;
 	} wbuf;
 	struct {
 		u_char header[ETHER_SIZE];
 		struct {
 			struct ether_arp arp;
-			u_char pad[24]; 	/* extra space */
+			u_char pad[24];		/* extra space */
 		} data;
 	} rbuf;
 
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarp: socket=%d\n", sock);
 #endif
 	if (!(d = socktodesc(sock))) {
@@ -85,7 +84,7 @@ rarp_getipaddress(int sock)
 		return (-1);
 	}
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarp: d=%x\n", (u_int)d);
 #endif
 
@@ -134,7 +133,7 @@ rarpsend(struct iodesc *d, void *pkt, size_t len)
 {
 
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarpsend: called\n");
 #endif
 
@@ -153,7 +152,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 	u_int16_t etype;	/* host order */
 
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("rarprecv: ");
 #endif
 
@@ -207,7 +206,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 
 	/* We have our answer. */
 #ifdef RARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("got it\n");
 #endif
 	return (n);

@@ -106,7 +106,7 @@ void
 vsprintf(char *buf, const char *cfmt, va_list ap)
 {
 	int	retval;
-	
+
 	retval = kvprintf(cfmt, NULL, buf, 10, ap);
 	buf[retval] = '\0';
 }

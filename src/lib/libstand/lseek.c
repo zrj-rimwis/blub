@@ -1,5 +1,4 @@
 /* $FreeBSD: src/lib/libstand/lseek.c,v 1.1.1.1.6.2 2001/08/30 03:14:16 jdp Exp $ */
-/* $DragonFly: src/lib/libstand/lseek.c,v 1.2 2003/06/17 04:26:51 dillon Exp $ */
 /*	$NetBSD: lseek.c,v 1.4 1997/01/22 00:38:10 cgd Exp $	*/
 
 /*-
@@ -34,30 +33,30 @@
  * SUCH DAMAGE.
  *
  *	@(#)lseek.c	8.1 (Berkeley) 6/11/93
- *  
+ *
  *
  * Copyright (c) 1989, 1990, 1991 Carnegie Mellon University
  * All Rights Reserved.
  *
  * Author: Alessandro Forin
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -132,7 +131,7 @@ lseek(int fd, off_t offset, int where)
     if (where == SEEK_CUR)
 	offset -= f->f_ralen;
 
-    /* 
+    /*
      * Invalidate the readahead buffer.
      */
     f->f_ralen = 0;

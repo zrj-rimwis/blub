@@ -34,7 +34,6 @@
  *
  * @(#) Header: net.c,v 1.9 93/08/06 19:32:15 leres Exp  (LBL)
  * $FreeBSD: src/lib/libstand/udp.c,v 1.1.2.1 2000/04/15 03:09:29 ps Exp $
- * $DragonFly: src/lib/libstand/udp.c,v 1.4 2005/12/11 02:27:26 swildner Exp $
  */
 
 #include <sys/param.h>
@@ -65,7 +64,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
 	u_char *ea;
 
 #ifdef NET_DEBUG
- 	if (debug) {
+	if (debug) {
 		printf("sendudp: d=%lx called.\n", (long)d);
 		if (d) {
 			printf("saddr: %s:%d",

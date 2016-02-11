@@ -31,7 +31,7 @@
 
 #include "stand.h"
 
-static struct 
+static struct
 {
     int		err;
     char	*msg;

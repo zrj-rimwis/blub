@@ -1,4 +1,4 @@
-/* 
+/*-
  * Copyright (c) 1998 Michael Smith.
  * Copyright (c) 2000 Maxim Sobolev
  * All rights reserved.
@@ -25,8 +25,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/bzipfs.c,v 1.2.2.3 2002/04/08 13:50:09 sobomax Exp $
- * $DragonFly: src/lib/libstand/bzipfs.c,v 1.4 2007/05/13 18:33:56 swildner Exp $
- *
  */
 
 #include "stand.h"
@@ -53,8 +51,8 @@ static int	bzf_stat(struct open_file *f, struct stat *sb);
 
 struct fs_ops bzipfs_fsops = {
     "bzip",
-    bzf_open, 
-    bzf_close, 
+    bzf_open,
+    bzf_close,
     bzf_read,
     null_write,
     bzf_seek,
@@ -75,16 +73,16 @@ bzf_fill(struct bz_file *bzf)
 {
     int		result;
     int		req;
-    
+
     req = BZ_BUFSIZE - bzf->bzf_bzstream.avail_in;
     result = 0;
-    
+
     /* If we need more */
     if (req > 0) {
 	/* move old data to bottom of buffer */
 	if (req < BZ_BUFSIZE)
 	    bcopy(bzf->bzf_buf + req, bzf->bzf_buf, BZ_BUFSIZE - req);
-	
+
 	/* read to fill buffer and update availibility data */
 	result = read(bzf->bzf_rawfd, bzf->bzf_buf + bzf->bzf_bzstream.avail_in, req);
 	bzf->bzf_bzstream.next_in = bzf->bzf_buf;
@@ -134,7 +132,7 @@ check_header(struct bz_file *bzf)
 
     return(0);
 }
-	
+
 static int
 bzf_open(const char *fname, struct open_file *f)
 {
@@ -205,7 +203,7 @@ static int
 bzf_close(struct open_file *f)
 {
     struct bz_file	*bzf = (struct bz_file *)f->f_fsdata;
-    
+
     f->f_fsdata = NULL;
     if (bzf) {
 	BZ2_bzDecompressEnd(&(bzf->bzf_bzstream));
@@ -214,8 +212,8 @@ bzf_close(struct open_file *f)
     }
     return(0);
 }
- 
-static int 
+
+static int
 bzf_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
     struct bz_file	*bzf = (struct bz_file *)f->f_fsdata;
@@ -255,7 +253,7 @@ bzf_seek(struct open_file *f, off_t offset, int where)
     struct bz_file	*bzf = (struct bz_file *)f->f_fsdata;
     off_t		target;
     char		discard[16];
-    
+
     switch (where) {
     case SEEK_SET:
 	target = offset;
@@ -271,7 +269,7 @@ bzf_seek(struct open_file *f, off_t offset, int where)
     if (target < bzf->bzf_bzstream.total_out_lo32) {
 	errno = EOFFSET;
 	return -1;
-    } 
+    }
 
     /* skip forwards if required */
     while (target > bzf->bzf_bzstream.total_out_lo32) {

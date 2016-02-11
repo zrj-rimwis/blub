@@ -1,5 +1,5 @@
 /*
- * This module derived from code donated to the FreeBSD Project by 
+ * This module derived from code donated to the FreeBSD Project by
  * Matthew Dillon <dillon@backplane.com>
  *
  * Copyright (c) 1998 The FreeBSD Project
@@ -27,14 +27,13 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/zalloc.c,v 1.5.2.1 2002/12/28 18:04:15 dillon Exp $
- * $DragonFly: src/lib/libstand/zalloc.c,v 1.2 2003/06/17 04:26:51 dillon Exp $
  */
 
 /*
- * LIB/MEMORY/ZALLOC.C	- self contained low-overhead memory pool/allocation 
+ * LIB/MEMORY/ZALLOC.C	- self contained low-overhead memory pool/allocation
  *			  subsystem
  *
- *	This subsystem implements memory pools and memory allocation 
+ *	This subsystem implements memory pools and memory allocation
  *	routines.
  *
  *	Pools are managed via a linked list of 'free' areas.  Allocating
@@ -43,7 +42,7 @@
  *	to allocate the entire pool without incuring any structural overhead.
  *
  *	The system works best when allocating similarly-sized chunks of
- *	memory.  Care must be taken to avoid fragmentation when 
+ *	memory.  Care must be taken to avoid fragmentation when
  *	allocating/deallocating dissimilar chunks.
  *
  *	When a memory pool is first allocated, the entire pool is marked as
@@ -53,7 +52,7 @@
  *	available.
  *
  *	z[n]xalloc() works like z[n]alloc() but the allocation is made from
- *	within the specified address range.  If the segment could not be 
+ *	within the specified address range.  If the segment could not be
  *	allocated, NULL is returned.  WARNING!  The address range will be
  *	aligned to an 8 or 16 byte boundry depending on the cpu so if you
  *	give an unaligned address range, unexpected results may occur.
@@ -151,7 +150,7 @@ zfree(MemPool *mp, void *ptr, uintptr_t bytes)
      * panic if illegal pointer
      */
 
-    if ((char *)ptr < (char *)mp->mp_Base || 
+    if ((char *)ptr < (char *)mp->mp_Base ||
 	(char *)ptr + bytes > (char *)mp->mp_End ||
 	((uintptr_t)ptr & MEMNODE_SIZE_MASK) != 0)
 	panic("zfree(%p,%d): wild pointer", ptr, bytes);
@@ -215,7 +214,7 @@ zfree(MemPool *mp, void *ptr, uintptr_t bytes)
 	 * We are beyond the last MemNode, append new MemNode.  Merge against
 	 * previous area if possible.
 	 */
-	if (pmn == &mp->mp_First || 
+	if (pmn == &mp->mp_First ||
 	    (char *)pmn + ((MemNode *)pmn)->mr_Bytes != (char *)ptr
 	) {
 	    ((MemNode *)ptr)->mr_Next = NULL;
@@ -300,4 +299,3 @@ zallocstats(MemPool *mp)
 }
 
 #endif
-

@@ -1,7 +1,7 @@
 /*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
- * Copyright (c) 1993 Adam Glass 
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/net.h,v 1.1.1.1.6.3 2001/03/05 06:27:18 kris Exp $
- * $DragonFly: src/lib/libstand/net.h,v 1.2 2003/06/17 04:26:51 dillon Exp $
  */
 
 #ifndef _KERNEL	/* XXX - see <netinet/in.h> */

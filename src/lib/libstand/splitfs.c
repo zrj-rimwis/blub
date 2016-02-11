@@ -1,4 +1,4 @@
-/* 
+/*-
  * Copyright (c) 2002 Maxim Sobolev
  * All rights reserved.
  *
@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/splitfs.c,v 1.3.2.1 2002/04/08 13:50:09 sobomax Exp $
- * $DragonFly: src/lib/libstand/splitfs.c,v 1.2 2003/06/17 04:26:51 dillon Exp $
  */
 
 #include "stand.h"
@@ -52,8 +51,8 @@ static int	splitfs_stat(struct open_file *f, struct stat *sb);
 
 struct fs_ops splitfs_fsops = {
     "split",
-    splitfs_open, 
-    splitfs_close, 
+    splitfs_open,
+    splitfs_close,
     splitfs_read,
     null_write,
     splitfs_seek,
@@ -164,8 +163,8 @@ splitfs_close(struct open_file *f)
     }
     return(0);
 }
- 
-static int 
+
+static int
 splitfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
     int i, nread, totread;

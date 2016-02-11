@@ -30,4 +30,3 @@ struct	in_addr swapip;			/* swap ip address */
 struct	in_addr gateip;			/* swap ip address */
 n_long	netmask = 0xffffff00;		/* subnet or net mask */
 int	errno;				/* our old friend */
-

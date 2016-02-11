@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  * @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp  (LBL)
- * $DragonFly: src/lib/libstand/arp.c,v 1.4 2005/12/11 02:27:26 swildner Exp $
  */
 
 #include <sys/param.h>
@@ -76,14 +75,14 @@ arpwhohas(struct iodesc *d, struct in_addr addr)
 		struct ether_header eh;
 		struct {
 			struct ether_arp arp;
-			u_char pad[18]; 	/* 60 - sizeof(...) */
+			u_char pad[18];		/* 60 - sizeof(...) */
 		} data;
 	} wbuf;
 	struct {
 		struct ether_header eh;
 		struct {
 			struct ether_arp arp;
-			u_char pad[24]; 	/* extra space */
+			u_char pad[24];		/* extra space */
 		} data;
 	} rbuf;
 
@@ -99,8 +98,8 @@ arpwhohas(struct iodesc *d, struct in_addr addr)
 	}
 
 #ifdef ARP_DEBUG
- 	if (debug)
- 	    printf("arpwhohas: send request for %s\n", inet_ntoa(addr));
+	if (debug)
+	    printf("arpwhohas: send request for %s\n", inet_ntoa(addr));
 #endif
 
 	bzero((char*)&wbuf.data, sizeof(wbuf.data));
@@ -129,7 +128,7 @@ arpwhohas(struct iodesc *d, struct in_addr addr)
 	/* Store ethernet address in cache */
 	ah = &rbuf.data.arp;
 #ifdef ARP_DEBUG
- 	if (debug) {
+	if (debug) {
 		printf("arp: response from %s\n",
 		    ether_sprintf(rbuf.eh.ether_shost));
 		printf("arp: cacheing %s --> %s\n",
@@ -147,7 +146,7 @@ arpsend(struct iodesc *d, void *pkt, size_t len)
 {
 
 #ifdef ARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("arpsend: called\n");
 #endif
 
@@ -166,7 +165,7 @@ arprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 	u_int16_t etype;	/* host order */
 
 #ifdef ARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("arprecv: ");
 #endif
 
@@ -234,7 +233,7 @@ arprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 
 	/* We have our answer. */
 #ifdef ARP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("got it\n");
 #endif
 	return (n);

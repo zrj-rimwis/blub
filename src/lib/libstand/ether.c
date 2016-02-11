@@ -1,5 +1,4 @@
 /*	$NetBSD: ether.c,v 1.11 1997/07/07 15:52:50 drochner Exp $	*/
-/* $DragonFly: src/lib/libstand/ether.c,v 1.3 2005/12/11 02:27:26 swildner Exp $								*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -58,7 +57,7 @@ sendether(struct iodesc *d, void *pkt, size_t len, u_char *dea, int etype)
 	struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
- 	if (debug)
+	if (debug)
 		printf("sendether: called\n");
 #endif
 
@@ -90,7 +89,7 @@ readether(struct iodesc *d, void *pkt, size_t len, time_t tleft,
 	struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
- 	if (debug)
+	if (debug)
 		printf("readether: called\n");
 #endif
 

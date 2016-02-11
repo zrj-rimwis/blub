@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/stand.h,v 1.18.2.8 2002/06/17 11:22:39 sobomax Exp $
- * From	$NetBSD: stand.h,v 1.22 1997/06/26 19:17:40 drochner Exp $	
+ * From	$NetBSD: stand.h,v 1.22 1997/06/26 19:17:40 drochner Exp $
  */
 
 /*-
@@ -127,7 +127,7 @@ extern struct fs_ops splitfs_fsops;
 #define	SEEK_CUR	1	/* set file offset to current plus offset */
 #define	SEEK_END	2	/* set file offset to EOF plus offset */
 
-/* 
+/*
  * Device switch
  */
 struct devsw {
@@ -254,7 +254,7 @@ extern void	twiddle(void);
 
 extern void	ngets(char *, int);
 #define gets(x)	ngets((x), 0)
-extern char 	*fgets(char *, int, int);
+extern char	*fgets(char *, int, int);
 extern int	fgetstr(char *, int, int);
 
 extern int	open(const char *, int);
@@ -271,7 +271,7 @@ extern void	srandom(u_long);
 extern u_long	random(void);
 
 extern void	exit(int);
-    
+
 /* imports from stdlib, locally modified */
 extern long	strtol(const char *, char **, int);
 extern char	*optarg;			/* getopt(3) external variables */
@@ -366,9 +366,9 @@ extern int	null_stat(struct open_file *, struct stat *);
 extern int	null_readdir(struct open_file *, struct dirent *);
 
 
-/* 
- * Machine dependent functions and data, must be provided or stubbed by 
- * the consumer 
+/*
+ * Machine dependent functions and data, must be provided or stubbed by
+ * the consumer
  */
 extern int		getchar(void);
 extern int		ischar(void);

@@ -1,4 +1,4 @@
-/* 
+/*-
  * Copyright (c) 1998 Michael Smith.
  * All rights reserved.
  *
@@ -24,8 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/environment.c,v 1.3.2.1 2000/09/10 01:24:16 ps Exp $
- * $DragonFly: src/lib/libstand/environment.c,v 1.2 2003/06/17 04:26:51 dillon Exp $
- *
  */
 
 /*
@@ -49,7 +47,7 @@ struct env_var	*
 env_getenv(const char *name)
 {
     struct env_var	*ev;
-    
+
     for (ev = environ; ev != NULL; ev = ev->ev_next)
 	if (!strcmp(ev->ev_name, name))
 	    break;
@@ -93,8 +91,8 @@ env_setenv(const char *name, int flags, const void *value,
 	ev->ev_prev = NULL;
 	ev->ev_next = NULL;
 	/* Search for the record to insert before */
-	for (last = NULL, curr = environ; 
-	     curr != NULL; 
+	for (last = NULL, curr = environ;
+	     curr != NULL;
 	     last = curr, curr = curr->ev_next) {
 
 	    if (strcmp(ev->ev_name, curr->ev_name) < 0) {
@@ -118,7 +116,7 @@ env_setenv(const char *name, int flags, const void *value,
 	    }
 	}
     }
-    
+
     /* If there is data in the variable, discard it */
     if (ev->ev_value != NULL)
 	free(ev->ev_value);

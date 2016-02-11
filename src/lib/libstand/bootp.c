@@ -34,7 +34,6 @@
  *
  * @(#) Header: bootp.c,v 1.4 93/09/11 03:13:51 leres Exp  (LBL)
  * $FreeBSD: src/lib/libstand/bootp.c,v 1.1.1.1.6.2 2000/09/20 18:37:25 ps Exp $
- * $DragonFly: src/lib/libstand/bootp.c,v 1.5 2005/12/11 02:27:26 swildner Exp $
  */
 
 #include <sys/param.h>
@@ -92,18 +91,18 @@ bootp(int sock, int flag)
 	} rbuf;
 
 #ifdef BOOTP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("bootp: socket=%d\n", sock);
 #endif
 	if (!bot)
 		bot = getsecs();
-	
+
 	if (!(d = socktodesc(sock))) {
 		printf("bootp: bad socket. %d\n", sock);
 		return;
 	}
 #ifdef BOOTP_DEBUG
- 	if (debug)
+	if (debug)
 		printf("bootp: d=%lx\n", (long)d);
 #endif
 
@@ -284,7 +283,7 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 		goto bad;
 
 	bp = (struct bootp *)pkt;
-	
+
 #ifdef BOOTP_DEBUG
 	if (debug)
 		printf("bootprecv: checked.  bp = 0x%lx, n = %d\n",

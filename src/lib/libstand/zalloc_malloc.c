@@ -1,5 +1,5 @@
 /*
- * This module derived from code donated to the FreeBSD Project by 
+ * This module derived from code donated to the FreeBSD Project by
  * Matthew Dillon <dillon@backplane.com>
  *
  * Copyright (c) 1998 The FreeBSD Project
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/zalloc_malloc.c,v 1.5 1999/08/28 00:05:35 peter Exp $
- * $DragonFly: src/lib/libstand/zalloc_malloc.c,v 1.3 2005/03/13 15:10:03 swildner Exp $
  */
 
 /*
@@ -130,7 +129,7 @@ calloc(size_t n1, size_t n2)
 
 /*
  * realloc() - I could be fancier here and free the old buffer before
- * 	       allocating the new one (saving potential fragmentation
+ *	       allocating the new one (saving potential fragmentation
  *	       and potential buffer copies).  But I don't bother.
  */
 
@@ -187,4 +186,3 @@ mallocstats(void)
 }
 
 #endif
-

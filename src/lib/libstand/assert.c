@@ -24,7 +24,6 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/assert.c,v 1.7 2001/10/29 07:07:25 mike Exp $
- * $DragonFly: src/lib/libstand/assert.c,v 1.3 2004/01/23 14:43:52 joerg Exp $
  */
 
 #include <assert.h>

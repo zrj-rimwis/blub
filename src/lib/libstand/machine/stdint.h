@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 2001, 2002 Mike Barcroft <mike@FreeBSD.org>
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
- * Copyright (c) 1990, 1993 The Regents of the University of California. 
+ * Copyright (c) 1990, 1993 The Regents of the University of California.
  *		All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

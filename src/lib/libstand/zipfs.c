@@ -323,6 +323,3 @@ zf_stat(struct open_file *f, struct stat *sb)
 	sb->st_size = -1;
     return(result);
 }
-
-
-

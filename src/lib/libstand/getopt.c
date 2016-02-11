@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  *
  * @(#)getopt.c	8.3 (Berkeley) 4/27/95
- * $DragonFly: src/lib/libstand/getopt.c,v 1.3 2005/12/11 02:27:26 swildner Exp $
  */
 
 #include "stand.h"
@@ -95,7 +94,7 @@ getopt(int nargc, char * const *nargv, const char *ostr)
 				(void)printf("option requires an argument -- %c\n", optopt);
 			return (BADCH);
 		}
-	 	else				/* white space */
+		else				/* white space */
 			optarg = nargv[optind];
 		place = EMSG;
 		++optind;

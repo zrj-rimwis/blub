@@ -51,7 +51,7 @@ strtol(const char *nptr, char **endptr, int base)
 	if (nptr == NULL)
 	    nptr = "";
 	s = nptr;
-	
+
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
 	 * If base is 0, allow 0x for hex and 0 for octal, else

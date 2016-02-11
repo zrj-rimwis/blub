@@ -74,7 +74,7 @@ struct hammer2_fs {
 	hammer2_blockref_t		sroot;
 	hammer2_blockset_t		sroot_blockset;
 #if defined(TESTING)
-	int 				fd;
+	int				fd;
 #elif defined(LIBSTAND)
 	struct open_file		*f;
 #elif defined(BOOT2)
@@ -500,7 +500,7 @@ h2readfile(struct hammer2_fs *hfs, hammer2_blockref_t *bref,
 		len = filesize - off;
 
 	/*
-	 * Loop until done 
+	 * Loop until done
 	 */
 	total = 0;
 	while (len) {
@@ -642,7 +642,7 @@ h2init(struct hammer2_fs *hfs)
 }
 
 /************************************************************************
- * 				BOOT2 SUPPORT				*
+ *				BOOT2 SUPPORT				*
  ************************************************************************
  *
  */
@@ -692,7 +692,7 @@ const struct boot2_fsapi boot2_hammer2_api = {
 #endif
 
 /************************************************************************
- * 				BOOT2 SUPPORT				*
+ *				BOOT2 SUPPORT				*
  ************************************************************************
  *
  */
@@ -872,7 +872,7 @@ hammer2_readdir(struct open_file *f, struct dirent *den)
 
 	for (;;) {
 		bytes = h2lookup(&hf->hfs, &hf->bref,
-				 f->f_offset | HAMMER2_DIRHASH_VISIBLE, 
+				 f->f_offset | HAMMER2_DIRHASH_VISIBLE,
 				 HAMMER2_KEY_MAX,
 				 &bres, (void **)&ipdata);
 		if (bytes <= 0)

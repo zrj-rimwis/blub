@@ -1,5 +1,4 @@
 /*	$NetBSD: rpc.c,v 1.18 1998/01/23 19:27:45 thorpej Exp $	*/
-/* $DragonFly: src/lib/libstand/rpc.c,v 1.3 2005/12/11 02:27:26 swildner Exp $							*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -60,7 +59,7 @@
 #include "rpc.h"
 
 struct auth_info {
-	int32_t 	authtype;	/* auth type */
+	int32_t		authtype;	/* auth type */
 	u_int32_t	authlen;	/* auth length */
 };
 
@@ -74,7 +73,7 @@ struct auth_unix {
 
 struct rpc_call {
 	u_int32_t	rp_xid;		/* request transaction id */
-	int32_t 	rp_direction;	/* call direction (0) */
+	int32_t		rp_direction;	/* call direction (0) */
 	u_int32_t	rp_rpcvers;	/* rpc version (2) */
 	u_int32_t	rp_prog;	/* program */
 	u_int32_t	rp_vers;	/* version */
@@ -83,8 +82,8 @@ struct rpc_call {
 
 struct rpc_reply {
 	u_int32_t	rp_xid;		/* request transaction id */
-	int32_t 	rp_direction;	/* call direction (1) */
-	int32_t 	rp_astatus;	/* accept status (0: accepted) */
+	int32_t		rp_direction;	/* call direction (1) */
+	int32_t		rp_astatus;	/* accept status (0: accepted) */
 	union {
 		u_int32_t	rpu_errno;
 		struct {
@@ -315,11 +314,11 @@ struct pmap_list {
 	struct in_addr	addr;	/* server, net order */
 	u_int	prog;		/* host order */
 	u_int	vers;		/* host order */
-	int 	port;		/* host order */
+	int	port;		/* host order */
 } rpc_pmap_list[PMAP_NUM];
 
-/* 
- * return port number in host order, or -1 
+/*
+ * return port number in host order, or -1
  *
  * Parameters:
  *	addr:	server, net order

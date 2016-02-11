@@ -109,7 +109,7 @@ static int tftperrors[8] = {
 	EINVAL			/* ??? */
 };
 
-static ssize_t 
+static ssize_t
 recvtftp(struct iodesc *d, void *pkt, size_t max_len, time_t tleft)
 {
 	struct tftphdr *t;
@@ -189,7 +189,7 @@ recvtftp(struct iodesc *d, void *pkt, size_t max_len, time_t tleft)
 }
 
 /* send request, expect first block (or error) */
-static int 
+static int
 tftp_makereq(struct tftp_handle *h)
 {
 	struct {
@@ -232,7 +232,7 @@ tftp_makereq(struct tftp_handle *h)
 }
 
 /* ack block, expect next */
-static int 
+static int
 tftp_getnextblock(struct tftp_handle *h)
 {
 	struct {
@@ -268,7 +268,7 @@ tftp_getnextblock(struct tftp_handle *h)
 	return (0);
 }
 
-static int 
+static int
 tftp_open(const char *path, struct open_file *f)
 {
 	struct tftp_handle *tftpfile;
@@ -308,7 +308,7 @@ tftp_open(const char *path, struct open_file *f)
  * Parameters:
  *	resid:	out
  */
-static int 
+static int
 tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 {
 	struct tftp_handle *tftpfile;
@@ -378,7 +378,7 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 	return (0);
 }
 
-static int 
+static int
 tftp_close(struct open_file *f)
 {
 	struct tftp_handle *tftpfile;
@@ -398,13 +398,13 @@ tftp_close(struct open_file *f)
  * Parameters:
  *	resid:	out
  */
-static int 
+static int
 tftp_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	return (EROFS);
 }
 
-static int 
+static int
 tftp_stat(struct open_file *f, struct stat *sb)
 {
 	sb->st_mode = 0444 | S_IFREG;
@@ -415,7 +415,7 @@ tftp_stat(struct open_file *f, struct stat *sb)
 	return (0);
 }
 
-static off_t 
+static off_t
 tftp_seek(struct open_file *f, off_t offset, int where)
 {
 	struct tftp_handle *tftpfile;

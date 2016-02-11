@@ -25,7 +25,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * $FreeBSD: src/lib/libstand/dosfs.c,v 1.4.2.1 2000/05/04 13:47:49 ps Exp $
- * $DragonFly: src/lib/libstand/dosfs.c,v 1.2 2003/06/17 04:26:51 dillon Exp $
  */
 
 /*
@@ -131,7 +130,7 @@ static DOS_DE dot[2] = {
 #define stclus(sz, de)  ((sz) != 32 ? cv2((de)->clus) :          \
                          ((u_int)cv2((de)->dex.h_clus) << 16) |  \
 			 cv2((de)->clus))
-    
+
 static int dosunmount(DOS_FS *);
 static int parsebs(DOS_FS *, DOS_BS *);
 static int namede(DOS_FS *, const char *, DOS_DE **);
@@ -214,7 +213,7 @@ dos_open(const char *path, struct open_file *fd)
 
     /* Allocate mount structure, associate with open */
     fs = malloc(sizeof(DOS_FS));
-    
+
     if ((err = dos_mount(fs, fd)))
 	goto out;
 
@@ -789,9 +788,9 @@ static int
 ioget(struct open_file *fd, u_int lsec, void *buf, u_int nsec)
 {
     int	err;
-    
+
     twiddle();
-    if ((err = (fd->f_dev->dv_strategy)(fd->f_devdata, F_READ, lsec, 
+    if ((err = (fd->f_dev->dv_strategy)(fd->f_devdata, F_READ, lsec,
 					secbyt(nsec), buf, NULL)))
 	return(err);
     return(0);

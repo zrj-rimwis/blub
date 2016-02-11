@@ -55,7 +55,7 @@ char *
 sbrk(intptr_t incr)
 {
     char	*ret;
-    
+
     if ((heapsize + incr) <= maxheap) {
 	ret = heapbase + heapsize;
 	bzero(ret, incr);
