@@ -112,6 +112,10 @@ static struct pci_progif progif_parallel[] = {
     {-1,	NULL}
 };
 
+static struct pci_progif progif_firewire[] = {
+    {0x10,	"OHCI"},
+    {-1,	NULL}
+};
 
 struct pci_subclass
 {
@@ -160,7 +164,7 @@ static struct pci_subclass subclass_comms[] = {
 };
 
 static struct pci_subclass subclass_serial[] = {
-    {0x0,	"Firewire",		progif_null},
+    {0x0,	"FireWire",		progif_firewire},
     {0x1,	"ACCESS.bus",		progif_null},
     {0x2,	"SSA",			progif_null},
     {0x3,	"USB",			progif_null},
