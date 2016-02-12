@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libstand/gzipfs.c,v 1.11 2002/12/19 19:34:58 jake Exp $
+ * $FreeBSD: head/lib/libstand/gzipfs.c 205273 2010-03-18 00:27:17Z delphij $
  */
 
 #include "stand.h"
@@ -37,8 +37,10 @@
 struct z_file
 {
     int			zf_rawfd;
+    off_t		zf_dataoffset;
     z_stream		zf_zstream;
     char		zf_buf[Z_BUFSIZE];
+    int			zf_endseen;
 };
 
 static int	zf_fill(struct z_file *z);
@@ -58,14 +60,6 @@ struct fs_ops gzipfs_fsops = {
     zf_stat,
     null_readdir
 };
-
-#if 0
-void *
-calloc(int items, size_t size)
-{
-    return(malloc(items * size));
-}
-#endif
 
 static int
 zf_fill(struct z_file *zf)
@@ -97,11 +91,12 @@ zf_fill(struct z_file *zf)
  * Returns 0 if the header is OK, nonzero if not.
  */
 static int
-get_byte(struct z_file *zf)
+get_byte(struct z_file *zf, off_t *curoffp)
 {
     if ((zf->zf_zstream.avail_in == 0) && (zf_fill(zf) == -1))
 	return(-1);
     zf->zf_zstream.avail_in--;
+    ++*curoffp;
     return(*(zf->zf_zstream.next_in)++);
 }
 
@@ -123,36 +118,37 @@ check_header(struct z_file *zf)
     uInt	len;
     int		c;
 
+    zf->zf_dataoffset = 0;
     /* Check the gzip magic header */
     for (len = 0; len < 2; len++) {
-	c = get_byte(zf);
+	c = get_byte(zf, &zf->zf_dataoffset);
 	if (c != gz_magic[len]) {
 	    return(1);
 	}
     }
-    method = get_byte(zf);
-    flags = get_byte(zf);
+    method = get_byte(zf, &zf->zf_dataoffset);
+    flags = get_byte(zf, &zf->zf_dataoffset);
     if (method != Z_DEFLATED || (flags & RESERVED) != 0) {
 	return(1);
     }
 
     /* Discard time, xflags and OS code: */
-    for (len = 0; len < 6; len++) (void)get_byte(zf);
+    for (len = 0; len < 6; len++) (void)get_byte(zf, &zf->zf_dataoffset);
 
     if ((flags & EXTRA_FIELD) != 0) { /* skip the extra field */
-	len  =  (uInt)get_byte(zf);
-	len += ((uInt)get_byte(zf))<<8;
+	len  =  (uInt)get_byte(zf, &zf->zf_dataoffset);
+	len += ((uInt)get_byte(zf, &zf->zf_dataoffset))<<8;
 	/* len is garbage if EOF but the loop below will quit anyway */
-	while (len-- != 0 && get_byte(zf) != -1) ;
+	while (len-- != 0 && get_byte(zf, &zf->zf_dataoffset) != -1) ;
     }
     if ((flags & ORIG_NAME) != 0) { /* skip the original file name */
-	while ((c = get_byte(zf)) != 0 && c != -1) ;
+	while ((c = get_byte(zf, &zf->zf_dataoffset)) != 0 && c != -1) ;
     }
     if ((flags & COMMENT) != 0) {   /* skip the .gz file comment */
-	while ((c = get_byte(zf)) != 0 && c != -1) ;
+	while ((c = get_byte(zf, &zf->zf_dataoffset)) != 0 && c != -1) ;
     }
     if ((flags & HEAD_CRC) != 0) {  /* skip the header crc */
-	for (len = 0; len < 2; len++) c = get_byte(zf);
+	for (len = 0; len < 2; len++) c = get_byte(zf, &zf->zf_dataoffset);
     }
     /* if there's data left, we're in business */
     return((c == -1) ? 1 : 0);
@@ -182,6 +178,7 @@ zf_open(const char *fname, struct open_file *f)
     if (zfname == NULL)
         return(ENOMEM);
     sprintf(zfname, "%s.gz", fname);
+
     /* Try to open the compressed datafile */
     rawfd = open(zfname, O_RDONLY);
     free(zfname);
@@ -206,10 +203,9 @@ zf_open(const char *fname, struct open_file *f)
     bzero(zf, sizeof(struct z_file));
     zf->zf_rawfd = rawfd;
 
-    /* Verify that the file is gzipped (XXX why do this afterwards?) */
+    /* Verify that the file is gzipped */
     if (check_header(zf)) {
 	close(zf->zf_rawfd);
-	inflateEnd(&(zf->zf_zstream));
 	free(zf);
 	return(EFTYPE);
     }
@@ -250,28 +246,45 @@ zf_read(struct open_file *f, void *buf, size_t size, size_t *resid)
     zf->zf_zstream.next_out = buf;			/* where and how much */
     zf->zf_zstream.avail_out = size;
 
-    while (zf->zf_zstream.avail_out) {
+    while (zf->zf_zstream.avail_out && zf->zf_endseen == 0) {
 	if ((zf->zf_zstream.avail_in == 0) && (zf_fill(zf) == -1)) {
 	    printf("zf_read: fill error\n");
-	    return(-1);
+	    return(EIO);
 	}
 	if (zf->zf_zstream.avail_in == 0) {		/* oops, unexpected EOF */
 	    printf("zf_read: unexpected EOF\n");
+	    if (zf->zf_zstream.avail_out == size)
+		return(EIO);
 	    break;
 	}
 
 	error = inflate(&zf->zf_zstream, Z_SYNC_FLUSH);	/* decompression pass */
 	if (error == Z_STREAM_END) {			/* EOF, all done */
+	    zf->zf_endseen = 1;
 	    break;
 	}
 	if (error != Z_OK) {				/* argh, decompression error */
 	    printf("inflate: %s\n", zf->zf_zstream.msg);
-	    errno = EIO;
-	    return(-1);
+	    return(EIO);
 	}
     }
     if (resid != NULL)
 	*resid = zf->zf_zstream.avail_out;
+    return(0);
+}
+
+static int
+zf_rewind(struct open_file *f)
+{
+    struct z_file	*zf = (struct z_file *)f->f_fsdata;
+
+    if (lseek(zf->zf_rawfd, zf->zf_dataoffset, SEEK_SET) == -1)
+	return(-1);
+    zf->zf_zstream.avail_in = 0;
+    zf->zf_zstream.next_in = NULL;
+    zf->zf_endseen = 0;
+    (void)inflateReset(&zf->zf_zstream);
+
     return(0);
 }
 
@@ -289,23 +302,26 @@ zf_seek(struct open_file *f, off_t offset, int where)
     case SEEK_CUR:
 	target = offset + zf->zf_zstream.total_out;
 	break;
-    default:
+    case SEEK_END:
 	target = -1;
+    default:
+	errno = EINVAL;
+	return(-1);
     }
 
-    /* Can we get there from here? */
-    if (target < zf->zf_zstream.total_out) {
-	errno = EOFFSET;
-	return -1;
-    }
+    /* rewind if required */
+    if (target < zf->zf_zstream.total_out && zf_rewind(f) != 0)
+	return(-1);
 
     /* skip forwards if required */
     while (target > zf->zf_zstream.total_out) {
-	if (zf_read(f, discard, min(sizeof(discard), target - zf->zf_zstream.total_out), NULL) == -1)
+	errno = zf_read(f, discard, min(sizeof(discard),
+	    target - zf->zf_zstream.total_out), NULL);
+	if (errno)
 	    return(-1);
     }
     /* This is where we are (be honest if we overshot) */
-    return (zf->zf_zstream.total_out);
+    return(zf->zf_zstream.total_out);
 }
 
 
