@@ -38,42 +38,46 @@
 int
 devopen(struct open_file *f, const char *fname, const char **file)
 {
-    struct devdesc	*dev;
-    int			result;
+	struct devdesc *dev;
+	int result;
 
-    if ((result = archsw.arch_getdev((void *)&dev, fname, file)) == 0) {	/* get the device */
+	result = archsw.arch_getdev((void **)&dev, fname, file);
+	if (result)
+		return (result);
+
 	/* point to device-specific data so that device open can use it */
-	f->f_flags |= F_DEVDESC;
 	f->f_devdata = dev;
-	if ((result = dev->d_dev->dv_open(f, dev)) == 0) {		/* try to open it */
-	    /* reference the devsw entry from the open_file structure */
-	    f->f_dev = dev->d_dev;
-	} else {
-	    devclose(f);
+	f->f_flags |= F_DEVDESC;
+	result = dev->d_dev->dv_open(f, dev);	/* try to open it */
+	if (result != 0) {
+		devclose(f);
+		return (result);
 	}
-    }
-    return(result);
+
+	/* reference the devsw entry from the open_file structure */
+	f->f_dev = dev->d_dev;
+	return (0);
 }
 
 int
 devclose(struct open_file *f)
 {
-    if (f->f_flags & F_DEVDESC) {
-	    if (f->f_devdata != NULL) {
-		free(f->f_devdata);
-		f->f_devdata = NULL;
-	    }
-	    f->f_flags &= ~F_DEVDESC;
-    }
-    return(0);
+	if (f->f_flags & F_DEVDESC) {
+		if (f->f_devdata != NULL) {
+			free(f->f_devdata);
+			f->f_devdata = NULL;
+		}
+		f->f_flags &= ~F_DEVDESC;
+	}
+	return (0);
 }
 
 void
 devreplace(struct open_file *f, void *devdata)
 {
-    if (f->f_flags & F_DEVDESC) {
-	free(f->f_devdata);
-	f->f_flags &= ~F_DEVDESC;
-    }
-    f->f_devdata = devdata;
+	if (f->f_flags & F_DEVDESC) {
+		free(f->f_devdata);
+		f->f_flags &= ~F_DEVDESC;
+	}
+	f->f_devdata = devdata;
 }
