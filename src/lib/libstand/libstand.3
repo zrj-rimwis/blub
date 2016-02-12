@@ -35,8 +35,9 @@
 .Sh SYNOPSIS
 .In stand.h
 .Sh DESCRIPTION
+The
 .Nm
-provides a set of supporting functions for standalone
+library provides a set of supporting functions for standalone
 applications, mimicking where possible the standard
 .Bx
 programming
@@ -107,7 +108,7 @@ for set/unset hook functions.
 .Xc
 .It Xo
 .Ft int
-.Fn setenv "const char *name" "char *value" "int overwrite"
+.Fn setenv "const char *name" "const char *value" "int overwrite"
 .Xc
 .It Xo
 .Ft int
@@ -128,7 +129,7 @@ Looks up a variable in the environment and returns its entire
 data structure.
 .It Xo
 .Ft int
-.Fn env_setenv "const char *name" "int flags" "char *value" "ev_sethook_t sethook" "ev_unsethook_t unsethook"
+.Fn env_setenv "const char *name" "int flags" "const void *value" "ev_sethook_t sethook" "ev_unsethook_t unsethook"
 .Xc
 .Pp
 Creates a new or sets an existing environment variable called
@@ -157,7 +158,7 @@ may be specified to refuse all attempts to set a variable.
 .Pp
 The unset hook is invoked when an attempt is made to unset a variable.
 If it
-returns zero, the  variable will be unset.
+returns zero, the variable will be unset.
 The predefined function
 .Fn env_nounset
 may be used to prevent a variable being unset.
@@ -222,7 +223,7 @@ Read characters from the console into
 All of the standard cautions apply to this function.
 .It Xo
 .Ft void
-.Fn ngets "char *buf" "size_t size"
+.Fn ngets "char *buf" "int size"
 .Xc
 .Pp
 Read at most
@@ -429,8 +430,10 @@ filesystem cannot provide meaningful values for this call, and the
 filesystem always reports files having uid/gid of zero.
 .El
 .Sh PAGER
+The
 .Nm
-supplies a simple internal pager to ease reading the output of large commands.
+library supplies a simple internal pager to ease reading the output of large
+commands.
 .Bl -hang -width 10n
 .It Xo
 .Ft void
@@ -449,7 +452,7 @@ lines to be displayed before pausing.
 Closes the pager.
 .It Xo
 .Ft int
-.Fn pager_output "char *lines"
+.Fn pager_output "const char *lines"
 .Xc
 .Pp
 Sends the lines in the nul-terminated buffer at
@@ -457,12 +460,13 @@ Sends the lines in the nul-terminated buffer at
 to the pager.
 Newline characters are counted in order to determine the number
 of lines being output (wrapped lines are not accounted for).
+The
 .Fn pager_output
-will return zero when all of the lines have been output, or nonzero if the
-display was paused and the user elected to quit.
+function will return zero when all of the lines have been output, or nonzero
+if the display was paused and the user elected to quit.
 .It Xo
 .Ft int
-.Fn pager_file "char *fname"
+.Fn pager_file "const char *fname"
 .Xc
 .Pp
 Attempts to open and display the file
@@ -478,7 +482,8 @@ or 1 if the user elects to quit while reading.
 .Fn ether_sprintf "u_char *ap"
 .Xc
 .Pp
-Convert an ethernet address to its human readable notation as specified in IEEE 802.
+Convert an ethernet address to its human readable notation as specified in
+IEEE 802.
 .El
 .Sh MISC
 .Bl -hang -width 10n
@@ -563,7 +568,7 @@ and
 and thus by many other functions for debugging and informational output.
 .It Xo
 .Ft int
-.Fn devopen "struct open_file *of" "const char *name" "char **file"
+.Fn devopen "struct open_file *of" "const char *name" "const char **file"
 .Xc
 .Pp
 Open the appropriate device for the file named in
@@ -635,9 +640,9 @@ File access via TFTP.
 File access via NFS.
 .It Va cd9660_fsops
 ISO 9660 (CD-ROM) filesystem.
-.It Va zipfs_fsops
+.It Va gzipfs_fsops
 Stacked filesystem supporting gzipped files.
-When trying the zipfs filesystem,
+When trying the gzipfs filesystem,
 .Nm
 appends
 .Li .gz
@@ -654,7 +659,7 @@ and
 on gzipped files will report an invalid length.
 .It Va bzipfs_fsops
 The same as
-.Va zipfs_fsops ,
+.Va gzipfs_fsops ,
 but for
 .Xr bzip2 1 Ns -compressed
 files.
@@ -668,8 +673,9 @@ Devices are exported by the supporting code via the array
 .Vt struct devsw *devsw[]
 which is a NULL terminated array of pointers to device switch structures.
 .Sh HISTORY
+The
 .Nm
-contains contributions from many sources, including:
+library contains contributions from many sources, including:
 .Bl -bullet -compact
 .It
 .Nm libsa
