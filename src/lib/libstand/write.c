@@ -85,5 +85,5 @@ write(int fd, void *dest, size_t bcount)
 	resid = bcount;
 	if ((errno = (f->f_ops->fo_write)(f, dest, bcount, &resid)))
 		return (-1);
-	return (0);
+	return (bcount - resid);
 }
