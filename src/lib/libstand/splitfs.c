@@ -43,6 +43,7 @@ struct split_file
     off_t file_pos;	/* Offset from the beginning of the slice */
 };
 
+static int	split_openfile(struct split_file *sf);
 static int	splitfs_open(const char *path, struct open_file *f);
 static int	splitfs_close(struct open_file *f);
 static int	splitfs_read(struct open_file *f, void *buf, size_t size, size_t *resid);
@@ -63,17 +64,39 @@ struct fs_ops splitfs_fsops = {
 static void
 split_file_destroy(struct split_file *sf)
 {
-     int i;
+    int i;
 
-     if (sf->filesc > 0) {
+    if (sf->filesc > 0) {
 	for (i = 0; i < sf->filesc; i++) {
 	    free(sf->filesv[i]);
 	    free(sf->descsv[i]);
 	}
 	free(sf->filesv);
 	free(sf->descsv);
-     }
-     free(sf);
+    }
+    free(sf);
+}
+
+static int
+split_openfile(struct split_file *sf)
+{
+    int i;
+
+    for (i = 0;; i++) {
+	sf->curfd = open(sf->filesv[sf->curfile], O_RDONLY);
+	if (sf->curfd >= 0)
+	    break;
+	if ((sf->curfd == -1) && (errno != ENOENT))
+	    return (errno);
+	if (i == NTRIES)
+	    return (EIO);
+	printf("\nInsert disk labelled %s and press any key...",
+	    sf->descsv[sf->curfile]);
+	getchar();
+	putchar('\n');
+    }
+    sf->file_pos = 0;
+    return (0);
 }
 
 static int
@@ -138,7 +161,12 @@ splitfs_open(const char *fname, struct open_file *f)
     free(buf);
     close(conffd);
 
-    if ((sf->filesc == 0) || ((sf->curfd = open(sf->filesv[0], O_RDONLY)) == -1)) {
+    if (sf->filesc == 0) {
+	split_file_destroy(sf);
+	return(ENOENT);
+    }
+    errno = split_openfile(sf);
+    if (errno != 0) {
 	split_file_destroy(sf);
 	return(ENOENT);
     }
@@ -167,7 +195,8 @@ splitfs_close(struct open_file *f)
 static int
 splitfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
-    int i, nread, totread;
+    ssize_t nread;
+    size_t totread;
     struct split_file *sf;
 
     sf = (struct split_file *)f->f_fsdata;
@@ -193,18 +222,9 @@ splitfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 		return (errno);
 
 	    sf->curfile++;
-	    for (i = 0;; i++) {
-		sf->curfd = open(sf->filesv[sf->curfile], O_RDONLY);
-		if (sf->curfd >= 0)
-		    break;
-		if ((sf->curfd == -1) && (errno != ENOENT))
+	    errno = split_openfile(sf);
+	    if (errno)
 		    return (errno);
-		if (i == NTRIES)
-		    return (EIO);
-		printf("\nInsert disk labelled %s and press any key...", sf->descsv[sf->curfile]);
-		getchar();putchar('\n');
-	    }
-	    sf->file_pos = 0;
 	}
     } while (totread < size);
 
