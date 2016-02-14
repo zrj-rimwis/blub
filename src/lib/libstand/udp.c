@@ -256,6 +256,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 		return -1;
 	}
 
-	n -= sizeof(*ip) + sizeof(*uh);
+	n = (n > (ntohs(uh->uh_ulen) - sizeof(*uh))) ?
+	    ntohs(uh->uh_ulen) - sizeof(*uh) : n;
 	return (n);
 }
