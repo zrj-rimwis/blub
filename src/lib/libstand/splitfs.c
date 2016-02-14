@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libstand/splitfs.c,v 1.3.2.1 2002/04/08 13:50:09 sobomax Exp $
+ * $FreeBSD: head/lib/libstand/splitfs.c 146443 2005-05-20 12:55:38Z charnier $
  */
 
 #include "stand.h"
@@ -211,7 +211,7 @@ splitfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 	sf->tot_pos += nread;
 	sf->file_pos += nread;
 	totread += nread;
-	buf += nread;
+	buf = (char *)buf + nread;
 
 	if (totread < size) {				/* EOF */
 	    if (sf->curfile == (sf->filesc - 1))	/* Last slice */
