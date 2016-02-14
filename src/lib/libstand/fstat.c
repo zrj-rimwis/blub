@@ -50,5 +50,7 @@ fstat(int fd, struct stat *sb)
 	}
 
 	errno = (f->f_ops->fo_stat)(f, sb);
+	if (errno)
+		return (-1);
 	return (0);
 }
