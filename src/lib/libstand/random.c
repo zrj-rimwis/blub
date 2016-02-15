@@ -34,6 +34,9 @@
 
 static u_long randseed = 1;
 
+void srandom(u_long seed);
+u_long random(void);
+
 void
 srandom(u_long seed)
 {
