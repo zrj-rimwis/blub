@@ -23,24 +23,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libstand/assert.c,v 1.7 2001/10/29 07:07:25 mike Exp $
+ * $FreeBSD: head/lib/libstand/assert.c 205900 2010-03-30 19:07:41Z jhb $
  */
 
 #include <assert.h>
 
 #include "stand.h"
 
-void	exit(int code);
-
 void
 __assert(const char *func, const char *file, int line, const char *expression)
 {
 	if (func == NULL) {
-		printf("Assertion failed: (%s), file %s, line %d.\n",
+		panic("Assertion failed: (%s), file %s, line %d.\n",
 		    expression, file, line);
 	} else {
-		printf("Assertion failed: (%s), function %s, file %s, line "
-		    "%d.\n", expression, func, file, line);
+		panic("Assertion failed: (%s), function %s, file %s, line %d.\n",
+		    expression, func, file, line);
 	}
-	exit(1);
 }
