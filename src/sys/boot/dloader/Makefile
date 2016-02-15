@@ -31,3 +31,5 @@ stack_protector.o: ../../libkern/stack_protector.c
 
 CFLAGS+=	-I${.CURDIR}
 CFLAGS+=	-I${.CURDIR}/../common
+# Ensure to use correct stand.h header
+CFLAGS+=        -I${.CURDIR}/../../../lib/libstand
