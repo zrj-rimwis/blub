@@ -62,6 +62,8 @@
 
 #include "stand.h"
 
+int ioctl(int, u_long, char *);
+
 int
 ioctl(int fd, u_long cmd, char *arg)
 {
