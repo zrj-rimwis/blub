@@ -43,6 +43,9 @@ struct bz_file
     int			bzf_endseen;
 };
 
+/* prototype in bzlib_private.h */
+void bz_internal_error(int errorcode);
+
 static int	bzf_fill(struct bz_file *z);
 static int	bzf_open(const char *path, struct open_file *f);
 static int	bzf_close(struct open_file *f);
