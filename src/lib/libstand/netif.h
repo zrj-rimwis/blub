@@ -53,6 +53,7 @@ extern int			netif_debug;
 
 void		netif_init(void);
 struct netif	*netif_select(void *);
+int		netif_match(struct netif *, void *);
 int		netif_probe(struct netif *, void *);
 void		netif_attach(struct netif *, struct iodesc *, void *);
 void		netif_detach(struct netif *);
