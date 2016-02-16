@@ -54,6 +54,8 @@
 #include "stand.h"
 #include "net.h"
 
+n_long ip_convertaddr(char *p);
+
 /*
  * Send a packet and wait for a reply, with exponential backoff.
  *
