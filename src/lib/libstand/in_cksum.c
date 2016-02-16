@@ -41,6 +41,9 @@
 
 #include "stand.h"
 
+/* prototype in net.h */
+int	in_cksum(void *, int);
+
 /*
  * Checksum routine for Internet Protocol family headers.
  * This routine is very heavily used in the network
