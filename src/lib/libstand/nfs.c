@@ -134,6 +134,8 @@ static off_t	nfs_seek(struct open_file *f, off_t offset, int where);
 static int	nfs_stat(struct open_file *f, struct stat *sb);
 static int	nfs_readdir(struct open_file *f, struct dirent *d);
 
+int		nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp);
+
 struct	nfs_iodesc nfs_root_node;
 
 struct fs_ops nfs_fsops = {
@@ -220,7 +222,7 @@ nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
  * Lookup a file.  Store handle and attributes.
  * Return zero or error number.
  */
-int
+static int
 nfs_lookupfh(struct nfs_iodesc *d, const char *name, struct nfs_iodesc *newfd)
 {
 	int len, rlen;
@@ -283,7 +285,7 @@ nfs_lookupfh(struct nfs_iodesc *d, const char *name, struct nfs_iodesc *newfd)
 /*
  * Get the destination of a symbolic link.
  */
-int
+static int
 nfs_readlink(struct nfs_iodesc *d, char *buf)
 {
 	struct {
@@ -328,7 +330,7 @@ nfs_readlink(struct nfs_iodesc *d, char *buf)
  * Read data from a file.
  * Return transfer count or -1 (and set errno)
  */
-ssize_t
+static ssize_t
 nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 {
 	struct nfs_read_args *args;
