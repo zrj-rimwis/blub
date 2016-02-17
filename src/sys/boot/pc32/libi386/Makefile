@@ -26,6 +26,9 @@ CFLAGS+= -DDISK_DEBUG
 # Include simple terminal emulation (cons25-compatible)
 CFLAGS+= -DTERM_EMU
 
+# XXX: make alloca() useable
+CFLAGS+= -DRALLOCA=__builtin_alloca
+
 CFLAGS+=	-I${.CURDIR}/../../common -I${.CURDIR}/../btx/lib \
 		-I"${SYSDIR}/${ACPICA_DIR}/include" \
 		-I"${SYSDIR}/${OSACPI_MI_DIR}" \

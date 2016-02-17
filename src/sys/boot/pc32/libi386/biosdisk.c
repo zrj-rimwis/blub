@@ -125,12 +125,6 @@ static int	bd_open(struct open_file *f, ...);
 static int	bd_close(struct open_file *f);
 static void	bd_print(int verbose);
 
-/*
- * Max number of sectors to bounce-buffer if the request crosses a 64k boundary
- */
-#define BOUNCEBUF_SIZE	8192
-#define BOUNCEBUF_SECTS	(BOUNCEBUF_SIZE / BIOSDISK_SECSIZE)
-
 struct devsw biosdisk = {
     "disk",
     DEVT_DISK,
@@ -146,10 +140,7 @@ struct devsw biosdisk = {
 static int	bd_opendisk(struct open_disk **odp, struct i386_devdesc *dev);
 static void	bd_closedisk(struct open_disk *od);
 static int	bd_bestslice(struct open_disk *od);
-static void	bd_chainextended(struct open_disk *od, u_int32_t base,
-					u_int32_t offset);
-
-static caddr_t	bounce_base;
+static void	bd_checkextended(struct open_disk *od, int slicenum);
 
 /*
  * Translate between BIOS device numbers and our private unit numbers.
@@ -182,10 +173,7 @@ bd_unit2bios(int unit)
 static int
 bd_init(void)
 {
-    int	base, unit, nfd = 0;
-
-    if (bounce_base == NULL)
-	bounce_base = malloc(BOUNCEBUF_SIZE * 2);
+    int base, unit, nfd = 0;
 
     /* sequence 0, 0x80 */
     for (base = 0; base <= 0x80; base += 0x80) {
@@ -230,9 +218,9 @@ bd_int13probe(struct bdinfo *bd)
 	/*
 	 * Ignore devices with an absurd sector size.
 	 */
-	if ((v86.ecx & 0x3f) == 0) {
+	if ((v86.ecx & 0x3f) == 0) {			/* absurd sector size */
 		DEBUG("Invalid geometry for unit %d", bd->bd_unit);
-		return(0);
+		return(0);				/* skip device */
 	}
 	bd->bd_flags |= BD_MODEINT13;
 	bd->bd_type = v86.ebx & 0xff;
@@ -248,7 +236,7 @@ bd_int13probe(struct bdinfo *bd)
 	    ((v86.ebx & 0xffff) == 0xaa55) &&		/* signature */
 	    (v86.ecx & 0x1)) {				/* packets mode ok */
 	    bd->bd_flags |= BD_MODEEDD1;
-	    if((v86.eax & 0xff00) > 0x300)
+	    if((v86.eax & 0xff00) >= 0x3000)
 	        bd->bd_flags |= BD_MODEEDD3;
 	}
 	return(1);
@@ -316,7 +304,6 @@ bd_printslice(struct open_disk *od, struct dos_partition *dp, char *prefix,
 	switch (dp->dp_typ) {
 	case DOSPTYP_386BSD:
 	case DOSPTYP_NETBSD:
-	/* XXX: possibly add types 0 and 1, as in subr_disk, for gpt magic */
 		bd_printbsdslice(od, (daddr_t)dp->dp_start, prefix, verbose);
 		return;
 	case DOSPTYP_LINSWP:
@@ -573,9 +560,12 @@ bd_opendisk(struct open_disk **odp, struct i386_devdesc *dev)
      * or searching for reasonable defaults.
      */
 
+    error = 0;
+
     /*
      * Find the slice in the DOS slice table.
      */
+    od->od_nslices = 0;
     if (bd_read(od, 0, 1, buf)) {
 	DEBUG("error reading MBR");
 	error = EIO;
@@ -597,30 +587,15 @@ bd_opendisk(struct open_disk **odp, struct i386_devdesc *dev)
     }
 
     /*
-     * copy the partition table, then pick up any extended partitions.  The
-     * base partition table always has four entries, even if some of them
-     * represented extended partitions.  However, any additional sub-extended
-     * partitions will be silently recursed and not included in the slice
-     * table.
+     * copy the partition table, then pick up any extended partitions.
      */
     bcopy(buf + DOSPARTOFF, &od->od_slicetab,
       sizeof(struct dos_partition) * NDOSPART);
-    od->od_nslices = NDOSPART;
-
-    dptr = &od->od_slicetab[0];
-    for (i = 0; i < NDOSPART; i++, dptr++) {
-	if ((dptr->dp_typ == DOSPTYP_EXT) || (dptr->dp_typ == DOSPTYP_EXTLBA))
-	    bd_chainextended(od, dptr->dp_start, 0); /* 1st offset is zero */
-    }
+    od->od_nslices = 4;			/* extended slices start here */
+    for (i = 0; i < NDOSPART; i++)
+	bd_checkextended(od, i);
     od->od_flags |= BD_PARTTABOK;
     dptr = &od->od_slicetab[0];
-
-    /*
-     * Overflow entries are not loaded into memory but we still keep
-     * track of the count.  Fix it up now.
-     */
-    if (od->od_nslices > NEXTDOSPART)
-	od->od_nslices = NEXTDOSPART;
 
     /*
      * Is this a request for the whole disk?
@@ -768,87 +743,47 @@ unsliced:
     return(error);
 }
 
-
 static void
-bd_chainextended(struct open_disk *od, u_int32_t base, u_int32_t offset)
+bd_checkextended(struct open_disk *od, int slicenum)
 {
-        char   buf[BIOSDISK_SECSIZE];
-        struct dos_partition *dp1, *dp2;
-	int i;
+	char	buf[BIOSDISK_SECSIZE];
+	struct dos_partition *dp;
+	u_int base;
+	int i, start, end;
 
-	if (bd_read(od, (daddr_t)(base + offset), 1, buf)) {
-                printf("\nerror reading extended partition table");
-		return;
-	}
+	dp = &od->od_slicetab[slicenum];
+	start = od->od_nslices;
+
+	if (dp->dp_size == 0)
+		goto done;
+	if (dp->dp_typ != DOSPTYP_EXT)
+		goto done;
+	if (bd_read(od, (daddr_t)dp->dp_start, 1, buf))
+		goto done;
+	if (((u_char)buf[0x1fe] != 0x55) || ((u_char)buf[0x1ff] != 0xaa)) {
+		DEBUG("no magic in extended table");
+		goto done;
+		}
+	base = dp->dp_start;
+	dp = (struct dos_partition *)(&buf[DOSPARTOFF]);
+	for (i = 0; i < NDOSPART; i++, dp++) {
+		if (dp->dp_size == 0)
+			continue;
+		if (od->od_nslices == NEXTDOSPART)
+			goto done;
+		dp->dp_start += base;
+		bcopy(dp, &od->od_slicetab[od->od_nslices], sizeof(*dp));
+		od->od_nslices++;
+		}
+	end = od->od_nslices;
 
 	/*
-	 * dp1 points to the first record in the on-disk XPT,
-	 * dp2 points to the next entry in the in-memory parition table.
-	 *
-	 * NOTE: dp2 may be out of bounds if od_nslices >= NEXTDOSPART.
-	 *
-	 * NOTE: unlike the extended partitions in our primary dos partition
-	 * table, we do not record recursed extended partitions themselves
-	 * in our in-memory partition table.
-	 *
-	 * NOTE: recording within our in-memory table must be breadth first
-	 * ot match what the kernel does.  Thus, two passes are required.
-	 *
-	 * NOTE: partitioning programs which support extended partitions seem
-	 * to always use the first entry for the user partition and the
-	 * second entry to chain, and also appear to disallow more then one
-	 * extended partition at each level.  Nevertheless we make our code
-	 * somewhat more generic (and the same as the kernel's own slice
-	 * scan).
+	 * now, recursively check the slices we just added
 	 */
-	dp1 = (struct dos_partition *)(&buf[DOSPARTOFF]);
-	dp2 = &od->od_slicetab[od->od_nslices];
-
-	for (i = 0; i < NDOSPART; ++i, ++dp1) {
-		if (dp1->dp_scyl == 0 && dp1->dp_shd == 0 &&
-		    dp1->dp_ssect == 0 && dp1->dp_start == 0 &&
-		    dp1->dp_size == 0) {
-			continue;
-		}
-		if ((dp1->dp_typ == DOSPTYP_EXT) ||
-		    (dp1->dp_typ == DOSPTYP_EXTLBA)) {
-			/*
-			 * breadth first traversal, must skip in the
-			 * first pass
-			 */
-			continue;
-		}
-
-		/*
-		 * Only load up the in-memory data if we haven't overflowed
-		 * our in-memory array.
-		 */
-		if (od->od_nslices < NEXTDOSPART) {
-			dp2->dp_typ = dp1->dp_typ;
-			dp2->dp_start = base + offset + dp1->dp_start;
-			dp2->dp_size = dp1->dp_size;
-		}
-		++od->od_nslices;
-		++dp2;
-	}
-
-	/*
-	 * Pass 2 - handle extended partitions.  Note that the extended
-	 * slice itself is not stored in the slice array when we recurse,
-	 * but any 'original' top-level extended slices are.  This is to
-	 * match what the kernel does.
-	 */
-	dp1 -= NDOSPART;
-	for (i = 0; i < NDOSPART; ++i, ++dp1) {
-		if (dp1->dp_scyl == 0 && dp1->dp_shd == 0 &&
-		    dp1->dp_ssect == 0 && dp1->dp_start == 0 &&
-		    dp1->dp_size == 0) {
-			continue;
-		}
-		if ((dp1->dp_typ == DOSPTYP_EXT) ||
-		    (dp1->dp_typ == DOSPTYP_EXTLBA))
-			bd_chainextended(od, base, dp1->dp_start);
-	}
+	for (i = start; i < end; i++)
+		bd_checkextended(od, i);
+done:
+	return;
 }
 
 /*
@@ -1009,176 +944,103 @@ bd_realstrategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf, siz
     return (0);
 }
 
+/* Max number of sectors to bounce-buffer if the request crosses a 64k boundary */
+#define FLOPPY_BOUNCEBUF	18
+
+struct edd_packet {
+    uint16_t	len;
+    uint16_t	count;
+    uint16_t	offset;
+    uint16_t	seg;
+    uint64_t	lba;
+};
+
 static int
-bd_read(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
+bd_edd_io(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest, int write)
 {
-    u_int	x, bpc, cyl, hd, sec, result, resid, retry, maxfer;
-    caddr_t	p, xp, bbuf, breg;
+	static struct edd_packet packet;
 
-    /* Just in case some idiot actually tries to read -1 blocks... */
-    if (blks < 0)
-	return (-1);
+	packet.len = sizeof(struct edd_packet);
+	packet.count = blks;
+	packet.offset = VTOPOFF(dest);
+	packet.seg = VTOPSEG(dest);
+	packet.lba = dblk;
+	v86.ctl = V86_FLAGS;
+	v86.addr = 0x13;
+	if (write)
+	/* Should we Write with verify ?? 0x4302 ? */
+		v86.eax = 0x4300;
+	else
+		v86.eax = 0x4200;
+	v86.edx = od->od_unit;
+	v86.ds = VTOPSEG(&packet);
+	v86.esi = VTOPOFF(&packet);
+	v86int();
+	return (v86.efl & PSL_C);
+}
 
-    bpc = (od->od_sec * od->od_hds);		/* blocks per cylinder */
-    resid = blks;
-    p = dest;
+static int
+bd_chs_io(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest, int write)
+{
+	u_int	x, bpc, cyl, hd, sec;
 
-    /*
-     * Always bounce.  Our buffer is probably not segment-addressable.
-     */
-    if (1) {
-
-	/*
-	 * There is a 64k physical boundary somewhere in the destination
-	 * buffer, so we have to arrange a suitable bounce buffer.  Allocate
-	 * a buffer twice as large as we need to.  Use the bottom half unless
-	 * there is a break there, in which case we use the top half.
-	 */
-	bbuf = bounce_base;
-	x = min(BOUNCEBUF_SECTS, (unsigned)blks);
-
-	if (((u_int32_t)VTOP(bbuf) & 0xffff8000) ==
-	    ((u_int32_t)VTOP(bbuf + x * BIOSDISK_SECSIZE - 1) & 0xffff8000)) {
-	    breg = bbuf;
-	} else {
-	    breg = bbuf + x * BIOSDISK_SECSIZE;
-	}
-	maxfer = x;		/* limit transfers to bounce region size */
-    } else {
-	breg = bbuf = NULL;
-	maxfer = 0;
-    }
-
-    while (resid > 0) {
+	bpc = (od->od_sec * od->od_hds);	/* blocks per cylinder */
 	x = dblk;
 	cyl = x / bpc;			/* block # / blocks per cylinder */
 	x %= bpc;			/* block offset into cylinder */
 	hd = x / od->od_sec;		/* offset / blocks per track */
 	sec = x % od->od_sec;		/* offset into track */
-
-	/* play it safe and don't cross track boundaries (XXX this is probably unnecessary) */
-	x = szmin(od->od_sec - sec, resid);
-	if (maxfer > 0)
-	    x = min(x, maxfer);		/* fit bounce buffer */
-
-	/* where do we transfer to? */
-	xp = (bbuf == NULL ? p : breg);
 
 	/* correct sector number for 1-based BIOS numbering */
 	sec++;
 
-	/*
-	 * Loop retrying the operation a couple of times.  The BIOS may also
-	 * retry.
-	 */
-	for (retry = 0; retry < 3; retry++) {
-	    /*
-	     * If retrying, reset the drive.
-	     */
-	    if (retry > 0) {
-		v86.ctl = V86_FLAGS;
-		v86.addr = 0x13;
-		v86.eax = 0;
-		v86.edx = od->od_unit;
-		v86int();
-	    }
+	if (cyl > 1023)
+	/* CHS doesn't support cylinders > 1023. */
+	return (1);
 
-	    /*
-	     * Always use EDD if the disk supports it, otherwise fall back
-	     * to CHS mode (returning an error if the cylinder number is
-	     * too large).
-	     */
-	    if (od->od_flags & BD_MODEEDD1) {
-		static unsigned short packet[8];
-
-		packet[0] = 0x10;
-		packet[1] = x;
-		packet[2] = VTOPOFF(xp);
-		packet[3] = VTOPSEG(xp);
-		packet[4] = dblk & 0xffff;
-		packet[5] = dblk >> 16;
-		packet[6] = 0;
-		packet[7] = 0;
-		v86.ctl = V86_FLAGS;
-		v86.addr = 0x13;
-		v86.eax = 0x4200;
-		v86.edx = od->od_unit;
-		v86.ds = VTOPSEG(packet);
-		v86.esi = VTOPOFF(packet);
-		v86int();
-		result = (v86.efl & PSL_C);
-		if (result == 0)
-		    break;
-	    } else if (cyl < 1024) {
-	        /* Use normal CHS addressing */
-	        v86.ctl = V86_FLAGS;
-		v86.addr = 0x13;
-		v86.eax = 0x200 | x;
-		v86.ecx = ((cyl & 0xff) << 8) | ((cyl & 0x300) >> 2) | sec;
-		v86.edx = (hd << 8) | od->od_unit;
-		v86.es = VTOPSEG(xp);
-		v86.ebx = VTOPOFF(xp);
-		v86int();
-		result = (v86.efl & PSL_C);
-		if (result == 0)
-		    break;
-	    } else {
-		result = 1;
-		break;
-	    }
-	}
-
-	DEBUG("%u sectors from %u/%u/%d to %p (0x%x) %s",
-	      x, cyl, hd, sec - 1, p, VTOP(p), result ? "failed" : "ok");
-	/* BUG here, cannot use v86 in printf because putchar uses it too */
-	DEBUG("ax = 0x%04x cx = 0x%04x dx = 0x%04x status 0x%x",
-	      0x200 | x,
-	      ((cyl & 0xff) << 8) | ((cyl & 0x300) >> 2) | sec,
-	      (hd << 8) | od->od_unit,
-	      (v86.eax >> 8) & 0xff);
-	if (result)
-	    return(-1);
-	if (bbuf != NULL)
-	    bcopy(breg, p, x * BIOSDISK_SECSIZE);
-	p += (x * BIOSDISK_SECSIZE);
-	dblk += x;
-	resid -= x;
-    }
-
-/*    hexdump(dest, (blks * BIOSDISK_SECSIZE)); */
-    return(0);
+	v86.ctl = V86_FLAGS;
+	v86.addr = 0x13;
+	if (write)
+		v86.eax = 0x300 | blks;
+	else
+		v86.eax = 0x200 | blks;
+	v86.ecx = ((cyl & 0xff) << 8) | ((cyl & 0x300) >> 2) | sec;
+	v86.edx = (hd << 8) | od->od_unit;
+	v86.es = VTOPSEG(dest);
+	v86.ebx = VTOPOFF(dest);
+	v86int();
+	return (v86.efl & PSL_C);
 }
 
-
 static int
-bd_write(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
+bd_io(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest, int write)
 {
-    u_int	x, bpc, cyl, hd, sec, result, resid, retry, maxfer;
+    u_int	x, sec, result, resid, retry, maxfer;
     caddr_t	p, xp, bbuf, breg;
 
-    /* Just in case some idiot actually tries to read -1 blocks... */
+    /* Just in case some idiot actually tries to read/write -1 blocks... */
     if (blks < 0)
 	return (-1);
 
-    bpc = (od->od_sec * od->od_hds);		/* blocks per cylinder */
     resid = blks;
     p = dest;
 
-    /*
-     * Always bounce.  Our buffer is probably not segment-addressable.
-     */
-    if (1) {
-	/*
-	 * There is a 64k physical boundary somewhere in the destination
-	 * buffer, so we have to arrange a suitable bounce buffer.  Allocate
-	 * a buffer twice as large as we need to.  Use the bottom half
-	 * unless there is a break there, in which case we use the top half.
-	 */
-	bbuf = bounce_base;
-	x = min(BOUNCEBUF_SECTS, (unsigned)blks);
+    /* Decide whether we have to bounce */
+    if (VTOP(dest) >> 20 != 0 || ((od->od_unit < 0x80) &&
+	((VTOP(dest) >> 16) != (VTOP(dest + blks * BIOSDISK_SECSIZE) >> 16)))) {
 
+	/*
+	 * There is a 64k physical boundary somewhere in the
+	 * destination buffer, or the destination buffer is above
+	 * first 1MB of physical memory so we have to arrange a
+	 * suitable bounce buffer.  Allocate a buffer twice as large
+	 * as we need to.  Use the bottom half unless there is a break
+	 * there, in which case we use the top half.
+	 */
+	x = min(FLOPPY_BOUNCEBUF, (unsigned)blks);
+	bbuf = RALLOCA(x * 2 * BIOSDISK_SECSIZE);
 	if (((u_int32_t)VTOP(bbuf) & 0xffff0000) ==
-	    ((u_int32_t)VTOP(bbuf + x * BIOSDISK_SECSIZE - 1) & 0xffff0000)) {
+	    ((u_int32_t)VTOP(bbuf + x * BIOSDISK_SECSIZE) & 0xffff0000)) {
 	    breg = bbuf;
 	} else {
 	    breg = bbuf + x * BIOSDISK_SECSIZE;
@@ -1190,13 +1052,11 @@ bd_write(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
     }
 
     while (resid > 0) {
-	x = dblk;
-	cyl = x / bpc;			/* block # / blocks per cylinder */
-	x %= bpc;			/* block offset into cylinder */
-	hd = x / od->od_sec;		/* offset / blocks per track */
-	sec = x % od->od_sec;		/* offset into track */
-
-	/* play it safe and don't cross track boundaries (XXX this is probably unnecessary) */
+	/*
+	 * Play it safe and don't cross track boundaries.
+	 * (XXX this is probably unnecessary)
+	 */
+	sec = dblk % od->od_sec;	/* offset into track */
 	x = szmin(od->od_sec - sec, resid);
 	if (maxfer > 0)
 	    x = szmin(x, maxfer);		/* fit bounce buffer */
@@ -1204,19 +1064,16 @@ bd_write(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
 	/* where do we transfer to? */
 	xp = (bbuf == NULL ? p : breg);
 
-	/* correct sector number for 1-based BIOS numbering */
-	sec++;
-
-
-	/* Put your Data In, Put your Data out,
-	   Put your Data In, and shake it all about
-	*/
-	if (bbuf != NULL)
+	/*
+	 * Put your Data In, Put your Data out,
+	 * Put your Data In, and shake it all about
+	 */
+	if (write && bbuf != NULL)
 	    bcopy(p, breg, x * BIOSDISK_SECSIZE);
 
 	/*
-	 * Loop retrying the operation a couple of times.  The BIOS may also
-	 * retry.
+	 * Loop retrying the operation a couple of times.
+	 * The BIOS may also retry.
 	 */
 	for (retry = 0; retry < 3; retry++) {
 	    /*
@@ -1230,58 +1087,23 @@ bd_write(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
 		v86int();
 	    }
 
-	    /*
-	     * Always use EDD if the disk supports it, otherwise fall back
-	     * to CHS mode (returning an error if the cylinder number is
-	     * too large).
-	     */
-	    if (od->od_flags & BD_MODEEDD1) {
-		static unsigned short packet[8];
-
-		packet[0] = 0x10;
-		packet[1] = x;
-		packet[2] = VTOPOFF(xp);
-		packet[3] = VTOPSEG(xp);
-		packet[4] = dblk & 0xffff;
-		packet[5] = dblk >> 16;
-		packet[6] = 0;
-		packet[7] = 0;
-		v86.ctl = V86_FLAGS;
-		v86.addr = 0x13;
-		    /* Should we Write with verify ?? 0x4302 ? */
-		v86.eax = 0x4300;
-		v86.edx = od->od_unit;
-		v86.ds = VTOPSEG(packet);
-		v86.esi = VTOPOFF(packet);
-		v86int();
-		result = (v86.efl & PSL_C);
-		if (result == 0)
-		    break;
-	    } else if (cyl < 1024) {
-	        /* Use normal CHS addressing */
-	        v86.ctl = V86_FLAGS;
-		v86.addr = 0x13;
-		v86.eax = 0x300 | x;
-		v86.ecx = ((cyl & 0xff) << 8) | ((cyl & 0x300) >> 2) | sec;
-		v86.edx = (hd << 8) | od->od_unit;
-		v86.es = VTOPSEG(xp);
-		v86.ebx = VTOPOFF(xp);
-		v86int();
-		result = (v86.efl & PSL_C);
-		if (result == 0)
-		    break;
-	    } else {
-		result = 1;
-		break;
-	    }
+	    if (od->od_flags & BD_MODEEDD1)
+		result = bd_edd_io(od, dblk, x, xp, write);
+	    else
+		result = bd_chs_io(od, dblk, x, xp, write);
 	}
 
-	DEBUG("%u sectors from %u/%u/%d to %p (0x%x) %s", x, cyl, hd, sec - 1, p, VTOP(p), result ? "failed" : "ok");
-	/* BUG here, cannot use v86 in printf because putchar uses it too */
-	DEBUG("ax = 0x%04x cx = 0x%04x dx = 0x%04x status 0x%x",
-	      0x200 | x, ((cyl & 0xff) << 8) | ((cyl & 0x300) >> 2) | sec, (hd << 8) | od->od_unit, (v86.eax >> 8) & 0xff);
-	if (result)
+	if (write)
+	    DEBUG("%d sectors from %lld to %p (0x%x) %s", x, dblk, p, VTOP(p),
+		result ? "failed" : "ok");
+	else
+	    DEBUG("%d sectors from %p (0x%x) to %lld %s", x, p, VTOP(p), dblk,
+		result ? "failed" : "ok");
+	if (result) {
 	    return(-1);
+	}
+	if (!write && bbuf != NULL)
+	    bcopy(breg, p, x * BIOSDISK_SECSIZE);
 	p += (x * BIOSDISK_SECSIZE);
 	dblk += x;
 	resid -= x;
@@ -1290,6 +1112,19 @@ bd_write(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
     /* hexdump(dest, (blks * BIOSDISK_SECSIZE)); */
     return(0);
 }
+
+static int
+bd_read(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
+{
+	return (bd_io(od, dblk, blks, dest, 0));
+}
+
+static int
+bd_write(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest)
+{
+	return (bd_io(od, dblk, blks, dest, 1));
+}
+
 static int
 bd_getgeom(struct open_disk *od)
 {
