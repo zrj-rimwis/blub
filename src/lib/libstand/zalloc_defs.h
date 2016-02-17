@@ -38,12 +38,10 @@
 #define DMALLOCDEBUG		/* add debugging code to gather stats */
 #define ZALLOCDEBUG
 
-#include <string.h>
+#include <sys/stdint.h>
 #include "stand.h"
-
 #include "zalloc_mem.h"
 
-#define Prototype extern
 #define Library extern
 
 /*
@@ -54,18 +52,21 @@
 #define BLKEXTENDMASK	(BLKEXTEND - 1)
 
 /*
- * required malloc alignment.  Just hardwire to 16.
+ * Required malloc alignment.
  *
- * Note: if we implement a more sophisticated realloc, we should ensure that
- * MALLOCALIGN is at least as large as MemNode.
+ * For most platforms, 16 bytes works fine.  The alignment also must be at
+ * least sizeof(struct MemNode); this is asserted in zalloc.c.
  */
+
+#define	MALLOCALIGN		16
+#define	MALLOCALIGN_MASK	(MALLOCALIGN - 1)
 
 typedef struct Guard {
     size_t	ga_Bytes;
     size_t	ga_Magic;	/* must be at least 32 bits */
 } Guard;
 
-#define MALLOCALIGN	16	/* at least as large a sizeof(sturct Guard) */
 #define GAMAGIC		0x55FF44FD
+#define GAFREE		0x5F54F4DF
 
 #include "zalloc_protos.h"

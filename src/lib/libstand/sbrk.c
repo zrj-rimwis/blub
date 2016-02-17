@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include "stand.h"
+#include "zalloc_defs.h"
 
 static size_t	maxheap, heapsize = 0;
 static void	*heapbase;
@@ -39,8 +40,9 @@ static void	*heapbase;
 void
 setheap(void *base, void *top)
 {
-    /* Align start address to 16 bytes for the malloc code. Sigh. */
-    heapbase = (void *)(((uintptr_t)base + 15) & ~15);
+    /* Align start address for the malloc code.  Sigh. */
+    heapbase = (void *)(((uintptr_t)base + MALLOCALIGN_MASK) &
+	~MALLOCALIGN_MASK);
     maxheap = (char *)top - (char *)heapbase;
 }
 

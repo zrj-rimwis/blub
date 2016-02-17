@@ -66,6 +66,8 @@
 #include <sys/cdefs.h>
 #include <sys/stat.h>
 #include <sys/dirent.h>
+
+/* this header intentionally exports NULL from <string.h> */
 #include <string.h>
 
 #define CHK(fmt, args...)	printf("%s(%d): " fmt "\n", __func__, __LINE__ , ##args)
@@ -382,28 +384,21 @@ extern void		panic(const char *, ...) __dead2 __printflike(1, 2);
 extern struct fs_ops	*file_system[];
 extern struct devsw	*devsw[];
 
-#if 0
+void *Malloc(size_t, const char *, int);
+void *Calloc(size_t, size_t, const char *, int);
+void *Realloc(void *, size_t, const char *, int);
+void Free(void *, const char *, int);
 
-static inline void *
-malloc_debug(size_t size, const char *file, int line)
-{
-    void *p;
-    printf("%s:%d malloc(%ld)", file, line, size);
-    p = malloc(size);
-    printf("=%p\n", p);
-    return p;
-}
-
-static inline void
-free_debug(void *p, const char *file, int line)
-{
-    printf("%s:%d free(%p)\n", file, line, p);
-    free(p);
-}
-
-#define malloc(x)	malloc_debug(x, __FILE__, __LINE__)
-#define free(x)		free_debug(x, __FILE__, __LINE__)
-
+#if 1
+#define malloc(x)	Malloc(x, __FILE__, __LINE__)
+#define calloc(x, y)	Calloc(x, y, __FILE__, __LINE__)
+#define free(x)		Free(x, __FILE__, __LINE__)
+#define realloc(x, y)	Realloc(x, y, __FILE__, __LINE__)
+#else
+#define malloc(x)	Malloc(x, NULL, 0)
+#define calloc(x, y)	Calloc(x, y, NULL, 0)
+#define free(x)		Free(x, NULL, 0)
+#define realloc(x, y)	Realloc(x, y, NULL, 0)
 #endif
 
 #endif	/* STAND_H */
