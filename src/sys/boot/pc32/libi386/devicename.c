@@ -119,23 +119,41 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
 		err = EUNIT;
 		goto fail;
 	    }
-	    if (*cp == 's') {		/* got a slice number */
+#ifdef LOADER_GPT_SUPPORT
+	    if (*cp == 'p') {		/* got a GPT partition */
 		np = cp + 1;
 		slice = strtol(np, &cp, 10);
 		if (cp == np) {
 		    err = ESLICE;
 		    goto fail;
 		}
-	    }
-	    if (*cp && (*cp != ':')) {
-		partition = *cp - 'a';		/* get a partition number */
-		if ((partition < 0) || (partition >= MAXPARTITIONS32)) {
-		    err = EPART;
+		if (*cp && (*cp != ':')) {
+		    err = EINVAL;
 		    goto fail;
 		}
-		cp++;
+		partition = 0xff;
+	    } else {
+#endif
+		if (*cp == 's') {		/* got a slice number */
+		    np = cp + 1;
+		    slice = strtol(np, &cp, 10);
+		    if (cp == np) {
+			err = ESLICE;
+			goto fail;
+		    }
+		}
+		if (*cp && (*cp != ':')) {
+		    partition = *cp - 'a';	/* get a partition number */
+		    if ((partition < 0) || (partition >= MAXPARTITIONS32)) {
+			err = EPART;
+			goto fail;
+		    }
+		    cp++;
+		}
 	    }
+#ifdef LOADER_GPT_SUPPORT
 	}
+#endif
 	if (*cp && (*cp != ':')) {
 	    err = EINVAL;
 	    goto fail;
@@ -207,10 +225,18 @@ i386_fmtdev(void *vdev)
     case DEVT_DISK:
 	cp = buf;
 	cp += sprintf(cp, "%s%d", dev->d_dev->dv_name, dev->d_unit);
+#ifdef LOADER_GPT_SUPPORT
+	if (dev->d_kind.biosdisk.partition == 0xff) {
+	    cp += sprintf(cp, "p%d", dev->d_kind.biosdisk.slice);
+	} else {
+#endif
 	if (dev->d_kind.biosdisk.slice > 0)
 	    cp += sprintf(cp, "s%d", dev->d_kind.biosdisk.slice);
 	if (dev->d_kind.biosdisk.partition >= 0)
 	    cp += sprintf(cp, "%c", dev->d_kind.biosdisk.partition + 'a');
+#ifdef LOADER_GPT_SUPPORT
+	}
+#endif
 	strcat(cp, ":");
 	break;
 

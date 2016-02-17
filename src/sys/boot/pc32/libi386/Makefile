@@ -26,6 +26,10 @@ CFLAGS+= -DDISK_DEBUG
 # Include simple terminal emulation (cons25-compatible)
 CFLAGS+= -DTERM_EMU
 
+.if !defined(LOADER_NO_GPT_SUPPORT)
+CFLAGS+=	-DLOADER_GPT_SUPPORT
+.endif
+
 # XXX: make alloca() useable
 CFLAGS+= -DRALLOCA=__builtin_alloca
 
