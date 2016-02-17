@@ -647,7 +647,8 @@ ret:
  *	resid:	out
  */
 int
-nfs_write(struct open_file *f, void *buf, size_t size, size_t *resid)
+nfs_write(struct open_file *f __unused, void *buf __unused,
+    size_t size __unused, size_t *resid __unused)
 {
 	return (EROFS);
 }

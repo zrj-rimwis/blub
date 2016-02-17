@@ -399,13 +399,14 @@ tftp_close(struct open_file *f)
  *	resid:	out
  */
 static int
-tftp_write(struct open_file *f, void *start, size_t size, size_t *resid)
+tftp_write(struct open_file *f __unused, void *start __unused, size_t size __unused,
+    size_t *resid __unused)
 {
 	return (EROFS);
 }
 
 static int
-tftp_stat(struct open_file *f, struct stat *sb)
+tftp_stat(struct open_file *f __unused, struct stat *sb)
 {
 	sb->st_mode = 0444 | S_IFREG;
 	sb->st_nlink = 1;
