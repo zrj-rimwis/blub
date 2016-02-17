@@ -49,6 +49,10 @@ SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memccpy.c memchr.c memcmp.c \
 .PATH:	${.CURDIR}/../../sys/libkern
 SRCS+=  icrc32.c
 
+# uuid functions from libc
+.PATH: ${.CURDIR}/../libc/uuid
+SRCS+= uuid_equal.c uuid_is_nil.c
+
 # _setjmp/_longjmp
 .if ${MACHINE_ARCH} == "x86_64"
 .PATH:	${.CURDIR}/i386
