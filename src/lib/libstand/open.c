@@ -111,6 +111,7 @@ open(const char *fname, int mode)
     /* see if we opened a raw device; otherwise, 'file' is the file name. */
     if (file == NULL || *file == '\0') {
 	f->f_flags |= F_RAW;
+	f->f_rabuf = NULL;
 	return (fd);
     }
 
