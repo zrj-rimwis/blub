@@ -411,7 +411,7 @@ nfs_open(const char *upath, struct open_file *f)
 
 #ifdef NFS_DEBUG
 	if (debug)
-	    printf("nfs_open: %s (rootpath=%s)\n", path, rootpath);
+	    printf("nfs_open: %s (rootpath=%s)\n", upath, rootpath);
 #endif
 	if (!rootpath[0]) {
 		printf("no rootpath, no nfs\n");
