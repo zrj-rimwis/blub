@@ -274,7 +274,7 @@ bd_print(int verbose)
 	pager_output(line);
 
 	/* try to open the whole disk */
-	dev.d_kind.biosdisk.unit = i;
+	dev.d_unit = i;
 	dev.d_kind.biosdisk.slice = -1;
 	dev.d_kind.biosdisk.partition = -1;
 
@@ -538,7 +538,7 @@ bd_opendisk(struct open_disk **odp, struct i386_devdesc *dev)
     int				error;
     static char			buf[BUFSIZE];
 
-    if (dev->d_kind.biosdisk.unit >= nbdinfo) {
+    if (dev->d_unit >= nbdinfo) {
 	DEBUG("attempt to open nonexistent disk");
 	return(ENXIO);
     }
@@ -550,14 +550,14 @@ bd_opendisk(struct open_disk **odp, struct i386_devdesc *dev)
     }
 
     /* Look up BIOS unit number, intialise open_disk structure */
-    od->od_dkunit = dev->d_kind.biosdisk.unit;
+    od->od_dkunit = dev->d_unit;
     od->od_unit = bdinfo[od->od_dkunit].bd_unit;
     od->od_flags = bdinfo[od->od_dkunit].bd_flags;
     od->od_boff = 0;
     od->od_nslices = 0;
     error = 0;
     DEBUG("open '%s', unit 0x%x slice %d partition %c",
-	     i386_fmtdev(dev), dev->d_kind.biosdisk.unit,
+	     i386_fmtdev(dev), dev->d_unit,
 	     dev->d_kind.biosdisk.slice, dev->d_kind.biosdisk.partition + 'a');
 
     /* Get geometry for this open (removable device may have changed) */
@@ -885,6 +885,7 @@ bd_bestslice(struct open_disk *od)
 
 	dp = &od->od_slicetab[0];
 	for (i = 0; i < od->od_nslices; i++, dp++) {
+
 		switch (dp->dp_typ) {
 		case DOSPTYP_386BSD:		/* FreeBSD */
 			pref = dp->dp_flag & 0x80 ? PREF_FBSD_ACT : PREF_FBSD;
@@ -962,36 +963,31 @@ bd_realstrategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf, siz
 #endif
 
     DEBUG("open_disk %p", od);
+    blks = size / BIOSDISK_SECSIZE;
+    if (rsize)
+	*rsize = 0;
 
     switch(rw){
     case F_READ:
-	blks = size / BIOSDISK_SECSIZE;
 	DEBUG("read %d from %d to %p", blks, dblk, buf);
 
-	if (rsize)
-	    *rsize = 0;
 	if (blks && bd_read(od, dblk, blks, buf)) {
 	    DEBUG("read error");
 	    return (EIO);
 	}
 #ifdef BD_SUPPORT_FRAGS
 	DEBUG("bd_strategy: frag read %d from %d+%d to %p",
-	     fragsize, dblk, blks, buf + (blks * BIOSDISK_SECSIZE));
+	    fragsize, dblk, blks, buf + (blks * BIOSDISK_SECSIZE));
 	if (fragsize && bd_read(od, dblk + blks, 1, fragsize)) {
 	    DEBUG("frag read error");
 	    return(EIO);
 	}
 	bcopy(fragbuf, buf + (blks * BIOSDISK_SECSIZE), fragsize);
 #endif
-	if (rsize)
-	    *rsize = size;
-	return (0);
+	break;
     case F_WRITE :
-	blks = size / BIOSDISK_SECSIZE;
 	DEBUG("write %d from %d to %p", blks, dblk, buf);
 
-	if (rsize)
-	    *rsize = 0;
 	if (blks && bd_write(od, dblk, blks, buf)) {
 	    DEBUG("write error");
 	    return (EIO);
@@ -1002,13 +998,15 @@ bd_realstrategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf, siz
 	    return (EIO);
 	}
 #endif
-	if (rsize)
-	    *rsize = size;
-	return (0);
+	break;
     default:
-	break; /* DO NOTHING */
+	/* DO NOTHING */
+	return (EROFS);
     }
-    return EROFS;
+
+    if (rsize)
+	*rsize = size;
+    return (0);
 }
 
 static int
@@ -1361,8 +1359,8 @@ bd_getdev(struct i386_devdesc *dev)
     char			*nip, *cp;
     int				unitofs = 0, i, unit;
 
-    biosdev = bd_unit2bios(dev->d_kind.biosdisk.unit);
-    DEBUG("unit %d BIOS device %d", dev->d_kind.biosdisk.unit, biosdev);
+    biosdev = bd_unit2bios(dev->d_unit);
+    DEBUG("unit %d BIOS device %d", dev->d_unit, biosdev);
     if (biosdev == -1)				/* not a BIOS device */
 	return(-1);
     if (bd_opendisk(&od, dev) != 0)		/* oops, not a viable device */
@@ -1370,7 +1368,7 @@ bd_getdev(struct i386_devdesc *dev)
 
     if (biosdev < 0x80) {
 	/* floppy (or emulated floppy) or ATAPI device */
-	if (bdinfo[dev->d_kind.biosdisk.unit].bd_type == DT_ATAPI) {
+	if (bdinfo[dev->d_unit].bd_type == DT_ATAPI) {
 	    /* is an ATAPI disk */
 	    major = WFDMAJOR;
 	} else {
