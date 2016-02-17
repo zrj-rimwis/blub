@@ -83,7 +83,8 @@ sendrecv(struct iodesc *d, ssize_t (*sproc)(struct iodesc *, void *, size_t),
 #endif
 
 	tmo = MINTMO;
-	tlast = tleft = 0;
+	tlast = 0;
+	tleft = 0;
 	t = getsecs();
 	for (;;) {
 		if (tleft <= 0) {
@@ -97,13 +98,14 @@ sendrecv(struct iodesc *d, ssize_t (*sproc)(struct iodesc *, void *, size_t),
 				    cc, ssize);
 
 			tleft = tmo;
-			tmo <<= 1;
+			tmo += MINTMO;
 			if (tmo > MAXTMO)
 				tmo = MAXTMO;
 
 			if (cc == -1) {
 				/* Error on transmit; wait before retrying */
-				while ((getsecs() - t) < tmo);
+				while ((getsecs() - t) < tmo)
+					;
 				tleft = 0;
 				continue;
 			}
