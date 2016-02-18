@@ -150,10 +150,12 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
 		    }
 		    cp++;
 		}
-	    }
 #ifdef LOADER_GPT_SUPPORT
-	}
+	    }
 #endif
+	} else {
+		cp = (char *)np;
+	}
 	if (*cp && (*cp != ':')) {
 	    err = EINVAL;
 	    goto fail;
@@ -176,6 +178,8 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
 		err = EUNIT;
 		goto fail;
 	    }
+	} else {
+		cp = (char *)np;
 	}
 	if (*cp && (*cp != ':')) {
 	    err = EINVAL;
