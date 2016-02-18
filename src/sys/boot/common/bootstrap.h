@@ -233,6 +233,7 @@ extern struct preloaded_file	*preloaded_files;
 
 int			mod_load(char *name, struct mod_depend *verinfo, int argc, char *argv[]);
 int			mod_loadkld(const char *name, int argc, char *argv[]);
+void			unload(void);
 
 struct preloaded_file *file_alloc(void);
 struct preloaded_file *file_findfile(const char *name, const char *type);

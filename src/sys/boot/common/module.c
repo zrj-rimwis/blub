@@ -174,12 +174,10 @@ command_load(int argc, char *argv[])
     return (error == 0 ? CMD_OK : CMD_ERROR);
 }
 
-COMMAND_SET(unload, "unload", "unload all modules", command_unload);
-
-static int
-command_unload(int argc, char *argv[])
+void
+unload(void)
 {
-    struct preloaded_file	*fp;
+    struct preloaded_file *fp;
 
     while (preloaded_files != NULL) {
 	fp = preloaded_files;
@@ -188,6 +186,14 @@ command_unload(int argc, char *argv[])
     }
     loadaddr = 0;
     unsetenv("kernelname");
+}
+
+COMMAND_SET(unload, "unload", "unload all modules", command_unload);
+
+static int
+command_unload(int argc, char *argv[])
+{
+    unload();
     return(CMD_OK);
 }
 
