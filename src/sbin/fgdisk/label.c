@@ -40,7 +40,7 @@
 static int all;
 static uuid_t type;
 static off_t block, size;
-static unsigned int entry = NOENTRY;
+static unsigned int entry;
 static uint8_t *name;
 
 static void
@@ -89,16 +89,16 @@ label(int fd)
 
 	/* Relabel all matching entries in the map. */
 	for (m = map_first(); m != NULL; m = m->map_next) {
-		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index == NOENTRY)
+		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
 			continue;
-		if (entry != NOENTRY && entry != m->map_index)
+		if (entry > 0 && entry != m->map_index)
 			continue;
 		if (block > 0 && block != m->map_start)
 			continue;
 		if (size > 0 && size != m->map_size)
 			continue;
 
-		i = m->map_index;
+		i = m->map_index - 1;
 
 		hdr = gpt->map_data;
 		ent = (void*)((char*)tbl->map_data + i *
@@ -134,7 +134,7 @@ label(int fd)
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
 
-		printf("%ss%u labeled\n", device_name, m->map_index);
+		printf("%sp%u labeled\n", device_name, m->map_index);
 	}
 }
 
@@ -192,10 +192,10 @@ cmd_label(int argc, char *argv[])
 			name_from_file(optarg);
 			break;
 		case 'i':
-			if (entry != NOENTRY)
+			if (entry > 0)
 				usage_label();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry == NOENTRY)
+			entry = strtol(optarg, &p, 10);
+			if (*p != 0 || entry < 1)
 				usage_label();
 			break;
 		case 'l':
@@ -222,8 +222,7 @@ cmd_label(int argc, char *argv[])
 	}
 
 	if (!all ^
-	    (block > 0 || entry != NOENTRY || size > 0 ||
-	     !uuid_is_nil(&type, NULL)))
+	    (block > 0 || entry > 0 || size > 0 || !uuid_is_nil(&type, NULL)))
 		usage_label();
 
 	if (name == NULL || argc == optind)

@@ -1,41 +1,39 @@
-/*
- * Copyright (c) 2008 The DragonFly Project.  All rights reserved.
- *
- * This code is derived from software contributed to The DragonFly Project
- * by Matthew Dillon <dillon@backplane.com>
+/*-
+ * Copyright (c) 2007 Yahoo!, Inc.
+ * All rights reserved.
+ * Written by: John Baldwin <jhb@FreeBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name of The DragonFly Project nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific, prior written permission.
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the author nor the names of any co-contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
- * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
+#include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,146 +44,207 @@
 #include "map.h"
 #include "gpt.h"
 
+static uuid_t boot_uuid = GPT_ENT_TYPE_FREEBSD_BOOT;
+static const char *pmbr_path = "/boot/pmbr";
+static const char *gptboot_path = "/boot/gptboot";
+static u_long boot_size;
+
 static void
 usage_boot(void)
 {
-	fprintf(stderr, "usage: %s device\n", getprogname());
+	fprintf(stderr,
+	    "usage: %s [-b pmbr] [-g gptboot] [-s count] device ...\n",
+	    getprogname());
 	exit(1);
 }
 
-static void
-bootset(int fd)
+static int
+gpt_find(uuid_t *type, map_t **mapp)
 {
-	uuid_t uuid;
-	off_t  block;
-	off_t  size;
-	unsigned int entry;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
-	u_int32_t status;
+	map_t *gpt, *tbl, *map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
-	struct mbr *mbr;
-	int bfd;
+	unsigned int i;
 
-	/*
-	 * Paramters for boot partition
-	 */
-	uuid_name_lookup(&uuid, "DragonFly Label32", &status);
-	if (status != uuid_s_ok)
-		err(1, "unable to find uuid for 'DragonFly Label32'");
-	entry = 0;
-	block = 0;
-	size = (off_t)1024 * 1024 * 1024 / 512;		/* 1GB */
-
+	/* Find a GPT partition with the requested UUID type. */
 	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL)
-		errx(1, "%s: error: no primary GPT header", device_name);
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL)
-		errx(1, "%s: error: no secondary GPT header", device_name);
+	if (gpt == NULL) {
+		warnx("%s: error: no primary GPT header", device_name);
+		return (ENXIO);
+	}
+
 	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		errx(1, "%s: error: no primary or secondary gpt table",
-		     device_name);
+	if (tbl == NULL) {
+		warnx("%s: error: no primary partition table", device_name);
+		return (ENXIO);
 	}
 
 	hdr = gpt->map_data;
-	if (entry > le32toh(hdr->hdr_entries)) {
-		errx(1, "%s: error: index %u out of range (%u max)",
-		     device_name, entry, le32toh(hdr->hdr_entries));
+	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
+		ent = (void *)((char *)tbl->map_data + i *
+		    le32toh(hdr->hdr_entsz));
+		if (uuid_equal(&ent->ent_type, type, NULL))
+			break;
+	}
+	if (i == le32toh(hdr->hdr_entries)) {
+		*mapp = NULL;
+		return (0);
 	}
 
-	ent = (void *)((char *)tbl->map_data + entry *
-		       le32toh(hdr->hdr_entsz));
-	if (!uuid_is_nil(&ent->ent_type, NULL)) {
-		errx(1, "%s: error: entry at index %d is not free",
-		     device_name, entry);
+	/* Lookup the map corresponding to this partition. */
+	for (map = map_find(MAP_TYPE_GPT_PART); map != NULL;
+	     map = map->map_next) {
+		if (map->map_type != MAP_TYPE_GPT_PART)
+			continue;
+		if (map->map_start == (off_t)le64toh(ent->ent_lba_start)) {
+			assert(map->map_start + map->map_size - 1LL ==
+			    (off_t)le64toh(ent->ent_lba_end));
+			*mapp = map;
+			return (0);
+		}
 	}
-	map = map_alloc(block, size);
-	if (map == NULL)
-		errx(1, "%s: error: no space available on device", device_name);
-	block = map->map_start;
-	size  = map->map_size;
 
-	le_uuid_enc(&ent->ent_type, &uuid);
-	ent->ent_lba_start = htole64(map->map_start);
-	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
+	/* Hmm, the map list is not in sync with the GPT table. */
+	errx(1, "internal map list is corrupted");
+}
 
-	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
-				     le32toh(hdr->hdr_entries) *
-				     le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+static void
+boot(int fd)
+{
+	struct stat sb;
+	off_t bsize, ofs;
+	map_t *pmbr, *gptboot;
+	struct mbr *mbr;
+	char *buf;
+	ssize_t nbytes;
+	unsigned int entry;
+	int bfd;
 
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
+	/* First step: verify boot partition size. */
+	if (boot_size == 0)
+		/* Default to 64k. */
+		bsize = 65536 / secsz;
+	else {
+		if (boot_size * secsz < 16384) {
+			warnx("invalid boot partition size %lu", boot_size);
+			return;
+		}
+		bsize = boot_size;
+	}
 
-	hdr = tpg->map_data;
-	ent = (void*)((char*)lbt->map_data + entry * le32toh(hdr->hdr_entsz));
-	le_uuid_enc(&ent->ent_type, &uuid);
-	ent->ent_lba_start = htole64(map->map_start);
-	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
-
-	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
-				     le32toh(hdr->hdr_entries) *
-				     le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
-
-	/*
-	 * Create a dummy partition
-	 */
-	map = map_find(MAP_TYPE_PMBR);
-	if (map == NULL)
-		errx(1, "I can't find the PMBR!");
-	mbr = map->map_data;
-	if (mbr == NULL)
-		errx(1, "I can't find the PMBR's data!");
-
-	/*
-	 * Copy in real boot code
-	 */
-	bfd = open("/boot/boot0", O_RDONLY);
-	if (bfd < 0 ||
-	    read(bfd, mbr->mbr_code, sizeof(mbr->mbr_code)) !=
-	    sizeof(mbr->mbr_code)) {
-		errx(1, "Cannot read /boot/boot0");
+	/* Second step: write the PMBR boot loader into the PMBR. */
+	pmbr = map_find(MAP_TYPE_PMBR);
+	if (pmbr == NULL) {
+		warnx("%s: error: PMBR not found", device_name);
+		return;
+	}
+	bfd = open(pmbr_path, O_RDONLY);
+	if (bfd < 0 || fstat(bfd, &sb) < 0) {
+		warn("unable to open PMBR boot loader");
+		return;
+	}
+	if (sb.st_size != secsz) {
+		warnx("invalid PMBR boot loader");
+		return;
+	}
+	mbr = pmbr->map_data;
+	nbytes = read(bfd, mbr->mbr_code, sizeof(mbr->mbr_code));
+	if (nbytes < 0) {
+		warn("unable to read PMBR boot loader");
+		return;
+	}
+	if (nbytes != sizeof(mbr->mbr_code)) {
+		warnx("short read of PMBR boot loader");
+		return;
 	}
 	close(bfd);
+	gpt_write(fd, pmbr);
+
+	/* Third step: open gptboot and obtain its size. */
+	bfd = open(gptboot_path, O_RDONLY);
+	if (bfd < 0 || fstat(bfd, &sb) < 0) {
+		warn("unable to open GPT boot loader");
+		return;
+	}
+
+	/* Fourth step: find an existing boot partition or create one. */
+	if (gpt_find(&boot_uuid, &gptboot) != 0)
+		return;
+	if (gptboot != NULL) {
+		if (gptboot->map_size * secsz < sb.st_size) {
+			warnx("%s: error: boot partition is too small",
+			    device_name);
+			return;
+		}
+	} else if (bsize * secsz < sb.st_size) {
+		warnx(
+		    "%s: error: proposed size for boot partition is too small",
+		    device_name);
+		return;
+	} else {
+		entry = 0;
+		gptboot = gpt_add_part(fd, boot_uuid, 0, bsize, &entry);
+		if (gptboot == NULL)
+			return;
+	}
 
 	/*
-	 * Generate partition #1
+	 * Fourth step, write out the gptboot binary to the boot partition.
+	 * When writing to a disk device, the write must be sector aligned
+	 * and not write to any partial sectors, so round up the buffer size
+	 * to the next sector and zero it.
 	 */
-	mbr->mbr_part[1].part_shd = 0xff;
-	mbr->mbr_part[1].part_ssect = 0xff;
-	mbr->mbr_part[1].part_scyl = 0xff;
-	mbr->mbr_part[1].part_ehd = 0xff;
-	mbr->mbr_part[1].part_esect = 0xff;
-	mbr->mbr_part[1].part_ecyl = 0xff;
-	mbr->mbr_part[1].part_start_lo = htole16(block);
-	mbr->mbr_part[1].part_start_hi = htole16((block) >> 16);
-	mbr->mbr_part[1].part_size_lo = htole16(size);
-	mbr->mbr_part[1].part_size_hi = htole16(size >> 16);
-
-	mbr->mbr_part[1].part_typ = 165;
-	mbr->mbr_part[1].part_flag = 0x80;
-
-	gpt_write(fd, map);
+	bsize = (sb.st_size + secsz - 1) / secsz * secsz;
+	buf = calloc(1, bsize);
+	nbytes = read(bfd, buf, sb.st_size);
+	if (nbytes < 0) {
+		warn("unable to read GPT boot loader");
+		return;
+	}
+	if (nbytes != sb.st_size) {
+		warnx("short read of GPT boot loader");
+		return;
+	}
+	close(bfd);
+	ofs = gptboot->map_start * secsz;
+	if (lseek(fd, ofs, SEEK_SET) != ofs) {
+		warn("%s: error: unable to seek to boot partition",
+		    device_name);
+		return;
+	}
+	nbytes = write(fd, buf, bsize);
+	if (nbytes < 0) {
+		warn("unable to write GPT boot loader");
+		return;
+	}
+	if (nbytes != bsize) {
+		warnx("short write of GPT boot loader");
+		return;
+	}
+	free(buf);
 }
 
 int
 cmd_boot(int argc, char *argv[])
 {
+	char *p;
 	int ch, fd;
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
-		switch(ch) {
+	while ((ch = getopt(argc, argv, "b:g:s:")) != -1) {
+		switch (ch) {
+		case 'b':
+			pmbr_path = optarg;
+			break;
+		case 'g':
+			gptboot_path = optarg;
+			break;
+		case 's':
+			if (boot_size > 0)
+				usage_boot();
+			boot_size = strtol(optarg, &p, 10);
+			if (*p != '\0' || boot_size < 1)
+				usage_boot();
+			break;
 		default:
 			usage_boot();
 		}
@@ -196,12 +255,15 @@ cmd_boot(int argc, char *argv[])
 
 	while (optind < argc) {
 		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
+		if (fd < 0) {
 			warn("unable to open device '%s'", device_name);
 			continue;
 		}
-		bootset(fd);
+
+		boot(fd);
+
 		gpt_close(fd);
 	}
+
 	return (0);
 }

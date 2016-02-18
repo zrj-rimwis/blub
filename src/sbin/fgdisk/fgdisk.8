@@ -41,10 +41,6 @@ utility provides the necessary functionality to manipulate GUID partition
 tables (GPTs), but see
 .Sx BUGS
 below for how and where functionality is missing.
-GPT partitions are accessed as
-.Dx
-disk slices, with same number as GPT partition,
-127 slices per disk device are supported.
 The basic usage model of the
 .Nm
 tool follows that of the
@@ -103,11 +99,8 @@ There is no formalized definition of the different levels yet.
 .Xc
 The
 .Ic add
-command allows the user to add a new partition to an existing table,
-the name of the disk slice for the added partition is printed.
-By default, it will create a
-.Cm dfly
-partition covering the first available block
+command allows the user to add a new partition to an existing table.
+By default, it will create a UFS partition covering the first available block
 of an unused disk space.
 The command-specific options can be used to control this behaviour.
 .Pp
@@ -123,7 +116,7 @@ The
 option allows the user to specify which (free) entry in the GPT table is to
 be used for the new partition.
 By default, the first free entry is selected.
-Entries start at index 0 representing partition 0 of the GPT.
+Entries start at index 1 representing partition 1 of the GPT.
 .Pp
 The
 .Fl s Ar count
@@ -136,67 +129,51 @@ option allows the user to specify the partition type.
 The type is given as an UUID, but
 .Nm
 accepts
-.Cm efi , swap , ufs , hfs , linux , dfly ,
+.Cm boot , efi , swap , ufs , hfs , linux , dfly ,
 and
 .Cm windows
 as aliases for the most commonly used partition types.
-.Cm ufs
-is a
-.Fx
-UFS UUID.
-.Cm dfly
-has the alias
-.Cm dragonfly
-and is a
-.Dx
-.Xr disklabel64 5
-UUID.
-You may also specify any symbolic name in the system
-.Xr uuids 5
-files.
 .\" ==== boot ====
-.It Nm Ic boot Ar device ...
+.It Xo
+.Nm
+.Ic boot
+.Op Fl b Ar pmbr
+.Op Fl g Ar gptboot
+.Op Fl s Ar count
+.Ar device ...
+.Xc
 The
 .Ic boot
-command allows the user to create a small boot partition in a freshly
-created GPT.
-.Pp
-This command creates a small, 1GB boot partition as partition #0
-and hacks in a special
-.Sq slice 1
-in the PMBR which aliases it.
-The PMBR is further modified to add the necessary boot code.
-You can then disklabel GPT partition #0 and mount it, placing the contents of
-.Pa /boot
-directory within.
-You must add a line to
-.Pa loader.conf ,
-like
-.Bd -literal -offset indent
-vfs.root.mountfrom="ufs:da1s1a"
-.Ed
-.Pp
-which point to the actual root mount.
-.Pp
-Your root partition may be another GPT partition and you may use a 64 bit
-disklabel within that partition if you desire.
+command allows the user to make a GPT labeled disk bootable via the BIOS
+bootstrap on i386 and amd64 machines.
+By default,
+the
+.Pa /boot/pmbr
+boot loader is installed into the PMBR and the
+.Pa /boot/gptboot
+boot loader is installed into the first boot partition.
+If no boot partition exists and there is available space,
+a boot partition will be created.
 .Pp
 The
-.Sq boot0
-boot manager is used, it can be manipulated with the
-.Xr boot0cfg 8
-command,
-.Sq packet
-option usually needs to be set.
+.Fl b Ar pmbr
+option allows the user to specify an alternate path for the PMBR boot loader.
 .Pp
-.Em NOTE!
-A disk setup with the
-.Ar boot
-command may not be shared with another OS,
-as it doesn't use a fully standard GPT.
+The
+.Fl g Ar gptboot
+option allows the user to specify an alternate path for the GPT boot loader
+that is installed into the boot partition.
 .Pp
-.Em WARNING!
-Some BIOSes may not be able to deal with this hack, your mileage may vary.
+The
+.Fl s Ar count
+option allows the user to specify the size in sectors of the boot partition
+if one does not already exist.
+A boot partition must be at least 16 kilobytes.
+By default,
+a size of 64 kilobytes is used.
+Note that the PMBR boot loader will load the entire boot partition into
+memory.
+As a result, the boot partition may not exceed 545 kilobytes.
 .\" ==== create ====
 .It Nm Ic create Oo Fl fp Oc Ar device ...
 The
@@ -263,7 +240,7 @@ option selects the partition that starts at the given block number.
 The
 .Fl i Ar index
 option selects the partition with the given partition number.
-Partition numbers start at 0.
+Partition numbers start at 1.
 .Pp
 The
 .Fl s Ar count
@@ -360,135 +337,17 @@ option takes precedence over the
 .Fl u
 option.
 .El
-.Sh FILES
-.Bl -tag -width ".Pa /etc/defaults/uuids"
-.It Pa /boot/boot0
-The default
-.Sq boot0
-image.
-.It Pa /etc/defaults/uuids
-A list of UUIDs
-and their symbolic names provided by the OS vendor.
-.It Pa /etc/uuids
-A list of UUIDs
-and their symbolic names provided by the system administrator.
-.El
-.Sh EXAMPLES
-To install an empty GPT on
-.Pa ad6 :
-.Pp
-.Dl "gpt create ad6"
-.Pp
-GPT partitions are defined in number of sectors, the sector size is usually 512B,
-which is assumed in the examples below, it can be found using:
-.Pp
-.Dl "gpt -v show ad6"
-.Pp
-To add a dummy GPT partition 0:
-.Pp
-.Dl "gpt add -i0 -s16 ad6"
-.Pp
-You might want to do this to not use slice 0 for data;
-when GPT is not used on a disk, slice 0 is the compatibility slice,
-which is used for
-.Dq dangerously dedicated
-disks.
-For GPT slice 0 has no special meaning, it is just the first slice on the disk.
-.Pp
-To add a GPT partition of size approx. 100GB:
-.Pp
-.Dl "gpt add -s200000000 ad6"
-.Pp
-This will be GPT partition 1 as it is the first one free,
-it will be accessible as
-.Pa ad6s1 ,
-which is also printed by the command.
-The type will be
-.Dq DragonFly Label64 ,
-it will have to be set up by
-.Xr disklabel64 8 .
-.Pp
-To add GPT partition 5 with type
-.Dq DragonFly HAMMER
-using the remaining free space:
-.Bd -literal -offset indent
-gpt add -i5 -t "DragonFly HAMMER" ad6
-.Ed
-.Pp
-To print the contents of the GPT:
-.Pp
-.Dl "gpt show ad6"
-.Ss Boot Setup
-To setup a disk using GPT for booting, the steps below can be used.
-System is copied from an already installed disk,
-e.g.\& a hard disk or an install CD.
-This example will setup disk
-.Pa da1
-with GPT for booting, using the
-.Ic boot
-command.
-.Pp
-.Em WARNING!
-Any previous data on disk installed to will be deleted.
-.Bd -literal -offset indent
-gpt create -f da1
-gpt boot da1
-boot0cfg -s 2 da1
-disklabel -B -r -w da1s0 auto
-disklabel -e da1s0	# add `a: * * 4.2BSD', to add `a' partition
-			#   with fstype `4.2BSD' covering whole slice
-
-gpt add da1
-disklabel64 -r -w da1s1 auto
-disklabel64 -e da1s1	# add `b: 4G * swap', to add `b' partition
-			#   with fstype `swap' and size 4GB,
-			# add `a: * * HAMMER', to add `a' partition
-			#   with fstype `HAMMER' covering rest of slice
-newfs_hammer -L ROOT /dev/da1s1a
-mount_hammer /dev/da1s1a /mnt
-
-newfs /dev/da1s0a
-mkdir /mnt/boot
-mount /dev/da1s0a /mnt/boot
-
-cpdup / /mnt		# copy each file system you need, e.g.
-cpdup /boot /mnt/boot
-cpdup /var /mnt/var
-cpdup /var/tmp /mnt/var/tmp
-cpdup /usr /mnt/usr
-
-cd /mnt
-vi etc/fstab		# add `/dev/da1s1a / hammer rw',
-			# add `/dev/da1s1b none swap sw',
-			# add `/dev/da1s0a /boot ufs rw 1 1',
-			# delete lines for file systems cpdup'ed above
-vi boot/loader.conf	# add `vfs.root.mountfrom="hammer:da1s1a"'
-cd
-umount /mnt/boot
-umount /mnt
-.Ed
-.Sh COMPATIBILITY
-The GPT that
-.Nm
-manipulates is part of the EFI standard and is supported by many OSs.
-GPT uses 64 bits to store number of sectors, this supports very large disks.
-With the prevalent sector size of 512B this is 8 billion TB.
 .Sh SEE ALSO
-.Xr uuid 3 ,
-.Xr disklabel64 5 ,
-.Xr uuids 5 ,
-.Xr boot0cfg 8 ,
-.Xr disklabel 8 ,
-.Xr disklabel64 8 ,
 .Xr fdisk 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
-.Xr newfs_hammer 8 ,
 .Xr swapon 8
 .Sh HISTORY
 The
 .Nm
-utility appeared in
+utility was forked from gpt(8) in
+.Dx 4.5
+that first appeared in
 .Fx 5.0
 for ia64.
 It was imported to
@@ -519,9 +378,3 @@ removed in future versions.
 Another possibility is that the current usage model is accompanied by
 other interfaces to make the tool usable as a back-end.
 This all depends on demand and thus feedback.
-.Pp
-The
-.Ic migrate
-command doesn't support
-.Dx
-partition types.

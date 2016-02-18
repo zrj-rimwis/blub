@@ -52,23 +52,49 @@ usage_show(void)
 static const char *
 friendly(uuid_t *t)
 {
-	static char *save_name1 /*= NULL*/;
-	static char *save_name2 /*= NULL*/;
+	static uuid_t boot = GPT_ENT_TYPE_FREEBSD_BOOT;
+	static uuid_t efi_slice = GPT_ENT_TYPE_EFI;
+	static uuid_t mslinux = GPT_ENT_TYPE_MS_BASIC_DATA;
+	static uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
+	static uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
+	static uuid_t linuxswap = GPT_ENT_TYPE_LINUX_SWAP;
+	static uuid_t msr = GPT_ENT_TYPE_MS_RESERVED;
+	static uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
+	static uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
+	static uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
+	static char buf[80];
+	char *s;
 
 	if (show_uuid)
 		goto unfriendly;
 
-	uuid_addr_lookup(t, &save_name1, NULL);
-	if (save_name1)
-		return (save_name1);
+	if (uuid_equal(t, &efi_slice, NULL))
+		return ("EFI System");
+	if (uuid_equal(t, &boot, NULL))
+		return ("FreeBSD boot");
+	if (uuid_equal(t, &swap, NULL))
+		return ("FreeBSD swap");
+	if (uuid_equal(t, &ufs, NULL))
+		return ("FreeBSD UFS/UFS2");
+	if (uuid_equal(t, &vinum, NULL))
+		return ("FreeBSD vinum");
+
+	if (uuid_equal(t, &freebsd, NULL))
+		return ("FreeBSD legacy");
+	if (uuid_equal(t, &mslinux, NULL))
+		return ("Linux/Windows");
+	if (uuid_equal(t, &linuxswap, NULL))
+		return ("Linux swap");
+	if (uuid_equal(t, &msr, NULL))
+		return ("Windows reserved");
+	if (uuid_equal(t, &hfs, NULL))
+		return ("Apple HFS");
 
 unfriendly:
-	if (save_name2) {
-		free(save_name2);
-		save_name2 = NULL;
-	}
-	uuid_to_string(t, &save_name2, NULL);
-	return (save_name2);
+	uuid_to_string(t, &s, NULL);
+	strlcpy(buf, s, sizeof buf);
+	free(s);
+	return (buf);
 }
 
 static void
@@ -91,10 +117,10 @@ show(int fd __unused)
 		printf("  %*llu", lbawidth, (long long)m->map_size);
 		putchar(' ');
 		putchar(' ');
-		if (m->map_index != NOENTRY)
+		if (m->map_index > 0)
 			printf("%5d", m->map_index);
 		else
-			printf("    -");
+			printf("     ");
 		putchar(' ');
 		putchar(' ');
 		switch (m->map_type) {

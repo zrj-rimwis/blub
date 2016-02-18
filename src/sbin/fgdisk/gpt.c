@@ -261,17 +261,17 @@ int
 parse_uuid(const char *s, uuid_t *uuid)
 {
 	uint32_t status;
-	uuid_t tmp;
 
 	uuid_from_string(s, uuid, &status);
 	if (status == uuid_s_ok)
 		return (0);
 
 	switch (*s) {
-	case 'd':
-		if (strcmp(s, "dfly") == 0 || strcmp(s, "dragonfly") == 0) {
-			s = "DragonFly Label64";
-			/* fall through to lookup at end */
+	case 'b':
+		if (strcmp(s, "boot") == 0) {
+			uuid_t boot = GPT_ENT_TYPE_FREEBSD_BOOT;
+			*uuid = boot;
+			return (0);
 		}
 		break;
 	case 'e':
@@ -316,12 +316,6 @@ parse_uuid(const char *s, uuid_t *uuid)
 			return (0);
 		}
 		break;
-	}
-
-	uuid_name_lookup(&tmp, s, &status);
-	if (status == uuid_s_ok) {
-		*uuid = tmp;
-		return(0);
 	}
 
 	return (EINVAL);
@@ -395,7 +389,7 @@ gpt_mbr(int fd, off_t lba)
 		else
 			break;
 	}
-	if (pmbr && (i == 1 || i == 4) && lba == 0) {
+	if (pmbr && i == 4 && lba == 0) {
 		if (pmbr != 1)
 			warnx("%s: Suspicious PMBR at sector %llu",
 			    device_name, (long long)lba);
@@ -437,7 +431,7 @@ gpt_mbr(int fd, off_t lba)
 			m = map_add(start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
 				return (-1);
-			m->map_index = i;
+			m->map_index = i + 1;
 		} else {
 			if (gpt_mbr(fd, start) == -1)
 				return (-1);
@@ -528,14 +522,14 @@ gpt_gpt(int fd, off_t lba)
 		    MAP_TYPE_GPT_PART, ent);
 		if (m == NULL)
 			return (-1);
-		m->map_index = i;
+		m->map_index = i + 1;
 	}
 	return (0);
 
- fail_ent:
+fail_ent:
 	free(p);
 
- fail_hdr:
+fail_hdr:
 	free(hdr);
 	return (0);
 }
@@ -561,7 +555,7 @@ gpt_open(const char *dev)
 
 	return (-1);
 
- found:
+found:
 	if (fstat(fd, &sb) == -1)
 		goto close;
 
@@ -601,14 +595,20 @@ gpt_open(const char *dev)
 
 	if (gpt_mbr(fd, 0LL) == -1)
 		goto close;
-	if (gpt_gpt(fd, 1LL) == -1)
-		goto close;
-	if (gpt_gpt(fd, mediasz / secsz - 1LL) == -1)
-		goto close;
+
+	/*
+	 * Don't look for a GPT unless we have a valid PMBR.
+	 */
+	if (map_find(MAP_TYPE_PMBR) != NULL) {
+		if (gpt_gpt(fd, 1LL) == -1)
+			goto close;
+		if (gpt_gpt(fd, mediasz / secsz - 1LL) == -1)
+			goto close;
+	}
 
 	return (fd);
 
- close:
+close:
 	close(fd);
 	return (-1);
 }
@@ -642,12 +642,9 @@ static struct {
 static void
 usage(void)
 {
-	const char *prgname = getprogname();
-
 	fprintf(stderr,
-	    "usage: %s [-rv] [-p nparts] <command> [options] <device> ...\n"
-	    "       %s show <device>\n",
-	    prgname, prgname);
+	    "usage: %s [-rv] [-p nparts] command [options] device ...\n",
+	    getprogname());
 	exit(1);
 }
 

@@ -1,6 +1,7 @@
 PROG=	fgdisk
-SRCS=	add.c create.c destroy.c gpt.c label.c map.c migrate.c recover.c \
-	remove.c show.c boot.c
+SRCS=	add.c boot.c create.c destroy.c gpt.c label.c map.c migrate.c \
+	recover.c remove.c show.c
+WARNS?=	4
 MAN=	fgdisk.8
 
 .include <bsd.prog.mk>
