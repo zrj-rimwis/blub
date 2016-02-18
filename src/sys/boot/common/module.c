@@ -51,7 +51,6 @@ struct moduledir {
 };
 
 static int			file_load(char *filename, vm_offset_t dest, struct preloaded_file **result);
-static int			file_loadraw(char *type, char *name);
 static int			file_load_dependencies(struct preloaded_file *base_mod);
 static char *			file_search(const char *name, char **extlist);
 static struct kernel_module *	file_findmodule(struct preloaded_file *fp, char *modname, struct mod_depend *verinfo);
@@ -154,7 +153,7 @@ command_load(int argc, char *argv[])
 	    command_errmsg = "invalid load type";
 	    return(CMD_ERROR);
 	}
-	return(file_loadraw(typestr, argv[1]));
+	return(file_loadraw(argv[1], typestr) ? CMD_OK : CMD_ERROR);
     }
     /*
      * Do we have explicit KLD load ?
@@ -354,7 +353,8 @@ file_load(char *filename, vm_offset_t dest, struct preloaded_file **result)
 }
 
 static int
-file_load_dependencies(struct preloaded_file *base_file) {
+file_load_dependencies(struct preloaded_file *base_file)
+{
     struct file_metadata *md;
     struct preloaded_file *fp;
     struct mod_depend *verinfo;
@@ -403,8 +403,8 @@ file_load_dependencies(struct preloaded_file *base_file) {
  * We've been asked to load (name) as (type), so just suck it in,
  * no arguments or anything.
  */
-int
-file_loadraw(char *type, char *name)
+struct preloaded_file *
+file_loadraw(char *name, char *type)
 {
     struct preloaded_file	*fp;
     char			*cp;
@@ -414,21 +414,21 @@ file_loadraw(char *type, char *name)
     /* We can't load first */
     if ((file_findfile(NULL, NULL)) == NULL) {
 	command_errmsg = "can't load file before kernel";
-	return(CMD_ERROR);
+	return(NULL);
     }
 
     /* locate the file on the load path */
     cp = file_search(name, NULL);
     if (cp == NULL) {
 	sprintf(command_errbuf, "can't find '%s'", name);
-	return(CMD_ERROR);
+	return(NULL);
     }
     name = cp;
 
     if ((fd = rel_open(name, NULL, O_RDONLY)) < 0) {
 	sprintf(command_errbuf, "can't open '%s': %s", name, strerror(errno));
 	free(name);
-	return(CMD_ERROR);
+	return(NULL);
     }
 
     laddr = loadaddr;
@@ -441,7 +441,7 @@ file_loadraw(char *type, char *name)
 	    sprintf(command_errbuf, "error reading '%s': %s", name, strerror(errno));
 	    free(name);
 	    close(fd);
-	    return(CMD_ERROR);
+	    return(NULL);
 	}
 	laddr += got;
     }
@@ -462,7 +462,7 @@ file_loadraw(char *type, char *name)
     /* Add to the list of loaded files */
     file_insert_tail(fp);
     close(fd);
-    return(CMD_OK);
+    return(fp);
 }
 
 /*
