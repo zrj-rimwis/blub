@@ -56,7 +56,6 @@
 #define BIOS_NUMDRIVES		0x475
 #define BIOSDISK_SECSIZE	512
 #define BUFSIZE			(4 * BIOSDISK_SECSIZE)
-#define	MAXBDDEV		MAXDEV
 
 #define DT_ATAPI		0x10		/* disk type for ATAPI floppies */
 #define WDMAJOR			0		/* major numbers for devices we frontend for */
