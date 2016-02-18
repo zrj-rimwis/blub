@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/boot/common/misc.c,v 1.8 2003/08/25 23:30:41 obrien Exp $
+ * $FreeBSD: head/sys/boot/common/misc.c 293724 2016-01-12 02:17:39Z smh $
  */
 
 #include <string.h>
@@ -41,7 +41,7 @@ unargv(int argc, char *argv[])
     int		i;
     char	*cp;
 
-    for (hlong = 0, i = 0, hlong = 0; i < argc; i++)
+    for (i = 0, hlong = 0; i < argc; i++)
 	hlong += strlen(argv[i]) + 2;
 
     if(hlong == 0)
@@ -96,17 +96,17 @@ strdupout(vm_offset_t str)
 void
 kern_bzero(vm_offset_t dest, size_t len)
 {
-    char	    buf[256];
-    size_t	    chunk, resid;
+	char buf[256];
+	size_t chunk, resid;
 
-    bzero(buf, sizeof(buf));
-    resid = len;
-    while (resid > 0) {
-	chunk = min(sizeof(buf), resid);
-	archsw.arch_copyin(buf, dest, chunk);
-	resid -= chunk;
-	dest += chunk;
-    }
+	bzero(buf, sizeof(buf));
+	resid = len;
+	while (resid > 0) {
+		chunk = min(sizeof(buf), resid);
+		archsw.arch_copyin(buf, dest, chunk);
+		resid -= chunk;
+		dest += chunk;
+	}
 }
 
 /*
@@ -117,18 +117,19 @@ kern_bzero(vm_offset_t dest, size_t len)
 int
 kern_pread(int fd, vm_offset_t dest, size_t len, off_t off)
 {
-    ssize_t	    nread;
-
-    if (lseek(fd, off, SEEK_SET) == -1) {
-	printf("\nlseek failed\n");
-	return (-1);
-    }
-    nread = archsw.arch_readin(fd, dest, len);
-    if (nread != len) {
-	printf("\nreadin failed\n");
-	return (-1);
-    }
-    return (0);
+	if (lseek(fd, off, SEEK_SET) == -1) {
+#ifdef DEBUG
+		printf("\nlseek failed\n");
+#endif
+		return (-1);
+	}
+	if ((size_t)archsw.arch_readin(fd, dest, len) != len) {
+#ifdef DEBUG
+		printf("\nreadin failed\n");
+#endif
+		return (-1);
+	}
+	return (0);
 }
 
 /*
@@ -138,26 +139,30 @@ kern_pread(int fd, vm_offset_t dest, size_t len, off_t off)
 void *
 alloc_pread(int fd, off_t off, size_t len)
 {
-    void           *buf;
-    ssize_t	    nread;
+	void *buf;
 
-    buf = malloc(len);
-    if (buf == NULL) {
-	printf("\nmalloc(%d) failed\n", (int)len);
-	return (NULL);
-    }
-    if (lseek(fd, off, SEEK_SET) == -1) {
-	printf("\nlseek failed\n");
-	free(buf);
-	return (NULL);
-    }
-    nread = read(fd, buf, len);
-    if (nread != len) {
-	printf("\nread failed\n");
-	free(buf);
-	return (NULL);
-    }
-    return (buf);
+	buf = malloc(len);
+	if (buf == NULL) {
+#ifdef DEBUG
+		printf("\nmalloc(%d) failed\n", (int)len);
+#endif
+		return (NULL);
+	}
+	if (lseek(fd, off, SEEK_SET) == -1) {
+#ifdef DEBUG
+		printf("\nlseek failed\n");
+#endif
+		free(buf);
+		return (NULL);
+	}
+	if ((size_t)read(fd, buf, len) != len) {
+#ifdef DEBUG
+		printf("\nread failed\n");
+#endif
+		free(buf);
+		return (NULL);
+	}
+	return (buf);
 }
 
 /*
