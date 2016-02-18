@@ -36,6 +36,7 @@
 #include <sys/linker.h>
 #include <sys/module.h>
 #include <sys/queue.h>
+#include <sys/stdint.h>
 
 #include "bootstrap.h"
 
@@ -431,6 +432,8 @@ file_loadraw(char *name, char *type)
 	return(NULL);
     }
 
+    printf("%s ", name);
+
     laddr = loadaddr;
     for (;;) {
 	/* read in 4k chunks; size is not really important */
@@ -445,6 +448,8 @@ file_loadraw(char *name, char *type)
 	}
 	laddr += got;
     }
+
+    printf("size=%#jx\n", (uintmax_t)(laddr - loadaddr));
 
     /* Looks OK so far; create & populate control structure */
     fp = file_alloc();
