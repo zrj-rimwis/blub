@@ -54,9 +54,11 @@ friendly(uuid_t *t)
 {
 	static uuid_t boot = GPT_ENT_TYPE_FREEBSD_BOOT;
 	static uuid_t efi_slice = GPT_ENT_TYPE_EFI;
-	static uuid_t mslinux = GPT_ENT_TYPE_MS_BASIC_DATA;
+	static uuid_t msdata = GPT_ENT_TYPE_MS_BASIC_DATA;
 	static uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
 	static uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
+	static uuid_t bios_boot = GPT_ENT_TYPE_BIOS_BOOT;
+	static uuid_t linuxdata = GPT_ENT_TYPE_LINUX_DATA;
 	static uuid_t linuxswap = GPT_ENT_TYPE_LINUX_SWAP;
 	static uuid_t msr = GPT_ENT_TYPE_MS_RESERVED;
 	static uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
@@ -79,12 +81,17 @@ friendly(uuid_t *t)
 	if (uuid_equal(t, &vinum, NULL))
 		return ("FreeBSD vinum");
 
-	if (uuid_equal(t, &freebsd, NULL))
-		return ("FreeBSD legacy");
-	if (uuid_equal(t, &mslinux, NULL))
-		return ("Linux/Windows");
+	if (uuid_equal(t, &bios_boot, NULL))
+		return ("BIOS boot");
+	if (uuid_equal(t, &linuxdata, NULL))
+		return ("Linux data");
 	if (uuid_equal(t, &linuxswap, NULL))
 		return ("Linux swap");
+
+	if (uuid_equal(t, &freebsd, NULL))
+		return ("FreeBSD legacy");
+	if (uuid_equal(t, &msdata, NULL))
+		return ("Windows");
 	if (uuid_equal(t, &msr, NULL))
 		return ("Windows reserved");
 	if (uuid_equal(t, &hfs, NULL))

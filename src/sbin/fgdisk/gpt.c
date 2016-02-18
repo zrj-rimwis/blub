@@ -290,7 +290,7 @@ parse_uuid(const char *s, uuid_t *uuid)
 		break;
 	case 'l':
 		if (strcmp(s, "linux") == 0) {
-			uuid_t lnx = GPT_ENT_TYPE_MS_BASIC_DATA;
+			uuid_t lnx = GPT_ENT_TYPE_LINUX_DATA;
 			*uuid = lnx;
 			return (0);
 		}
