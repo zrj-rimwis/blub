@@ -30,29 +30,10 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/linker.h>
+#include <sys_boot.h>
 #include "bootstrap.h"
 #include "libi386.h"
 #include "btxv86.h"
-
-/*
- * Return a 'boothowto' value corresponding to the kernel arguments in
- * (kargs) and any relevant environment variables.
- */
-static struct
-{
-    const char	*ev;
-    int		mask;
-} howto_names[] = {
-    {"boot_askname",	RB_ASKNAME},
-    {"boot_cdrom",	RB_CDROM},
-    {"boot_ddb",	RB_KDB},
-    {"boot_gdb",	RB_GDB},
-    {"boot_single",	RB_SINGLE},
-    {"boot_verbose",	RB_VERBOSE},
-    {"boot_vidcons",	RB_VIDEO},
-    {"boot_serial",	RB_SERIAL},
-    {NULL,	0}
-};
 
 int
 bi_getboothowto(char *kargs)
