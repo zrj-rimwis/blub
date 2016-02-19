@@ -34,13 +34,10 @@
 #include <sys/linker.h>
 #include <sys/queue.h>
 #include <machine/metadata.h>
-#include <machine/psl.h>
 #include <machine/pc/bios.h>
 #include "bootstrap.h"
 #include "libi386.h"
 #include "btxv86.h"
-
-#define	V86_CY(x)	((x) & PSL_C)
 
 /* XXX in case not in pc/bios.h */
 #ifndef SMAP_XATTR_MASK

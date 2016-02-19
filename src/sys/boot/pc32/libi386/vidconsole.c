@@ -31,7 +31,6 @@
 #include <stand.h>
 #include <bootstrap.h>
 #include <btxv86.h>
-#include <machine/psl.h>
 #include "libi386.h"
 
 #if KEYBOARD_PROBE
@@ -512,7 +511,7 @@ vidc_ischar(void)
     v86.addr = 0x16;
     v86.eax = 0x100;
     v86int();
-    return (!(v86.efl & PSL_Z));
+    return (!V86_ZR(v86.efl));
 }
 
 #if KEYBOARD_PROBE

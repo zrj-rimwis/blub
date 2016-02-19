@@ -29,7 +29,6 @@
  * Obtain memory configuration information from the BIOS
  */
 #include <stand.h>
-#include <machine/psl.h>
 #include <machine/pc/bios.h>
 #include "libi386.h"
 #include "btxv86.h"
@@ -64,7 +63,7 @@ bios_getmem(void)
 		(int)(smap.base >> 32), (int)smap.base,
 		(int)(smap.length >> 32), (int)smap.length);
 #endif
-	if ((v86.efl & PSL_C) || (v86.eax != SMAP_SIG))
+	if ((V86_CY(v86.efl)) || (v86.eax != SMAP_SIG))
 	    break;
 	/* look for a low-memory segment that's large enough */
 	if ((smap.type == SMAP_TYPE_MEMORY) && (smap.base == 0) &&
@@ -94,7 +93,7 @@ bios_getmem(void)
 	v86.addr = 0x15;		/* int 0x15 function 0xe801*/
 	v86.eax = 0xe801;
 	v86int();
-	if (!(v86.efl & PSL_C)) {
+	if (!(V86_CY(v86.efl))) {
 	    v = ((v86.ecx & 0xffff) +
 		((int64_t)(v86.edx & 0xffff) * 64)) * 1024;
 	    if (v > 0x40000000)
