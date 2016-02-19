@@ -366,6 +366,7 @@ display_size(uint64_t size)
 
 #ifdef LOADER_GPT_SUPPORT
 static uuid_t efi = GPT_ENT_TYPE_EFI;
+static uuid_t freebsd_boot = GPT_ENT_TYPE_FREEBSD_BOOT;
 static uuid_t freebsd_ufs = GPT_ENT_TYPE_FREEBSD_UFS;
 static uuid_t freebsd_swap = GPT_ENT_TYPE_FREEBSD_SWAP;
 static uuid_t ms_basic_data = GPT_ENT_TYPE_MS_BASIC_DATA;
@@ -386,6 +387,8 @@ bd_printgptpart(struct open_disk *od, struct gpt_part *gp, char *prefix,
 	sprintf(line, "%s: EFI         %s\n", prefix, stats);
     else if (uuid_equal(&gp->gp_type, &ms_basic_data, NULL))
 	sprintf(line, "%s: FAT/NTFS    %s\n", prefix, stats);
+    else if (uuid_equal(&gp->gp_type, &freebsd_boot, NULL))
+	sprintf(line, "%s: FreeBSD boot%s\n", prefix, stats);
     else if (uuid_equal(&gp->gp_type, &freebsd_ufs, NULL))
 	sprintf(line, "%s: FreeBSD UFS %s\n", prefix, stats);
     else if (uuid_equal(&gp->gp_type, &freebsd_swap, NULL))
