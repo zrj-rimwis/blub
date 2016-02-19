@@ -94,10 +94,9 @@ _ts=	$s
 .if ${_ts} == "_64"
 _ADDCFLAGS$s+= -DDISKLABEL64
 _ADDCFLAGS$s+= -DHAMMER2FS -DUFS
-_ADDOBJS$s+= hammer2$s.o ufsread$s.o scrc32$s.o
+_ADDOBJS$s+= hammer2$s.o scrc32$s.o
 .else
 _ADDCFLAGS$s+= -DUFS -DUFS1_ONLY
-_ADDOBJS$s+= ufsread$s.o
 .endif
 
 all: boot1$s boot2$s
@@ -112,9 +111,9 @@ boot1$s.o: boot1.S
 	${CC} ${CFLAGS} ${_ADDCFLAGS$s} -DFLAGS=${B1FLAGS} \
 		${ASSEMBLER_FLAGS} ${.ALLSRC} -o ${.TARGET} -c
 
-#${.CURDIR}/../../common/ufsread.c ${.CURDIR}/../../../../lib/libstand/hammer2.c
+# ${.CURDIR}/../../../../lib/libstand/hammer2.c
 
-boot2$s.s: boot2.c boot2$s.h ufsread.c hammer2.c scrc32.c
+boot2$s.s: boot2.c boot2$s.h ${.CURDIR}/../../common/ufsread.c hammer2.c scrc32.c
 	${CC} ${CFLAGS} ${_ADDCFLAGS$s} -S -o boot2$s.s.tmp ${.CURDIR}/boot2.c
 	sed -e '/align/d' -e '/nop/d' < ${.TARGET}.tmp > ${.TARGET}
 	rm -f ${.TARGET}.tmp
@@ -153,9 +152,6 @@ CLEANFILES+=	boot1$s boot1$s.out boot1$s.o \
 		${_ADDOBJS$s}
 
 hammer2$s.o: hammer2.c
-	${CC} ${CFLAGS} ${_ADDCFLAGS$s} ${.ALLSRC} -o ${.TARGET} -c
-
-ufsread$s.o: ufsread.c
 	${CC} ${CFLAGS} ${_ADDCFLAGS$s} ${.ALLSRC} -o ${.TARGET} -c
 
 scrc32$s.o: scrc32.c

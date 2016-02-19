@@ -24,23 +24,14 @@
  * $FreeBSD: src/sys/boot/common/ufsread.c,v 1.12 2003/08/25 23:30:41 obrien Exp $
  */
 
-#ifdef BOOT2
-#include "boot2.h"
-#else
-#include <sys/param.h>
-#endif
-#include <sys/dtype.h>
-#include <sys/dirent.h>
-#include <machine/bootinfo.h>
-#include <machine/elf.h>
 #include <vfs/ufs/dir.h>
 #include "dinode.h"
 #include "fs.h"
 
-#ifdef __i386__
+#ifdef UFS_SMALL_CGBASE
 /* XXX: Revert to old (broken for over 1.5Tb filesystems) version of cgbase
-   (see sys/ufs/ffs/fs.h rev 1.39) so that i386 boot loader (boot2) can
-   support both UFS1 and UFS2 again. */
+   (see sys/ufs/ffs/fs.h rev 1.39) so that small boot loaders (e.g. boot2) can
+   support both UFS1 and UFS2. */
 #undef cgbase
 #define cgbase(fs, c)   ((ufs2_daddr_t)((fs)->fs_fpg * (c)))
 #endif

@@ -212,6 +212,9 @@ strcmp(const char *s1, const char *s2)
     return ((int)((unsigned char)*s1 - (unsigned char)*s2));
 }
 
+#define	UFS_SMALL_CGBASE
+#include "ufsread.c"
+
 #if defined(UFS) && defined(HAMMER2FS)
 
 const struct boot2_fsapi *fsapi;
