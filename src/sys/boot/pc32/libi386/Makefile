@@ -33,7 +33,8 @@ CFLAGS+=	-DLOADER_GPT_SUPPORT
 # XXX: make alloca() useable
 CFLAGS+= -DRALLOCA=__builtin_alloca
 
-CFLAGS+=	-I${.CURDIR}/../../common -I${.CURDIR}/../btx/lib \
+CFLAGS+=	-I${.CURDIR}/../../common -I${.CURDIR}/../common \
+		-I${.CURDIR}/../btx/lib \
 		-I"${SYSDIR}/${ACPICA_DIR}/include" \
 		-I"${SYSDIR}/${OSACPI_MI_DIR}" \
 		-I${.CURDIR}/../../.. -I.

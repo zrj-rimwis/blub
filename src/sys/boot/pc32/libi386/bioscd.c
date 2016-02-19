@@ -46,6 +46,7 @@
 
 #include <bootstrap.h>
 #include <btxv86.h>
+#include <edd.h>
 #include "libi386.h"
 
 #define BIOSCD_SECSIZE		2048
@@ -259,7 +260,7 @@ static int
 bc_read(int unit, daddr_t dblk, int blks, caddr_t dest)
 {
 	u_int result, retry;
-	static unsigned short packet[8];
+	static struct edd_packet packet;
 	int biosdev;
 #ifdef DISK_DEBUG
 	int error;
@@ -288,20 +289,17 @@ bc_read(int unit, daddr_t dblk, int blks, caddr_t dest)
 			v86int();
 		}
 
-		packet[0] = 0x10;
-		packet[1] = blks;
-		packet[2] = VTOPOFF(dest);
-		packet[3] = VTOPSEG(dest);
-		packet[4] = dblk & 0xffff;
-		packet[5] = dblk >> 16;
-		packet[6] = 0;
-		packet[7] = 0;
+		packet.len = sizeof(struct edd_packet);
+		packet.count = blks;
+		packet.off = VTOPOFF(dest);
+		packet.seg = VTOPSEG(dest);
+		packet.lba = dblk;
 		v86.ctl = V86_FLAGS;
 		v86.addr = 0x13;
 		v86.eax = 0x4200;
 		v86.edx = biosdev;
-		v86.ds = VTOPSEG(packet);
-		v86.esi = VTOPOFF(packet);
+		v86.ds = VTOPSEG(&packet);
+		v86.esi = VTOPOFF(&packet);
 		v86int();
 		result = V86_CY(v86.efl);
 		if (result == 0)

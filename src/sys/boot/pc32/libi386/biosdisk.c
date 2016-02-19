@@ -50,6 +50,7 @@
 
 #include <bootstrap.h>
 #include <btxv86.h>
+#include <edd.h>
 #include "libi386.h"
 
 #define BIOS_NUMDRIVES		0x475
@@ -272,9 +273,9 @@ bd_int13probe(struct bdinfo *bd)
 	v86int();
 	if (!(V86_CY(v86.efl)) &&			/* carry clear */
 	    ((v86.ebx & 0xffff) == 0xaa55) &&		/* signature */
-	    (v86.ecx & 0x1)) {				/* packets mode ok */
+	    (v86.ecx & EDD_INTERFACE_FIXED_DISK)) {	/* packets mode ok */
 	    bd->bd_flags |= BD_MODEEDD1;
-	    if((v86.eax & 0xff00) >= 0x3000)
+	    if ((v86.eax & 0xff00) >= 0x3000)
 	        bd->bd_flags |= BD_MODEEDD3;
 	}
 	return(1);
@@ -1241,14 +1242,6 @@ bd_realstrategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf, siz
 /* Max number of sectors to bounce-buffer if the request crosses a 64k boundary */
 #define FLOPPY_BOUNCEBUF	18
 
-struct edd_packet {
-    uint16_t	len;
-    uint16_t	count;
-    uint16_t	offset;
-    uint16_t	seg;
-    uint64_t	lba;
-};
-
 static int
 bd_edd_io(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest, int write)
 {
@@ -1256,7 +1249,7 @@ bd_edd_io(struct open_disk *od, daddr_t dblk, int blks, caddr_t dest, int write)
 
 	packet.len = sizeof(struct edd_packet);
 	packet.count = blks;
-	packet.offset = VTOPOFF(dest);
+	packet.off = VTOPOFF(dest);
 	packet.seg = VTOPSEG(dest);
 	packet.lba = dblk;
 	v86.ctl = V86_FLAGS;
