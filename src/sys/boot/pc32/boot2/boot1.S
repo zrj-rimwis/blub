@@ -155,6 +155,10 @@ main:		cld				# String ops inc
 /*
  * Relocate ourself to BOOT1_ORIGIN.  Since %cx == 0, the inc %ch sets
  * %cx == 0x100 (256 words == 512 bytes).
+ * Note that boot1 does not use this relocated copy
+ * of itself while loading boot2; however, BTX reclaims the memory
+ * used by boot1 during its initialization.  As a result, boot2 uses
+ * xread from the relocated copy.
  */
 		mov %sp,%si			# Source
 		mov $BOOT1_ORIGIN,%di		# Destination

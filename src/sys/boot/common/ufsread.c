@@ -77,7 +77,7 @@ const struct boot2_fsapi boot2_ufs_api = {
 static __inline__ int
 fsfind(const char *name, ufs_ino_t *ino)
 {
-	char buf[DEV_BSIZE];
+	static char buf[DEV_BSIZE];
 	struct direct *d;
 	char *s;
 	ssize_t n;
@@ -102,7 +102,7 @@ fsfind(const char *name, ufs_ino_t *ino)
 static boot2_ino_t
 boot2_ufs_lookup(const char *path)
 {
-	char name[MAXNAMLEN + 1];
+	static char name[MAXNAMLEN + 1];
 	const char *s;
 	ufs_ino_t ino;
 	ssize_t n;

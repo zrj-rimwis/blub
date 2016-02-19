@@ -147,7 +147,7 @@ have_vd:					# Have Primary VD
 
 		/*
 		 * Load the binary into the buffer.  Due to real mode
-		 * addressing limitations we have to read it in in 64k
+		 * addressing limitations we have to read it in 64k
 		 * chunks.
 		 */
 		mov DIR_SIZE(%bx),%eax		# Read file length
