@@ -57,14 +57,33 @@
 #define BDA_NHRDRV	0x475		/* Number of drivers found by BIOS */
 #define BDA_KEYBOARD	0x496		/* BDA byte with keyboard bit */
 
+#define	KARGS_FLAGS_CD		0x1
+#define	KARGS_FLAGS_PXE		0x2
+#define	KARGS_FLAGS_RES		0x4
+#define	KARGS_FLAGS_EXTARG	0x8	/* variably sized extended argument */
+
+#define	BA_BOOTFLAGS	0x8	/* offsetof(struct bootargs, bootflags) */
+#define	BA_BOOTINFO	0x14	/* offsetof(struct bootargs, bootinfo) */
+#define	BI_SIZE		0x30	/* offsetof(struct bootinfo, bi_size) */
+
 /*
  * Structural equivalences
  */
 #define BOOTINFO_SIZE	0x48		/* bootinfo structure size */
-#define MEM_ARG_SIZE	0x18
+#define MEM_ARG_SIZE	0x18		/* sizeof(struct bootargs) */
 #define MEM_PAGE_SIZE	0x1000
 #define MEM_BTX_LDR_OFF	MEM_PAGE_SIZE	/* offset of btx in the loader */
-#define USR_ARGOFFSET	(BOOTINFO_SIZE+MEM_ARG_SIZE)
+
+/*
+ * We reserve some space above BTX allocated stack for the arguments
+ * and certain data that could hang off them.  Currently only struct bootinfo
+ * is supported in that category.  The bootinfo is placed at the top
+ * of the arguments area and the actual arguments are placed at USR_ARGOFFSET
+ * offset from the top and grow towards the top.  Hopefully we have enough
+ * space for bootinfo and the arguments to not run into each other.
+ * Arguments area below USR_ARGOFFSET is reserved for future use.
+ */
+#define USR_ARGOFFSET	0x800		/* actual args offset within the args area */
 
 /* -------- WARNING, BOOT0 STACK BELOW MEM_BIOS_LADDR -------- */
 #define MEM_BIOS_LADDR	0x7c00		/* Load address (static/BIOS) */

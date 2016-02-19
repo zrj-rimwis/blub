@@ -40,11 +40,6 @@
 		.set AOUT_HEADER,MEM_PAGE_SIZE	# size of the a.out header
 
 		/*
-		 * Flags for kargs->bootflags
-		 */
-		.set KARGS_FLAGS_CD,0x1		# flag to indicate booting from
-						#  CD loader
-		/*
 		 * Segment selectors.
 		 */
 		.set SEL_SDATA,0x8		# Supervisor data

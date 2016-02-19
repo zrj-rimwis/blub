@@ -40,12 +40,6 @@
 		.set AOUT_HEADER,MEM_PAGE_SIZE	# size of the a.out header
 
 		/*
-		 * Flags for kargs->bootflags
-		 */
-		.set KARGS_FLAGS_PXE,0x2	# flag to indicate booting from
-						#  PXE loader
-
-		/*
 		 * Segment selectors.
 		 */
 		.set SEL_SDATA,0x8		# Supervisor data
