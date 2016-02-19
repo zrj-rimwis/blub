@@ -58,6 +58,8 @@
 #include <sys/diskmbr.h>
 #include <sys/dtype.h>
 #include <sys/dirent.h>
+#include <sys/reboot.h>
+
 #include <machine/bootinfo.h>
 #include <machine/elf.h>
 
@@ -74,43 +76,10 @@
 #endif
 #include "boot2.h"
 #include "lib.h"
+#include "rbx.h"
 #include "../bootasm.h"
 
 #define SECOND		18	/* Circa that many ticks in a second. */
-
-#define RBX_ASKNAME	0x0	/* -a */
-#define RBX_SINGLE	0x1	/* -s */
-/* 0x2 is reserved for log2(RB_NOSYNC). */
-/* 0x3 is reserved for log2(RB_HALT). */
-/* 0x4 is reserved for log2(RB_INITNAME). */
-#define RBX_DFLTROOT	0x5	/* -r */
-#define RBX_KDB		0x6	/* -d */
-/* 0x7 is reserved for log2(RB_RDONLY). */
-/* 0x8 is reserved for log2(RB_DUMP). */
-/* 0x9 is reserved for log2(RB_MINIROOT). */
-#define RBX_CONFIG	0xa	/* -c */
-#define RBX_VERBOSE	0xb	/* -v */
-#define RBX_SERIAL	0xc	/* -h */
-#define RBX_CDROM	0xd	/* -C */
-/* 0xe is reserved for log2(RB_POWEROFF). */
-#define RBX_GDB		0xf	/* -g */
-#define RBX_MUTE	0x10	/* -m */
-/* 0x11 is reserved for log2(RB_SELFTEST). */
-#define RBX_PAUSE	0x12	/* -p */
-/* 0x13 is reserved for boot programs. */
-#define RBX_NOINTR	0x1c	/* -n */
-#define RBX_VIDEO	0x1d	/* -V */
-#define RBX_PROBEKBD	0x1e	/* -P */
-/* 0x1f is reserved for log2(RB_BOOTINFO). */
-
-#define RBF_MUTE	(1 << RBX_MUTE)
-#define RBF_SERIAL	(1 << RBX_SERIAL)
-#define RBF_VIDEO	(1 << RBX_VIDEO)
-#define RBF_NOINTR	(1 << RBX_NOINTR)
-#define RBF_PROBEKBD	(1 << RBX_PROBEKBD)
-
-/* pass: -a, -s, -r, -d, -c, -v, -h, -C, -g, -m, -p, -V */
-#define RBX_MASK	0x2005ffff
 
 #define PATH_CONFIG	"/boot.config"
 #define PATH_BOOT3	"/loader"		/* /boot is dedicated */
@@ -167,7 +136,7 @@ static struct dsk {
 
 static char cmd[512];
 static const char *kname;
-static uint32_t opts = RBF_VIDEO;
+uint32_t opts;
 static struct bootinfo bootinfo;
 
 /*
@@ -320,11 +289,11 @@ main(void)
      * the initialization fails, don't try to use the serial port.  This
      * can happen if the serial port is unmaped (happens on new laptops a lot).
      */
-    if ((opts & (RBF_MUTE|RBF_SERIAL|RBF_VIDEO)) == 0)
-	opts |= RBF_SERIAL|RBF_VIDEO;
-    if (opts & RBF_SERIAL) {
+    if ((opts & (OPT_SET(RBX_MUTE)|OPT_SET(RBX_SERIAL)|OPT_SET(RBX_VIDEO))) == 0)
+	opts |= (OPT_SET(RBX_SERIAL)|OPT_SET(RBX_VIDEO));
+    if (OPT_CHECK(RBX_SERIAL)) {
 	if (sio_init())
-	    opts = RBF_VIDEO;
+	    opts = OPT_SET(RBX_VIDEO);
     }
 
 
@@ -440,7 +409,7 @@ load(void)
 
     bootinfo.bi_kernelname = VTOP(kname);
     bootinfo.bi_bios_dev = dsk.drive;
-    __exec((caddr_t)addr, opts & RBX_MASK,
+    __exec((caddr_t)addr, RB_BOOTINFO | (opts & RBX_MASK),
 	   MAKEBOOTDEV(dev_maj[dsk.type], dsk.slice, dsk.unit, dsk.part),
 	   0, 0, 0, VTOP(&bootinfo));
 }
@@ -471,13 +440,13 @@ parse(void)
 		return(-1);
 		ok: ;	/* ugly but save space */
 	    }
-	    if (opts & RBF_PROBEKBD) {
+	    if (OPT_CHECK(RBX_PROBEKBD)) {
 		i = *(uint8_t *)PTOV(0x496) & 0x10;
 		if (!i) {
 		    printf("NO KB\n");
-		    opts |= RBF_VIDEO | RBF_SERIAL;
+		    opts |= OPT_SET(RBX_VIDEO) | OPT_SET(RBX_SERIAL);
 		}
-		opts &= ~RBF_PROBEKBD;
+		opts &= ~OPT_SET(RBX_PROBEKBD);
 	    }
 	} else {
 	    for (q = arg--; *q && *q != '('; q++);
@@ -755,7 +724,7 @@ keyhit(unsigned ticks)
 {
     uint32_t t0, t1;
 
-    if (opts & RBF_NOINTR)
+    if (OPT_CHECK(RBX_NOINTR))
 	return 0;
     t0 = 0;
     for (;;) {
@@ -764,7 +733,7 @@ keyhit(unsigned ticks)
 	t1 = *(uint32_t *)PTOV(0x46c);
 	if (!t0)
 	    t0 = t1;
-        if ((uint32_t)(t1 - t0) >= ticks)
+	if ((uint32_t)(t1 - t0) >= ticks)
 	    return 0;
     }
 }
@@ -772,9 +741,9 @@ keyhit(unsigned ticks)
 static int
 xputc(int c)
 {
-    if (opts & RBF_VIDEO)
+    if (OPT_CHECK(RBX_VIDEO))
 	putc(c);
-    if (opts & RBF_SERIAL)
+    if (OPT_CHECK(RBX_SERIAL))
 	sio_putc(c);
     return c;
 }
@@ -791,12 +760,12 @@ getc(int fn)
 static int
 xgetc(int fn)
 {
-    if (opts & RBF_NOINTR)
+    if (OPT_CHECK(RBX_NOINTR))
 	return 0;
     for (;;) {
-	if ((opts & RBF_VIDEO) && getc(1))
+	if (OPT_CHECK(RBX_VIDEO) && getc(1))
 	    return fn ? 1 : getc(0);
-	if ((opts & RBF_SERIAL) && sio_ischar())
+	if (OPT_CHECK(RBX_SERIAL) && sio_ischar())
 	    return fn ? 1 : sio_getc();
 	if (fn)
 	    return 0;
