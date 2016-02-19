@@ -4,7 +4,7 @@ BOOT=		gptboot
 BINDIR?=	/boot
 BINMODE=	444
 PROG=		${BOOT}
-MAN=
+MAN=		gptboot.8
 STRIP=
 
 BOOT_COMCONSOLE_PORT?= 0x3f8
