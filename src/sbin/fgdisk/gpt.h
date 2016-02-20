@@ -76,7 +76,7 @@ uint8_t *utf16_to_utf8(uint16_t *);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
 int	cmd_add(int, char *[]);
-int	cmd_boot(int, char *[]);
+int	cmd_installboot(int, char *[]);
 int	cmd_create(int, char *[]);
 int	cmd_destroy(int, char *[]);
 int	cmd_label(int, char *[]);

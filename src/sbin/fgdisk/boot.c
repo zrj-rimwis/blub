@@ -50,7 +50,7 @@ static const char *gptboot_path = "/boot/gptboot";
 static u_long boot_size;
 
 static void
-usage_boot(void)
+usage_installboot(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-b pmbr] [-g gptboot] [-s count] device ...\n",
@@ -109,7 +109,7 @@ gpt_find(uuid_t *type, map_t **mapp)
 }
 
 static void
-boot(int fd)
+installboot(int fd)
 {
 	struct stat sb;
 	off_t bsize, ofs;
@@ -225,7 +225,7 @@ boot(int fd)
 }
 
 int
-cmd_boot(int argc, char *argv[])
+cmd_installboot(int argc, char *argv[])
 {
 	char *p;
 	int ch, fd;
@@ -240,18 +240,18 @@ cmd_boot(int argc, char *argv[])
 			break;
 		case 's':
 			if (boot_size > 0)
-				usage_boot();
+				usage_installboot();
 			boot_size = strtol(optarg, &p, 10);
 			if (*p != '\0' || boot_size < 1)
-				usage_boot();
+				usage_installboot();
 			break;
 		default:
-			usage_boot();
+			usage_installboot();
 		}
 	}
 
 	if (argc == optind)
-		usage_boot();
+		usage_installboot();
 
 	while (optind < argc) {
 		fd = gpt_open(argv[optind++]);
@@ -260,7 +260,7 @@ cmd_boot(int argc, char *argv[])
 			continue;
 		}
 
-		boot(fd);
+		installboot(fd);
 
 		gpt_close(fd);
 	}

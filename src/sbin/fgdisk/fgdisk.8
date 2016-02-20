@@ -133,17 +133,17 @@ accepts
 and
 .Cm windows
 as aliases for the most commonly used partition types.
-.\" ==== boot ====
+.\" ==== installboot ====
 .It Xo
 .Nm
-.Ic boot
+.Ic installboot
 .Op Fl b Ar pmbr
 .Op Fl g Ar gptboot
 .Op Fl s Ar count
 .Ar device ...
 .Xc
 The
-.Ic boot
+.Ic installboot
 command allows the user to make a GPT labeled disk bootable via the BIOS
 bootstrap on i386 and amd64 machines.
 By default,
