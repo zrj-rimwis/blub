@@ -59,8 +59,8 @@ extern const struct boot2_fsapi boot2_ufs_api;
 #include "../bootasm.h"
 
 #define PATH_CONFIG	"/boot.config"
-#define PATH_BOOT3	"/loader"		/* /boot is dedicated */
-#define PATH_BOOT3_ALT	"/boot/loader"		/* /boot in root */
+#define PATH_BOOT3	"/boot/loader"		/* /boot in root */
+#define PATH_BOOT3_ALT	"/loader"		/* /boot is dedicated */
 #define PATH_KERNEL	"/boot/kernel/kernel"
 
 #define NOPT		14
@@ -201,6 +201,8 @@ main(void)
 	bootinfo.bi_memsizes_valid++;
 
 	/* Process configuration file */
+	/* force VIDEO output */
+	opts |= OPT_SET(RBX_VIDEO);
 
 	if (gptinit() != 0)
 		return (-1);
@@ -235,8 +237,6 @@ printf("zrj drive=%u, type=%u, unit=%u\n", dsk.drive,dsk.type,dsk.unit);
 			printf("%s: %s", PATH_CONFIG, cmd);
 		/* Do not process this command twice */
 			*cmd = '\0';
-		}
-
 	/*
 	 * Setup our (serial) console after processing the config file.  If
 	 * the initialization fails, don't try to use the serial port.  This
@@ -248,6 +248,7 @@ printf("zrj drive=%u, type=%u, unit=%u\n", dsk.drive,dsk.type,dsk.unit);
 		if (sio_init())
 			opts = OPT_SET(RBX_VIDEO);
 	}
+		}
 
 		if (autoboot && keyhit(3)) {
 			if (*kname == '\0')
