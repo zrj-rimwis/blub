@@ -42,7 +42,7 @@
  * The previous signal state is NOT restored.
  */
 
-#include <machine/asm.h>
+#include <i386/asm.h>
 
 ENTRY(_setjmp)
 	movl	4(%esp),%eax

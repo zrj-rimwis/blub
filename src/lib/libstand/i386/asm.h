@@ -33,6 +33,10 @@
  * $FreeBSD: src/sys/i386/include/asm.h,v 1.7 2000/01/25 09:01:55 bde Exp $
  */
 
+#ifndef __i386__
+#error Only for i386
+#endif
+
 #ifndef _CPU_ASM_H_
 #define	_CPU_ASM_H_
 
