@@ -31,12 +31,31 @@
  * SUCH DAMAGE.
  *
  *	@(#)quad.h	8.1 (Berkeley) 6/4/93
- * $FreeBSD: src/lib/libstand/quad.h,v 1.2 1999/08/28 00:05:33 peter Exp $
+ * $FreeBSD: head/lib/libstand/quad.h 269077 2014-07-24 19:06:15Z sbruno $
+ */
+
+/*
+ * Quad arithmetic.
+ *
+ * This library makes the following assumptions:
+ *
+ *  - The type long long (aka quad_t) exists.
+ *
+ *  - A quad variable is exactly twice as long as `long'.
+ *
+ *  - The machine's arithmetic is two's complement.
+ *
+ * This library can provide 128-bit arithmetic on a machine with 128-bit
+ * quads and 64-bit longs, for instance, or 96-bit arithmetic on machines
+ * with 48-bit longs.
  */
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <limits.h>
+
+_Static_assert(sizeof(quad_t) == sizeof(int) * 2,
+	"Bitwise function in libstand are broken on this architecture\n");
 
 /*
  * Depending on the desired operation, we view a `long long' (aka quad_t) in
@@ -45,8 +64,8 @@
 union uu {
 	quad_t	q;		/* as a (signed) quad */
 	quad_t	uq;		/* as an unsigned quad */
-	long	sl[2];		/* as two signed longs */
-	u_long	ul[2];		/* as two unsigned longs */
+	int	sl[2];		/* as two signed ints */
+	u_int	ul[2];		/* as two unsigned ints */
 };
 
 /*
@@ -55,10 +74,26 @@ union uu {
 #define	H		_QUAD_HIGHWORD
 #define	L		_QUAD_LOWWORD
 
-#define	HALF_BITS	(sizeof(long) * CHAR_BIT / 2)
+/*
+ * Total number of bits in a quad_t and in the pieces that make it up.
+ * These are used for shifting, and also below for halfword extraction
+ * and assembly.
+ */
+#define	QUAD_BITS	(sizeof(quad_t) * CHAR_BIT)
+#define	HALF_BITS	(sizeof(int) * CHAR_BIT / 2)
 
+/*
+ * Extract high and low shortwords from longword, and move low shortword of
+ * longword to upper half of long, i.e., produce the upper longword of
+ * ((quad_t)(x) << (number_of_bits_in_long/2)).  (`x' must actually be u_long.)
+ *
+ * These are used in the multiply code, to split a longword into upper
+ * and lower halves, and to reassemble a product as a quad_t, shifted left
+ * (sizeof(long)*CHAR_BIT/2).
+ */
 #define	HHALF(x)	((x) >> HALF_BITS)
 #define	LHALF(x)	((x) & ((1 << HALF_BITS) - 1))
+#define	LHUP(x)		((x) << HALF_BITS)
 
 quad_t		__divdi3(quad_t, quad_t);
 quad_t		__moddi3(quad_t, quad_t);
