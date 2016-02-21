@@ -112,8 +112,6 @@ int biospci_read_config(uint32_t locator, int offset, int width, uint32_t *val);
 
 void	biosacpi_detect(void);
 
-void	smbios_detect(void);
-
 int	i386_autoload(void);
 
 int	bi_getboothowto(char *kargs);

@@ -74,6 +74,7 @@
 #include "../bootasm.h"
 #include "common/bootargs.h"
 #include "libi386/libi386.h"
+#include "libi386/smbios.h"
 #include "btxv86.h"
 
 CTASSERT(sizeof(struct bootargs) == MEM_ARG_SIZE);
@@ -246,7 +247,7 @@ main(void)
     biosacpi_detect();
 
     /* detect SMBIOS for future reference */
-    smbios_detect();
+    smbios_detect(NULL);
 
     /* enable EHCI */
     setenv("ehci_load", "YES", 1);
