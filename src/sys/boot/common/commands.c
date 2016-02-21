@@ -218,15 +218,20 @@ static int
 command_commandlist(int argc, char *argv[])
 {
     struct bootblk_command	**cmdp;
-    char str[81];
+    int		res;
+    char	name[20];
 
+    res = 0;
     pager_open();
-    printf("Available commands:\n");
+    res = pager_output("Available commands:\n");
     SET_FOREACH(cmdp, Xcommand_set) {
+	if (res)
+	    break;
 	if (((*cmdp)->c_name != NULL) && ((*cmdp)->c_desc != NULL)) {
-	    snprintf(str, sizeof(str), "  %-15s  %s\n",
-		(*cmdp)->c_name, (*cmdp)->c_desc);
-	    pager_output(str);
+	    sprintf(name, "  %-15s  ", (*cmdp)->c_name);
+	    pager_output(name);
+	    pager_output((*cmdp)->c_desc);
+	    res = pager_output("\n");
 	}
     }
     pager_close();
