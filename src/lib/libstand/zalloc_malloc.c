@@ -50,7 +50,7 @@ void mallocstats(void);
 #endif
 
 void *
-Malloc(size_t bytes, const char *file, int line)
+Malloc(size_t bytes, const char *file __unused, int line __unused)
 {
     Guard *res;
 
