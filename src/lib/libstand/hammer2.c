@@ -275,7 +275,7 @@ h2lookup(struct hammer2_fs *hfs, hammer2_blockref_t *base,
 	hammer2_key_t scan_end;
 	int i;
 	int rc;
-	int count;
+	int count = 0;
 	int dev_boff;
 	int dev_bsize;
 
