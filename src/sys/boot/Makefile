@@ -9,7 +9,10 @@
 # Build DLoader
 SUBDIR+=		dloader
 
-# Pick the machine-dependant subdir based on the target architecture.
+# Private copy for pc32
+SUBDIR+=		libstand32
+
+# Pick the machine-dependent subdir based on the target architecture.
 .if ${REALLY_X86_64} == "true"
 SUBDIR+=		pc32
 .else

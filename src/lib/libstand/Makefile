@@ -7,27 +7,34 @@
 #   quite large.
 #
 
-LIB=		stand
+LIBSTAND_SRC?=	${.CURDIR}
+LIBC_SRC=	${LIBSTAND_SRC}/../libc
+LIB?=		stand
 NOPROFILE=	YES
 NOPIC=		YES
-INCS=		stand.h
-MAN=		libstand.3
+INCS?=		stand.h
+MAN?=		libstand.3
 CSTD?=		c99
 WARNS?=		2
 
 # Mostly OK, some of the libc imports are a bit noisy
-CFLAGS+=	-ffreestanding
+CFLAGS+=	-ffreestanding -Wformat
+CFLAGS+=	-I${LIBSTAND_SRC}
 
-.if ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CFLAGS+=	-mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float
+.endif
+
+.if ${MACHINE_ARCH} == "i386"
+FORCE_CPUTYPE=	i386
+CFLAGS+=	-m32
 .if ${CCVER:Mgcc*}
 CFLAGS+=	-mpreferred-stack-boundary=2
 .endif
-CFLAGS+=	-mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float
-FORCE_CPUTYPE=	i386
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
-CFLAGS+=	-m32
+CFLAGS+=	-fPIC -mno-red-zone
 .endif
 
 # standalone components and stuff we have modified locally
@@ -39,31 +46,27 @@ SRCS+=	gzguts.h zutil.h __main.c assert.c bcd.c bswap.c environment.c getopt.c g
 SRCS+=	strcasecmp.c
 
 # string functions from libc
-.PATH:	${.CURDIR}/../libc/string
-.if ${MACHINE_ARCH} == "x86_64"
+.PATH:	${LIBC_SRC}/string
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memccpy.c memchr.c memcmp.c \
         memcpy.c memmove.c memset.c qdivrem.c rindex.c strcat.c strchr.c \
         strcmp.c strcpy.c strcspn.c strlen.c strncat.c strncmp.c strncpy.c \
 	strpbrk.c strrchr.c strsep.c strspn.c strstr.c strtok.c swab.c
 .endif
-.PATH:	${.CURDIR}/../../sys/libkern
+.PATH:	${LIBSTAND_SRC}/../../sys/libkern
 SRCS+=  icrc32.c
 
 # uuid functions from libc
-.PATH: ${.CURDIR}/../libc/uuid
+.PATH: ${LIBC_SRC}/uuid
 SRCS+= uuid_equal.c uuid_is_nil.c
 
 # _setjmp/_longjmp
-.if ${MACHINE_ARCH} == "x86_64"
-.PATH:	${.CURDIR}/i386
-.else
-.endif
-# really only required for i386
-CFLAGS+=-I${.CURDIR}/../libc/${MACHINE_ARCH}
+.PATH:	${LIBSTAND_SRC}/${MACHINE_ARCH}
+
 SRCS+=	_setjmp.S
 
 # decompression functionality from libbz2
-BZ2DIR=	${.CURDIR}/../../contrib/bzip2
+BZ2DIR=	${LIBSTAND_SRC}/../../contrib/bzip2
 .PATH:	${BZ2DIR}
 CFLAGS+=-I${BZ2DIR} -DBZ_NO_STDIO -DBZ_NO_COMPRESS
 SRCS+=	libstand_bzlib_private.h
@@ -83,7 +86,7 @@ libstand_bzlib_private.h: bzlib_private.h
 		${.ALLSRC} > ${.TARGET}
 
 # decompression functionality from libz
-ZLIBDIR= ${.CURDIR}/../../contrib/zlib-1.2
+ZLIBDIR= ${LIBSTAND_SRC}/../../contrib/zlib-1.2
 .PATH: ${ZLIBDIR}
 CFLAGS+=-DCOMPILING_LIBSTAND -DHAVE_MEMCPY -I${ZLIBDIR}
 SRCS+=	adler32.c crc32.c libstand_zutil.h libstand_gzguts.h
@@ -129,7 +132,3 @@ SRCS+=	hammer1.c
 SRCS+=	hammer2.c
 
 .include <bsd.lib.mk>
-
-.if ${MACHINE_ARCH} == "x86_64"
-CFLAGS+= -I${.CURDIR}
-.endif

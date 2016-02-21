@@ -56,15 +56,7 @@ COMPILER_LDFLAGS+=	-Wl,--script,${.CURDIR}/../loader/loader.ldscript
 LIBI386=	${.OBJDIR}/../libi386/libi386.a
 CFLAGS+=	-I${.CURDIR}/..
 
-# where to get libstand from
-#XXX need a better way to do this
-LIBSTAND=	${.CURDIR}/../../../../lib/libstand/libstand.a
-.if !exists(${LIBSTAND})
-LIBSTAND=	${.OBJDIR}/../../../../lib/libstand/libstand.a
-.if !exists(${LIBSTAND})
-LIBSTAND=	-lstand
-.endif
-.endif
+LIBSTAND=	${.OBJDIR}/../../libstand32/libstand32.a
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libstand/
 
 # BTX components
