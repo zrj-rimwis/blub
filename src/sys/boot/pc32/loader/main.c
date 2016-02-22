@@ -102,6 +102,9 @@ extern	char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 /* XXX debugging */
 extern char _end[];
 
+static void *heap_top;
+static void *heap_bottom;
+
 #define COMCONSOLE_DEBUG
 #ifdef COMCONSOLE_DEBUG
 
@@ -169,15 +172,19 @@ main(void)
      * data.
      */
     bios_getmem();
+
     memend = (char *)&memend - 0x8000;	/* space for stack (16K) */
     memend = (char *)((uintptr_t)memend & ~(uintptr_t)(0x1000 - 1));
     if (memend < (char *)_end) {
-	setheap((void *)_end, PTOV(bios_basemem));
+	heap_top = PTOV(bios_basemem);
+	heap_bottom = (void *)_end;
     } else {
 	if (memend > (char *)PTOV(bios_basemem))
 	    memend = (char *)PTOV(bios_basemem);
-	setheap((void *)_end, memend);
+	heap_top = memend;
+	heap_bottom = (void *)_end;
     }
+    setheap(heap_bottom, heap_top);
 
     /*
      * XXX Chicken-and-egg problem; we want to have console output early,
@@ -332,6 +339,7 @@ extract_currdev(void)
 	       "Guessed BIOS device 0x%x not found by probes, defaulting to disk0:\n", biosdev);
 	new_currdev.d_unit = 0;
     }
+
     env_setenv("currdev", EV_VOLATILE, i386_fmtdev(&new_currdev),
 	       i386_setcurrdev, env_nounset);
     env_setenv("loaddev", EV_VOLATILE, i386_fmtdev(&new_currdev), env_noset,
@@ -371,7 +379,9 @@ command_heap(int argc, char *argv[])
 
     mallocstats();
     base = getheap(&bytes);
-    printf("heap %p-%p (%d)\n", base, base + bytes, (int)bytes);
+    printf("getheap %p-%p (%d)\n", base, base + bytes, (int)bytes);
+    printf("heap base at %p, top at %p, upper limit at %p\n", heap_bottom,
+      sbrk(0), heap_top);
     printf("stack at %p\n", &argc);
     return(CMD_OK);
 }
