@@ -71,7 +71,13 @@ BZ2DIR=	${LIBSTAND_SRC}/../../contrib/bzip2
 CFLAGS+=-I${BZ2DIR} -DBZ_NO_STDIO -DBZ_NO_COMPRESS
 SRCS+=	libstand_bzlib_private.h
 
-.for file in bzlib.c crctable.c decompress.c huffman.c randtable.c
+CLEANFILES+= bzlib_de.c
+bzlib_de.c: bzlib.c	# Don't forget to adjust line numbers on bzip2 update
+	awk -v s="#ifndef BZ_NO_COMPRESS" -v e="#endif /* BZ_NO_COMPRESS */"	\
+		'NR~/^(33|114|880|88|486|1569)$$/ {x++;print(x%2?s:e)} {print}'	\
+		${.ALLSRC} > ${.TARGET}
+
+.for file in bzlib_de.c crctable.c decompress.c huffman.c randtable.c
 SRCS+=	_${file}
 CLEANFILES+=	_${file}
 
