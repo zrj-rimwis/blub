@@ -156,7 +156,6 @@ main(void)
     bzero(&v86, sizeof(v86));
     v86.efl = PSL_RESERVED_DEFAULT | PSL_I;
 
-
     /*
      * Initialize the heap as early as possible.  Once this is done,
      * malloc() is usable.
@@ -175,6 +174,20 @@ main(void)
 
     memend = (char *)&memend - 0x8000;	/* space for stack (16K) */
     memend = (char *)((uintptr_t)memend & ~(uintptr_t)(0x1000 - 1));
+
+    /*
+     * For day to day usage simple memend setup is more than engouh,
+     * but bigger heap is a must for loading bzipp'ed kernel/modules
+     * "bzf_read: BZ2_bzDecompress returned -3"
+     */
+#if defined(LOADER_BZIP2_SUPPORT)
+    if (high_heap_size > 0) {
+	heap_top = PTOV(high_heap_base + high_heap_size);
+	heap_bottom = PTOV(high_heap_base);
+	if (high_heap_base < memtop_copyin)
+	    memtop_copyin = high_heap_base;
+    } else
+#endif
     if (memend < (char *)_end) {
 	heap_top = PTOV(bios_basemem);
 	heap_bottom = (void *)_end;
