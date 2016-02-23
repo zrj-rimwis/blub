@@ -29,6 +29,7 @@
 #include <bootstrap.h>
 #include <machine/cpufunc.h>
 #include <dev/serial/ic_layer/ns16550.h>
+#include <bus/pci/pcireg.h>
 #include "libi386.h"
 
 #define COMC_FMT	0x3		/* 8N1 */
@@ -49,13 +50,21 @@ static void	comc_putchar(int c);
 static int	comc_getchar(void);
 static int	comc_getspeed(void);
 static int	comc_ischar(void);
-static int	comc_parsespeed(const char *string);
-static void	comc_setup(int speed);
+static int	comc_parseint(const char *string);
+static uint32_t comc_parse_pcidev(const char *string);
+static int	comc_pcidev_set(struct env_var *ev, int flags,
+		    const void *value);
+static int	comc_pcidev_handle(uint32_t locator);
+static int	comc_port_set(struct env_var *ev, int flags,
+		    const void *value);
+static void	comc_setup(int speed, int port);
 static int	comc_speed_set(struct env_var *ev, int flags,
 		    const void *value);
 
 static int	comc_started;
 static int	comc_curspeed;
+static int	comc_port = COMPORT;
+static uint32_t	comc_locator;
 
 struct console comconsole = {
     "comconsole",
@@ -82,16 +91,17 @@ comc_probe(struct console *cp)
 {
     int i;
 
-    char speedbuf[16];
-    char *cons, *speedenv;
-    int speed;
+    char intbuf[16];
+    char *cons, *env;
+    int speed, port;
+    uint32_t locator;
 
-    if (inb(COMPORT + com_lsr) == 0xFF)
+    if (inb(comc_port + com_lsr) == 0xFF)
 	return;
     for (i = 255; i >= 0; --i) {
 	if (comc_ischar() == 0)
 	    break;
-        inb(COMPORT + com_data);
+        inb(comc_port + com_data);
     }
     if (i < 0)
 	return;
@@ -108,16 +118,40 @@ comc_probe(struct console *cp)
 	    getenv("boot_multicons") != NULL) {
 		comc_curspeed = comc_getspeed();
 	}
-	speedenv = getenv("comconsole_speed");
-	if (speedenv != NULL) {
-	    speed = comc_parsespeed(speedenv);
+
+	env = getenv("comconsole_speed");
+	if (env != NULL) {
+	    speed = comc_parseint(env);
 	    if (speed > 0)
 		comc_curspeed = speed;
 	}
 
-	sprintf(speedbuf, "%d", comc_curspeed);
+	sprintf(intbuf, "%d", comc_curspeed);
 	unsetenv("comconsole_speed");
-	env_setenv("comconsole_speed", EV_VOLATILE, speedbuf, comc_speed_set,
+	env_setenv("comconsole_speed", EV_VOLATILE, intbuf, comc_speed_set,
+	    env_nounset);
+
+	env = getenv("comconsole_port");
+	if (env != NULL) {
+	    port = comc_parseint(env);
+	    if (port > 0)
+		comc_port = port;
+	}
+
+	sprintf(intbuf, "%d", comc_port);
+	unsetenv("comconsole_port");
+	env_setenv("comconsole_port", EV_VOLATILE, intbuf, comc_port_set,
+	    env_nounset);
+
+	env = getenv("comconsole_pcidev");
+	if (env != NULL) {
+	    locator = comc_parse_pcidev(env);
+	    if (locator != 0)
+		    comc_pcidev_handle(locator);
+	}
+
+	unsetenv("comconsole_pcidev");
+	env_setenv("comconsole_pcidev", EV_VOLATILE, env, comc_pcidev_set,
 	    env_nounset);
     }
 }
@@ -129,9 +163,9 @@ comc_init(int arg)
 	return 0;
     comc_started = 1;
 
-    comc_setup(comc_curspeed);
+    comc_setup(comc_curspeed, comc_port);
 
-    return(0);
+    return (0);
 }
 
 static void
@@ -140,8 +174,8 @@ comc_putchar(int c)
     int wait;
 
     for (wait = COMC_TXWAIT; wait > 0; wait--) {
-        if (inb(COMPORT + com_lsr) & LSR_TXRDY) {
-	    outb(COMPORT + com_data, (u_char)c);
+        if (inb(comc_port + com_lsr) & LSR_TXRDY) {
+	    outb(comc_port + com_data, (u_char)c);
 	    break;
 	}
     }
@@ -150,13 +184,13 @@ comc_putchar(int c)
 static int
 comc_getchar(void)
 {
-    return(comc_ischar() ? inb(COMPORT + com_data) : -1);
+    return (comc_ischar() ? inb(comc_port + com_data) : -1);
 }
 
 static int
 comc_ischar(void)
 {
-    return(inb(COMPORT + com_lsr) & LSR_RXRDY);
+    return (inb(comc_port + com_lsr) & LSR_RXRDY);
 }
 
 static int
@@ -164,38 +198,154 @@ comc_speed_set(struct env_var *ev, int flags, const void *value)
 {
     int speed;
 
-    if (value == NULL || (speed = comc_parsespeed(value)) <= 0) {
+    if (value == NULL || (speed = comc_parseint(value)) <= 0) {
 	printf("Invalid speed\n");
 	return (CMD_ERROR);
     }
 
     if (comc_started && comc_curspeed != speed)
-	comc_setup(speed);
+	comc_setup(speed, comc_port);
 
     env_setenv(ev->ev_name, flags | EV_NOHOOK, value, NULL, NULL);
 
     return (CMD_OK);
 }
 
-static void
-comc_setup(int speed)
+static int
+comc_port_set(struct env_var *ev, int flags, const void *value)
 {
+    int port;
 
-    comc_curspeed = speed;
+    if (value == NULL || (port = comc_parseint(value)) <= 0) {
+	printf("Invalid port\n");
+	return (CMD_ERROR);
+    }
 
-    outb(COMPORT + com_cfcr, CFCR_DLAB | COMC_FMT);
-    outb(COMPORT + com_dlbl, COMC_BPS(speed) & 0xff);
-    outb(COMPORT + com_dlbh, COMC_BPS(speed) >> 8);
-    outb(COMPORT + com_cfcr, COMC_FMT);
-    outb(COMPORT + com_mcr, MCR_RTS | MCR_DTR);
+    if (comc_started && comc_port != port)
+	comc_setup(comc_curspeed, port);
 
-    do
-	inb(COMPORT + com_data);
-    while (inb(COMPORT + com_lsr) & LSR_RXRDY);
+    env_setenv(ev->ev_name, flags | EV_NOHOOK, value, NULL, NULL);
+
+    return (CMD_OK);
+}
+
+/*
+ * Input: bus:dev:func[:bar]. If bar is not specified, it is 0x10.
+ * Output: bar[24:16] bus[15:8] dev[7:3] func[2:0]
+ */
+static uint32_t
+comc_parse_pcidev(const char *string)
+{
+#ifdef NO_PCI
+	return (0);
+#else
+	char *p, *p1;
+	uint8_t bus, dev, func, bar;
+	uint32_t locator;
+	int pres;
+
+	pres = strtol(string, &p, 0);
+	if (p == string || *p != ':' || pres < 0 )
+		return (0);
+	bus = pres;
+	p1 = ++p;
+
+	pres = strtol(p1, &p, 0);
+	if (p == string || *p != ':' || pres < 0 )
+		return (0);
+	dev = pres;
+	p1 = ++p;
+
+	pres = strtol(p1, &p, 0);
+	if (p == string || (*p != ':' && *p != '\0') || pres < 0 )
+		return (0);
+	func = pres;
+
+	if (*p == ':') {
+		p1 = ++p;
+		pres = strtol(p1, &p, 0);
+		if (p == string || *p != '\0' || pres <= 0 )
+			return (0);
+		bar = pres;
+	} else
+		bar = 0x10;
+
+	locator = (bar << 16) | biospci_locator(bus, dev, func);
+	return (locator);
+#endif
 }
 
 static int
-comc_parsespeed(const char *speedstr)
+comc_pcidev_handle(uint32_t locator)
+{
+#ifdef NO_PCI
+	return (CMD_ERROR);
+#else
+	char intbuf[64];
+	uint32_t port;
+
+	if (biospci_read_config(locator & 0xffff,
+				(locator & 0xff0000) >> 16, 2, &port) == -1) {
+		printf("Cannot read bar at 0x%x\n", locator);
+		return (CMD_ERROR);
+	}
+	if (!PCI_BAR_IO(port)) {
+		printf("Memory bar at 0x%x\n", locator);
+		return (CMD_ERROR);
+	}
+        port &= PCIM_BAR_IO_BASE;
+
+	sprintf(intbuf, "%d", port);
+	unsetenv("comconsole_port");
+	env_setenv("comconsole_port", EV_VOLATILE, intbuf,
+		   comc_port_set, env_nounset);
+
+	comc_setup(comc_curspeed, port);
+	comc_locator = locator;
+
+	return (CMD_OK);
+#endif
+}
+
+static int
+comc_pcidev_set(struct env_var *ev, int flags, const void *value)
+{
+	uint32_t locator;
+	int error;
+
+	if (value == NULL || (locator = comc_parse_pcidev(value)) <= 0) {
+		printf("Invalid pcidev\n");
+		return (CMD_ERROR);
+	}
+	if (comc_started && comc_locator != locator) {
+		error = comc_pcidev_handle(locator);
+		if (error != CMD_OK)
+			return (error);
+	}
+	env_setenv(ev->ev_name, flags | EV_NOHOOK, value, NULL, NULL);
+	return (CMD_OK);
+}
+
+static void
+comc_setup(int speed, int port)
+{
+
+    comc_curspeed = speed;
+    comc_port = port;
+
+    outb(comc_port + com_cfcr, CFCR_DLAB | COMC_FMT);
+    outb(comc_port + com_dlbl, COMC_BPS(speed) & 0xff);
+    outb(comc_port + com_dlbh, COMC_BPS(speed) >> 8);
+    outb(comc_port + com_cfcr, COMC_FMT);
+    outb(comc_port + com_mcr, MCR_RTS | MCR_DTR);
+
+    do
+	inb(comc_port + com_data);
+    while (inb(comc_port + com_lsr) & LSR_RXRDY);
+}
+
+static int
+comc_parseint(const char *speedstr)
 {
     char *p;
     int speed;
@@ -215,13 +365,13 @@ comc_getspeed(void)
 	u_char	dlbl;
 	u_char	cfcr;
 
-	cfcr = inb(COMPORT + com_cfcr);
-	outb(COMPORT + com_cfcr, CFCR_DLAB | cfcr);
+	cfcr = inb(comc_port + com_cfcr);
+	outb(comc_port + com_cfcr, CFCR_DLAB | cfcr);
 
-	dlbl = inb(COMPORT + com_dlbl);
-	dlbh = inb(COMPORT + com_dlbh);
+	dlbl = inb(comc_port + com_dlbl);
+	dlbh = inb(comc_port + com_dlbh);
 
-	outb(COMPORT + com_cfcr, cfcr);
+	outb(comc_port + com_cfcr, cfcr);
 
 	divisor = dlbh << 8 | dlbl;
 
