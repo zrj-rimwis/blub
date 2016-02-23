@@ -191,14 +191,67 @@ static struct pci_class
 static void	biospci_enumerate(void);
 static void	biospci_addinfo(int devid, struct pci_class *pc, struct pci_subclass *psc, struct pci_progif *ppi);
 
-static int	biospci_version;
-static int	biospci_hwcap;
-
 struct pnphandler biospcihandler =
 {
     "PCI BIOS",
     biospci_enumerate
 };
+
+#define PCI_BIOS_PRESENT	0xb101
+#define FIND_PCI_DEVICE		0xb102
+#define FIND_PCI_CLASS_CODE	0xb103
+#define GENERATE_SPECIAL_CYCLE	0xb106
+#define READ_CONFIG_BYTE	0xb108
+#define READ_CONFIG_WORD	0xb109
+#define READ_CONFIG_DWORD	0xb10a
+#define WRITE_CONFIG_BYTE	0xb10b
+#define WRITE_CONFIG_WORD	0xb10c
+#define WRITE_CONFIG_DWORD	0xb10d
+#define GET_IRQ_ROUTING_OPTIONS	0xb10e
+#define SET_PCI_IRQ		0xb10f
+
+#define PCI_INT			0x1a
+
+#define PCI_SIGNATURE		0x20494350	/* AKA "PCI " */
+
+void
+biospci_detect(void)
+{
+    uint16_t version, hwcap, maxbus;
+    char buf[24];
+
+    /* Find the PCI BIOS */
+    v86.ctl = V86_FLAGS;
+    v86.addr = PCI_INT;
+    v86.eax = PCI_BIOS_PRESENT;
+    v86.edi = 0x0;
+    v86int();
+
+    /* Check for OK response */
+    if (V86_CY(v86.efl) || ((v86.eax & 0xff00) != 0) ||
+	(v86.edx != PCI_SIGNATURE))
+	return;
+
+    version = v86.ebx & 0xffff;
+    hwcap = v86.eax & 0xff;
+    maxbus = v86.ecx & 0xff;
+#if 0
+    printf("PCI BIOS %d.%d%s%s maxbus %d\n",
+	   bcd2bin((version >> 8) & 0xf), bcd2bin(version & 0xf),
+	   (hwcap & 1) ? " config1" : "", (hwcap & 2) ? " config2" : "",
+	   maxbus);
+#endif
+    sprintf(buf, "%d", bcd2bin((version >> 8) & 0xf));
+    setenv("pcibios.major", buf, 1);
+    sprintf(buf, "%d", bcd2bin(version & 0xf));
+    setenv("pcibios.minor", buf, 1);
+    sprintf(buf, "%d", !!(hwcap & 1));
+    setenv("pcibios.config1", buf, 1);
+    sprintf(buf, "%d", !!(hwcap & 2));
+    setenv("pcibios.config2", buf, 1);
+    sprintf(buf, "%d", maxbus);
+    setenv("pcibios.maxbus", buf, 1);
+}
 
 static void
 biospci_enumerate(void)
@@ -209,25 +262,6 @@ biospci_enumerate(void)
     struct pci_subclass *psc;
     struct pci_progif	*ppi;
 
-    /* Find the PCI BIOS */
-    v86.ctl = V86_FLAGS;
-    v86.addr = 0x1a;
-    v86.eax = 0xb101;
-    v86.edi = 0x0;
-    v86int();
-
-    /* Check for OK response */
-    if (V86_CY(v86.efl) || ((v86.eax & 0xff00) != 0) ||
-	(v86.edx != 0x20494350))
-	return;
-
-    biospci_version = v86.ebx & 0xffff;
-    biospci_hwcap = v86.eax & 0xff;
-#if 0
-    printf("PCI BIOS %d.%d%s%s\n",
-	   bcd2bin((biospci_version >> 8) & 0xf), bcd2bin(biospci_version & 0xf),
-	   (biospci_hwcap & 1) ? " config1" : "", (biospci_hwcap & 2) ? " config2" : "");
-#endif
     /* Iterate over known classes */
     for (pc = pci_classes; pc->pc_class >= 0; pc++) {
 	/* Iterate over subclasses */
@@ -287,8 +321,8 @@ int
 biospci_find_devclass(uint32_t class, int index, uint32_t *locator)
 {
 	v86.ctl = V86_FLAGS;
-	v86.addr = 0x1a;
-	v86.eax = 0xb103;
+	v86.addr = PCI_INT;
+	v86.eax = FIND_PCI_CLASS_CODE;
 	v86.ecx = class;
 	v86.esi = index;
 	v86int();
@@ -305,8 +339,8 @@ int
 biospci_read_config(uint32_t locator, int offset, int width, uint32_t *val)
 {
 	v86.ctl = V86_FLAGS;
-	v86.addr = 0x1a;
-	v86.eax = 0xb108 + width;
+	v86.addr = PCI_INT;
+	v86.eax = READ_CONFIG_BYTE + width;
 	v86.ebx = locator;
 	v86.edi = offset;
 	v86int();

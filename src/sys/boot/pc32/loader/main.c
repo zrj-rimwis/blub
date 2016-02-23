@@ -269,6 +269,9 @@ main(void)
     /* detect SMBIOS for future reference */
     smbios_detect(NULL);
 
+    /* detect PCI BIOS for future reference */
+    biospci_detect();
+
     /* enable EHCI */
     setenv("ehci_load", "YES", 1);
 

@@ -109,6 +109,7 @@ extern vm_offset_t	memtop_copyin;	/* memtop less heap size for the cases */
 extern uint32_t		high_heap_size;	/* extended memory region available */
 extern vm_offset_t	high_heap_base;	/* for use as the heap */
 
+void	biospci_detect(void);
 int biospci_find_devclass(uint32_t class, int index, uint32_t *locator);
 int biospci_read_config(uint32_t locator, int offset, int width, uint32_t *val);
 uint32_t biospci_locator(int8_t bus, uint8_t device, uint8_t function);
