@@ -206,17 +206,19 @@ main(void)
      *
      * We can use printf() etc. once this is done.   The previous boot stage
      * might have requested a video or serial preference, in which case we
-     * set it.  If neither is specified or both are specified we leave the
-     * console environment variable alone, defaulting to dual boot.
+     * set it.
      */
     bi_setboothowto(initial_howto);
     if (initial_howto & RB_MUTE) {
 	setenv("console", "nullconsole", 1);
-    } else if ((initial_howto & (RB_VIDEO|RB_SERIAL)) != (RB_VIDEO|RB_SERIAL)) {
-	if (initial_howto & RB_VIDEO)
-	    setenv("console", "vidconsole", 1);
-	if (initial_howto & RB_SERIAL)
-	    setenv("console", "comconsole", 1);
+    } else if ((initial_howto & (RB_VIDEO|RB_SERIAL)) == (RB_VIDEO|RB_SERIAL)) {
+	setenv("console", "vidconsole comconsole", 1);
+    } else if (initial_howto & RB_VIDEO) {
+	setenv("console", "vidconsole", 1);
+    } else if (initial_howto & RB_SERIAL) {
+	setenv("console", "comconsole", 1);
+    } else {
+	/* XXX leave to cons_probe() */
     }
     cons_probe();
 

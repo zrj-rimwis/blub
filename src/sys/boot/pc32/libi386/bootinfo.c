@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/boot/i386/libi386/bootinfo.c,v 1.35 2003/08/25 23:28:31 obrien Exp $
+ * $FreeBSD: head/sys/boot/i386/libi386/bootinfo.c 263005 2014-03-11 10:13:06Z royger $
  */
 
 #include <stand.h>
@@ -39,6 +39,7 @@ int
 bi_getboothowto(char *kargs)
 {
     char	*cp;
+    char	*curpos, *next, *string;
     int		howto;
     int		active;
     int		i;
@@ -101,19 +102,38 @@ bi_getboothowto(char *kargs)
     for (i = 0; howto_names[i].ev != NULL; i++)
 	if (getenv(howto_names[i].ev) != NULL)
 	    howto |= howto_names[i].mask;
-    if (!strcmp(getenv("console"), "comconsole"))
-	howto |= RB_SERIAL;
-    if (!strcmp(getenv("console"), "nullconsole"))
-	howto |= RB_MUTE;
-    if (!strcmp(getenv("console"), "vidconsole"))
-	howto |= RB_VIDEO;
+
+    /* Enable selected consoles */
+    string = next = strdup(getenv("console"));
+    while (next != NULL) {
+	curpos = strsep(&next, " ,");
+	if (*curpos == '\0')
+		continue;
+	if (!strcmp(curpos, "vidconsole"))
+	    howto |= RB_VIDEO;
+	else if (!strcmp(curpos, "comconsole"))
+	    howto |= RB_SERIAL;
+	else if (!strcmp(curpos, "nullconsole"))
+	    howto |= RB_MUTE;
+    }
+
+    /*
+     * If both RB_VIDEO and RB_SERIAL are set, mimic -D option.
+     * All available consoles become active.
+     */
+    if ((howto & (RB_SERIAL|RB_VIDEO)) == (RB_SERIAL|RB_VIDEO))
+	howto &= ~(RB_MUTE|RB_VIDEO|RB_SERIAL);
+
+    if (string != NULL)
+	free(string);
+
     return(howto);
 }
 
 void
 bi_setboothowto(int howto)
 {
-    int	i;
+    int		i;
 
     for (i = 0; howto_names[i].ev != NULL; i++)
 	if (howto & howto_names[i].mask)
