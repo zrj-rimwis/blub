@@ -53,7 +53,7 @@
  * We only need a 32 bit ino_t for UFS-only boot code.  We have to squeeze
  * space usage, else we'd just use 64 bits across the board.
  */
-#if defined(HAMMERFS) || defined(HAMMER2FS)
+#if defined(GPT) || defined(HAMMERFS) || defined(HAMMER2FS)
 typedef uint64_t boot2_ino_t;
 #else
 typedef uint32_t boot2_ino_t;
@@ -79,7 +79,11 @@ extern int	no_io_error;
 extern int	ls;
 extern struct boot2_dmadat *boot2_dmadat;
 
+#ifdef GPT
+extern int dskread(void *, daddr_t, unsigned);
+#else
 extern int dskread(void *, unsigned, unsigned);
+#endif
 extern void printf(const char *,...);
 extern void putchar(int);
 extern int strcmp(const char *s1, const char *s2);

@@ -31,25 +31,7 @@
 
 #include <btxv86.h>
 
-#if 0
-/* XXX */
 #include "boot2.h"
-#else
-typedef uint32_t boot2_ino_t;
-struct boot2_fsapi {
-    int (*fsinit)(void);
-    boot2_ino_t (*fslookup)(const char *);
-    ssize_t (*fsread)(boot2_ino_t, void *, size_t);
-};
-struct boot2_dmadat {
-/* XXX   char    secbuf[DEV_BSIZE]; */
-    char    secbuf[DEV_BSIZE*4];
-    /* extended by *fsread() modules */
-};
-extern struct boot2_dmadat *boot2_dmadat;
-extern const struct boot2_fsapi boot2_ufs_api;
-#endif
-
 #include "lib.h"
 #include "rbx.h"
 #include "drv.h"
@@ -123,7 +105,6 @@ void exit(int);
 static void load(void);
 static int parse(char *, int *);
 static int dskprobe(void);
-static int dskread(void *, daddr_t, unsigned);
 static uint32_t memsize(void);
 
 #include "ufsread.c"
@@ -494,7 +475,7 @@ dskprobe(void)
  * Read from the probed disk.  We have established the slice and partition
  * base sector.
  */
-static int
+int
 dskread(void *buf, daddr_t lba, unsigned nblk)
 {
 	return drvread(&dsk, buf, lba + dsk.start, nblk);
