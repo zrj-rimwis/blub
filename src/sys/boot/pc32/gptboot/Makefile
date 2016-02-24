@@ -1,10 +1,16 @@
-.PATH:		${.CURDIR}/../boot2 ${.CURDIR}/../common ${.CURDIR}/../../common
-
 BOOT=		gptboot
 BINDIR?=	/boot
 BINMODE=	444
 PROG=		${BOOT}
 MAN=		gptboot.8
+
+LIBSTAND_SRC=	${.CURDIR}/../../../../lib/libstand
+
+.PATH: ${.CURDIR}/../boot2
+.PATH: ${.CURDIR}/../common
+.PATH: ${.CURDIR}/../../common
+.PATH: ${.CURDIR}/../../../../lib/libstand
+.PATH: ${.CURDIR}/../../../libkern
 
 BOOT_COMCONSOLE_PORT?= 0x3f8
 BOOT_COMCONSOLE_SPEED?= 9600
@@ -25,7 +31,7 @@ CFLAGS=	-DBOOTPROG=\"gptboot\" \
 	-fno-unwind-tables \
 	-fno-asynchronous-unwind-tables \
 	-mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 \
-	-DGPT -DUFS \
+	-DGPT -DUFS -DBOOT2 -DHAMMER2FS \
 	-D${GPTBOOT_UFS} \
 	-DSIOPRT=${BOOT_COMCONSOLE_PORT} \
 	-DSIOFMT=${B2SIOFMT} \
@@ -44,7 +50,7 @@ LDFLAGS=	-nostdlib -static -N --gc-sections
 LINKSCRIPT=	--script ${.CURDIR}/gptboot.ldscript
 
 LIBSTAND=	${.OBJDIR}/../../libstand32/libstand32.a
-CFLAGS+=	-I${.CURDIR}/../../../../lib/libstand/
+CFLAGS+=	-I${LIBSTAND_SRC}
 
 # BTX components
 .if exists(${.OBJDIR}/../btx)
@@ -76,9 +82,17 @@ CLEANFILES+=	gptboot.bin gptboot.out gptboot.o sio.o gpt.o crc32.o drv.o \
 gptboot.bin: gptboot.out
 	objcopy -S -O binary gptboot.out ${.TARGET}
 
-gptboot.out: ${BTXCRT} gptboot.o sio.o gpt.o crc32.o drv.o cons.o util.o
+gptboot.out: ${BTXCRT} gptboot.o sio.o gpt.o crc32.o drv.o cons.o util.o hammer2gpt.o icrc32gpt.o
 	${LD} ${LDFLAGS} -Ttext ${ORG2} ${LINKSCRIPT} -o ${.TARGET} ${.ALLSRC} ${LIBSTAND}
 
-gptboot.o: ${.CURDIR}/../../common/ufsread.c
+gptboot.o:	${.CURDIR}/../../common/ufsread.c
+
+CLEANFILES+=	hammer2gpt.o icrc32gpt.o
+
+hammer2gpt.o: hammer2.c
+	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} -c
+
+icrc32gpt.o: icrc32.c
+	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} -c
 
 .include <bsd.prog.mk>
