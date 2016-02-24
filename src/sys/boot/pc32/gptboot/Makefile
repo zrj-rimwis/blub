@@ -5,7 +5,6 @@ BINDIR?=	/boot
 BINMODE=	444
 PROG=		${BOOT}
 MAN=		gptboot.8
-STRIP=
 
 BOOT_COMCONSOLE_PORT?= 0x3f8
 BOOT_COMCONSOLE_SPEED?= 9600
@@ -41,7 +40,8 @@ CFLAGS=	-DBOOTPROG=\"gptboot\" \
 	-Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings \
 	-Winline
 
-LDFLAGS=-static -N --gc-sections
+LDFLAGS=	-nostdlib -static -N --gc-sections
+LINKSCRIPT=	--script ${.CURDIR}/gptboot.ldscript
 
 LIBSTAND=	${.OBJDIR}/../../libstand32/libstand32.a
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libstand/
@@ -67,9 +67,8 @@ CLEANFILES+=	gptldr.bin gptldr.out gptldr.o
 gptldr.bin: gptldr.out
 	objcopy -S -O binary gptldr.out ${.TARGET}
 
-# ld.gold produces not working gptboot
 gptldr.out: gptldr.o
-	LDVER=ld.bfd ${LD} ${LDFLAGS} -e start -Ttext ${ORG1} -o ${.TARGET} gptldr.o
+	${LD} ${LDFLAGS} -e start -Ttext ${ORG1} -o ${.TARGET} gptldr.o
 
 CLEANFILES+=	gptboot.bin gptboot.out gptboot.o sio.o gpt.o crc32.o drv.o \
 		cons.o util.o
@@ -78,7 +77,7 @@ gptboot.bin: gptboot.out
 	objcopy -S -O binary gptboot.out ${.TARGET}
 
 gptboot.out: ${BTXCRT} gptboot.o sio.o gpt.o crc32.o drv.o cons.o util.o
-	LDVER=ld.bfd ${LD} ${LDFLAGS} -Ttext ${ORG2} -o ${.TARGET} ${.ALLSRC} ${LIBSTAND}
+	${LD} ${LDFLAGS} -Ttext ${ORG2} ${LINKSCRIPT} -o ${.TARGET} ${.ALLSRC} ${LIBSTAND}
 
 gptboot.o: ${.CURDIR}/../../common/ufsread.c
 
