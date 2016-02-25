@@ -228,7 +228,7 @@ getstr(void)
 	    *s = 0;
 	    return;
 	default:
-	    if (s - cmd < sizeof(cmd) - 1)
+	    if (s - cmd < (int32_t)sizeof(cmd) - 1)
 		*s++ = c;
 	    putchar(c);
 	}
@@ -419,7 +419,7 @@ parse(void)
 {
     char *arg = cmd;
     char *p, *q;
-    unsigned int drv;
+    int drv;
     int c, i;
 
     while ((c = *arg++)) {

@@ -136,7 +136,7 @@ getstr(char *cmdstr, size_t cmdstrsize)
 			*s = 0;
 			return;
 		default:
-			if (s - cmdstr < cmdstrsize - 1)
+			if (s - cmdstr < (ssize_t)cmdstrsize - 1)
 				*s++ = c;
 			putchar(c);
 			break;

@@ -97,7 +97,7 @@ gptfind(const uuid_t *uuid, struct dsk *dskp, int part)
 	int firsttry;
 
 	if (part >= 0) {
-		if (part == 0 || part > gpthdr->hdr_entries) {
+		if (part == 0 || part > (int)(gpthdr->hdr_entries)) {
 			printf("%s: invalid partition index\n", BOOTPROG);
 			return (-1);
 		}
@@ -113,7 +113,7 @@ gptfind(const uuid_t *uuid, struct dsk *dskp, int part)
 
 	firsttry = (curent == -1);
 	curent++;
-	if (curent >= gpthdr->hdr_entries) {
+	if (curent >= (int)(gpthdr->hdr_entries)) {
 		curent = gpthdr->hdr_entries;
 		return (-1);
 	}
@@ -122,7 +122,7 @@ gptfind(const uuid_t *uuid, struct dsk *dskp, int part)
 		 * First look for partition with both GPT_ENT_ATTR_BOOTME and
 		 * GPT_ENT_ATTR_BOOTONCE flags.
 		 */
-		for (; curent < gpthdr->hdr_entries; curent++) {
+		for (; curent < (int)(gpthdr->hdr_entries); curent++) {
 			ent = &gpttable[curent];
 			if (bcmp(&ent->ent_type, uuid, sizeof(uuid_t)) != 0)
 				continue;
@@ -136,7 +136,7 @@ gptfind(const uuid_t *uuid, struct dsk *dskp, int part)
 		bootonce = 0;
 		curent = 0;
 	}
-	for (; curent < gpthdr->hdr_entries; curent++) {
+	for (; curent < (int)(gpthdr->hdr_entries); curent++) {
 		ent = &gpttable[curent];
 		if (bcmp(&ent->ent_type, uuid, sizeof(uuid_t)) != 0)
 			continue;
@@ -152,7 +152,7 @@ gptfind(const uuid_t *uuid, struct dsk *dskp, int part)
 		 * No partition with BOOTME flag was found, try to boot from
 		 * first UFS partition.
 		 */
-		for (curent = 0; curent < gpthdr->hdr_entries; curent++) {
+		for (curent = 0; curent < (int)(gpthdr->hdr_entries); curent++) {
 			ent = &gpttable[curent];
 			if (bcmp(&ent->ent_type, uuid, sizeof(uuid_t)) != 0)
 				continue;
@@ -242,7 +242,7 @@ gptbootconv(const char *which, struct dsk *dskp, struct gpt_hdr *hdr,
 	table_updated = 0;
 	entries_per_sec = DEV_BSIZE / hdr->hdr_entsz;
 	for (nent = 0, slba = hdr->hdr_lba_table;
-	     slba < hdr->hdr_lba_table + hdr->hdr_entries / entries_per_sec;
+	     slba < (daddr_t)(hdr->hdr_lba_table + hdr->hdr_entries / entries_per_sec);
 	     slba++, nent += entries_per_sec) {
 		sector_updated = 0;
 		for (part = 0; part < entries_per_sec; part++) {
@@ -301,10 +301,10 @@ gptread_table(const char *which, const uuid_t *uuid, struct dsk *dskp,
 		ent = (struct gpt_ent *)secbuf;
 		for (part = 0; part < entries_per_sec; part++, ent++) {
 			bcopy(ent, &table[nent], sizeof(table[nent]));
-			if (++nent >= hdr->hdr_entries)
+			if (++nent >= (int)hdr->hdr_entries)
 				break;
 		}
-		if (nent >= hdr->hdr_entries)
+		if (nent >= (int)hdr->hdr_entries)
 			break;
 		slba++;
 	}

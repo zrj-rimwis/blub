@@ -373,7 +373,7 @@ parse(char *cmdstr, int *dskupdated)
 {
     char *arg = cmdstr;
     char *ep, *p, *q;
-    unsigned int drv;
+    int drv;
     int c, i;
 
     *dskupdated = 0;

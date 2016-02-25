@@ -112,7 +112,7 @@ dvar_unset(const char *name)
 	lastp = &dvbase;
 	if ((p = strchr(name, '*')) != NULL) {
 		while ((var = *lastp) != NULL) {
-			if (strlen(var->name) >= p - name &&
+			if ((int)strlen(var->name) >= p - name &&
 			    strncmp(var->name, name, p - name) == 0) {
 				dvar_free(lastp);
 			} else {

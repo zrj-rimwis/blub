@@ -177,7 +177,7 @@ boot2_ufs_init(void)
 #endif
 		    ) &&
 		    fs->fs_bsize <= MAXBSIZE &&
-		    fs->fs_bsize >= sizeof(struct fs))
+		    fs->fs_bsize >= (int32_t)sizeof(struct fs))
 			break;
 	}
 	if (sblock_try[n] == -1)

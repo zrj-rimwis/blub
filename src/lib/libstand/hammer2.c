@@ -531,7 +531,7 @@ h2readfile(struct hammer2_fs *hfs, hammer2_blockref_t *bref,
 		 * position.  It must overlap in this case or h2lookup()
 		 * would have returned something else.
 		 */
-		if (bres.key < off) {
+		if ((off_t)(bres.key) < off) {
 			data += off - bres.key;
 			bytes -= off - bres.key;
 		}
@@ -541,7 +541,7 @@ h2readfile(struct hammer2_fs *hfs, hammer2_blockref_t *bref,
 		 * position, handle zero-fill.  Again h2lookup() only returns
 		 * this case if there is an actual overlap.
 		 */
-		if (bres.key > off) {
+		if ((off_t)(bres.key) > off) {
 			zfill = (ssize_t)(bres.key - off);
 			bzero(buf, zfill);
 			len -= zfill;
@@ -553,7 +553,7 @@ h2readfile(struct hammer2_fs *hfs, hammer2_blockref_t *bref,
 		/*
 		 * Trim returned request before copying.
 		 */
-		if (bytes > len)
+		if ((size_t)bytes > len)
 			bytes = len;
 		bcopy(data, buf, bytes);
 		len -= bytes;

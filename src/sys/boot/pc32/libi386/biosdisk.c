@@ -536,7 +536,7 @@ bd_printbsdslice(struct open_disk *od, daddr_t offset, char *prefix,
 	char		buf[BIOSDISK_SECSIZE*2];
 	struct disklabel32	*lp = NULL;
 	struct disklabel64	*lp64 = NULL;
-	int			i;
+	unsigned int		i;
 
 	/* read disklabel */
 	if (bd_read(od, offset + LABELSECTOR32, 1, buf))
@@ -829,8 +829,8 @@ unsliced:
 	if (lp64->d_magic == DISKMAGIC64) {
 	    od->od_flags |= BD_LABELOK;
 
-	    if (dev->d_kind.biosdisk.partition >= lp64->d_npartitions ||
-		lp64->d_partitions[dev->d_kind.biosdisk.partition].p_bsize == 0) {
+	    if ((dev->d_kind.biosdisk.partition >= (int)(lp64->d_npartitions)) ||
+		(lp64->d_partitions[dev->d_kind.biosdisk.partition].p_bsize == 0)) {
 		DEBUG("partition '%c' exceeds partitions in table (a-'%c')",
 		      'a' + dev->d_kind.biosdisk.partition, 'a' + lp64->d_npartitions);
 		error = EPART;
