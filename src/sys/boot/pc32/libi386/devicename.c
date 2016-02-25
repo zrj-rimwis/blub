@@ -154,7 +154,7 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
 	    }
 #endif
 	} else {
-		cp = (char *)np;
+		cp = __DECONST(char *,np);
 	}
 	if (*cp && (*cp != ':')) {
 	    err = EINVAL;
@@ -179,7 +179,7 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
 		goto fail;
 	    }
 	} else {
-		cp = (char *)np;
+		cp = __DECONST(char *, np);
 	}
 	if (*cp && (*cp != ':')) {
 	    err = EINVAL;
