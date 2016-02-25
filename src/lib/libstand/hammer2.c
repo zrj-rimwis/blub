@@ -39,6 +39,9 @@
 
 #ifdef BOOT2
 #include "boot2.h"
+#ifdef GPT
+#include "util.h"
+#endif
 #endif
 
 #ifdef TESTING
@@ -89,7 +92,7 @@ struct hammer2_inode {
 	off_t				doff;	/* disk inode offset */
 };
 
-#ifdef BOOT2
+#if defined(BOOT2) && !defined(GPT)
 
 static void
 bzero(void *buf, size_t size)

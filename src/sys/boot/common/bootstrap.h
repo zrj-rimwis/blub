@@ -315,8 +315,6 @@ void	delay(int delay);
 
 void	dev_cleanup(void);
 
-time_t	time(time_t *tloc);
-
 #ifndef CTASSERT                /* Allow lint to override */
 #define CTASSERT(x)             _CTASSERT(x, __LINE__)
 #define _CTASSERT(x, y)         __CTASSERT(x, y)

@@ -83,11 +83,12 @@ extern struct boot2_dmadat *boot2_dmadat;
 extern int dskread(void *, daddr_t, unsigned);
 #else
 extern int dskread(void *, unsigned, unsigned);
-#endif
+
 extern void printf(const char *,...);
 extern void putchar(int);
 extern int strcmp(const char *s1, const char *s2);
 extern void memcpy(void *d, const void *s, int len);
+#endif
 
 #ifdef UFS
 extern const struct boot2_fsapi boot2_ufs_api;

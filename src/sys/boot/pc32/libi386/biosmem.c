@@ -218,6 +218,8 @@ bios_getmem(void)
     }
 }
 
+COMMAND_SET(biosmem, "biosmem", "show BIOS memory setup", command_biosmem);
+
 static int
 command_biosmem(int argc __unused, char *argv[] __unused)
 {
@@ -247,5 +249,3 @@ command_biosmem(int argc __unused, char *argv[] __unused)
 
 	return (CMD_OK);
 }
-
-COMMAND_SET(biosmem, "biosmem", "show BIOS memory setup", command_biosmem);
