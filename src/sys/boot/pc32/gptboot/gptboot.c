@@ -201,9 +201,10 @@ printf("zrj drive=%u, type=%u, unit=%u\n", dsk.drive,dsk.type,dsk.unit);
 		 * successful.
 		 */
 		if (dskprobe() == 0) {
-			if ((ino = fsapi->fslookup(PATH_CONFIG)))
+			if ((ino = fsapi->fslookup(PATH_CONFIG))) {
 				sz = fsapi->fsread(ino, cmd, sizeof(cmd) - 1);
-			cmd[(sz < 0) ? 0 : sz] = '\0';
+				cmd[(sz < 0) ? 0 : sz] = '\0';
+			}
 		}
 
 		/*
