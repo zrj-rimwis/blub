@@ -79,7 +79,7 @@ static int	pxe_open(struct open_file *f, ...);
 static int	pxe_close(struct open_file *f);
 static void	pxe_print(int verbose);
 static void	pxe_cleanup(void);
-static void	pxe_setnfshandle(char *rootpath);
+static void	pxe_setnfshandle(char *rp);
 
 static void	pxe_perror(int error);
 static int	pxe_netif_match(struct netif *nif, void *machdep_hint);
@@ -421,7 +421,7 @@ struct nfs_iodesc {
 extern struct	nfs_iodesc nfs_root_node;
 
 static void
-pxe_setnfshandle(char *rootpath)
+pxe_setnfshandle(char *rp __unused)
 {
 	int	i;
 	u_char	*fh;
