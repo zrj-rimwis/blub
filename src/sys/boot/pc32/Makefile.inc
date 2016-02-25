@@ -10,7 +10,7 @@ CFLAGS+=	-mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float
 # override CPU type, so that gcc doesn't insert mmx/sse instructions
 FORCE_CPUTYPE=	i386
 
-WARNS?=	3
+WARNS?=	4
 
 # if a gcc compiler is being used, identify GCC-only flags,
 # otherwise check for clang and set value of ASSEMBLER_FLAGS if found

@@ -53,10 +53,12 @@ struct moduledir {
 
 static int			file_load(char *filename, vm_offset_t dest, struct preloaded_file **result);
 static int			file_load_dependencies(struct preloaded_file *base_mod);
-static char *			file_search(const char *name, char **extlist);
-static struct kernel_module *	file_findmodule(struct preloaded_file *fp, char *modname, struct mod_depend *verinfo);
+static char *			file_search(const char *name, const char **extlist);
+static struct kernel_module *	file_findmodule(struct preloaded_file *fp,
+						const char *modname,
+						struct mod_depend *verinfo);
 static int			file_havepath(const char *name);
-static char			*mod_searchmodule(char *name, struct mod_depend *verinfo);
+static char			*mod_searchmodule(const char *name, struct mod_depend *verinfo);
 static void			file_insert_tail(struct preloaded_file *mp);
 struct file_metadata*		metadata_next(struct file_metadata *base_mp, int type);
 static void			moduledir_readhints(struct moduledir *mdp);
@@ -71,7 +73,7 @@ static STAILQ_HEAD(, moduledir) moduledir_list = STAILQ_HEAD_INITIALIZER(moduled
 
 struct preloaded_file *preloaded_files = NULL;
 
-static char *kld_ext_list[] = {
+static const char *kld_ext_list[] = {
     ".ko",
     "",
     ".debug",
@@ -484,7 +486,7 @@ file_loadraw(const char *fname, char *type)
  * If module is already loaded just assign new argc/argv.
  */
 int
-mod_load(char *modname, struct mod_depend *verinfo, int argc, char *argv[])
+mod_load(const char *modname, struct mod_depend *verinfo, int argc, char *argv[])
 {
     struct kernel_module	*mp;
     int				err;
@@ -593,7 +595,7 @@ file_findfile(const char *name, const char *type)
  * NULL may be passed as a wildcard.
  */
 struct kernel_module *
-file_findmodule(struct preloaded_file *fp, char *modname,
+file_findmodule(struct preloaded_file *fp, const char *modname,
 	struct mod_depend *verinfo)
 {
     struct kernel_module *mp, *best;
@@ -668,16 +670,17 @@ metadata_next(struct file_metadata *md, int type)
     return (md);
 }
 
-static char *emptyextlist[] = { "", NULL };
+static const char *emptyextlist[] = { "", NULL };
 
 /*
  * Check if the given file is in place and return full path to it.
  */
 static char *
-file_lookup(const char *path, const char *name, int namelen, char **extlist)
+file_lookup(const char *path, const char *name, int namelen, const char **extlist)
 {
     struct stat	st;
-    char	*result, *cp, **cpp;
+    char	*result, *cp;
+    const char	**cpp;
     int		pathlen, extlen, len;
 
     pathlen = strlen(path);
@@ -738,7 +741,7 @@ file_havepath(const char *name)
  * it internally.
  */
 static char *
-file_search(const char *name, char **extlist)
+file_search(const char *name, const char **extlist)
 {
     struct moduledir	*mdp;
     struct stat		sb;
@@ -855,7 +858,7 @@ bad:
  * Attempt to locate the file containing the module (name)
  */
 static char *
-mod_searchmodule(char *name, struct mod_depend *verinfo)
+mod_searchmodule(const char *name, struct mod_depend *verinfo)
 {
     struct	moduledir *mdp;
     char	*result;

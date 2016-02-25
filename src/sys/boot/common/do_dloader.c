@@ -320,9 +320,10 @@ static void
 prompt(void)
 {
     char	*pr, *p, *cp, *ev;
+    char	pcp[] = ">";
 
     if ((cp = getenv("prompt")) == NULL)
-	cp = ">";
+	cp = pcp;
     pr = p = strdup(cp);
 
     while (*p != 0) {

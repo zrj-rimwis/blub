@@ -58,6 +58,7 @@ command_ls(int argc, char *argv[])
     struct	dirent *d;
     char	*buf, *path;
     char	lbuf[128];		/* one line */
+    char	pemty[] = "";
     int		result, ch;
     int		verbose;
 
@@ -81,7 +82,7 @@ command_ls(int argc, char *argv[])
     argc -= (optind - 1);
 
     if (argc < 2) {
-	path = "";
+	path = pemty;
     } else {
 	path = argv[1];
     }

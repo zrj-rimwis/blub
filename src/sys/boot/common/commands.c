@@ -31,7 +31,7 @@
 
 #include "bootstrap.h"
 
-char		*command_errmsg;
+const char		*command_errmsg;
 char		command_errbuf[256];
 int		CurrentCondition = 1;
 

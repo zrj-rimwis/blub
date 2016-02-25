@@ -64,7 +64,7 @@ COMMAND_SET(menu, "menu", "Run menu system", command_menu);
 static int curitem;
 static int curadd;
 
-static char *kenv_vars[] = {
+static const char *kenv_vars[] = {
 	"LINES",
 	"acpi_load",
 	"autoboot_delay",
@@ -225,18 +225,20 @@ command_loadall(int ac __unused, char **av __unused)
 	int res;
 	int tmp;
 
-	argv[0] = "unload";
+	argv[0] = strdup("unload");
 	(void)perform(1, argv);
+	free(argv[0]);
 
 	/*
 	 * Load kernel
 	 */
-	argv[0] = "load";
+	argv[0] = strdup("load");
 	argv[1] = getenv("kernelname");
 	argv[2] = getenv("kernel_options");
 	if (argv[1] == NULL)
 		argv[1] = strdup("kernel");
 	res = perform((argv[2] == NULL)?2:3, argv);
+	free(argv[0]);
 	free(argv[1]);
 	if (argv[2])
 		free(argv[2]);
@@ -296,10 +298,10 @@ command_loadall(int ac __unused, char **av __unused)
 			free(tmp_str);
 		}
 
-		argv[0] = "load";
+		argv[0] = strdup("load");
 		if (mod_type) {
 			argc = 4;
-			argv[1] = "-t";
+			argv[1] = strdup("-t");
 			argv[2] = mod_type;
 			argv[3] = mod_name;
 		} else {
@@ -315,7 +317,10 @@ command_loadall(int ac __unused, char **av __unused)
 			/* don't kill the boot sequence */
 			/* res = tmp; */
 		}
+		free(argv[0]);
 		free(mod_name);
+		if (mod_type)
+			free(argv[1]);
 	}
 	return(res);
 }
@@ -452,9 +457,9 @@ command_menu(int ac __unused, char **av __unused)
 #define LOGO_LINES 16
 #define FRED_LEFT 0
 #define FRED_RIGHT 1
-static char *logo_blank_line = "                                 ";
+static const char *logo_blank_line = "                                 ";
 
-static char *logo_color[LOGO_LINES] = {
+static const char *logo_color[LOGO_LINES] = {
 	"[31;1m ,--,                       ,--, [0m",
 	"[31;1m |   `-,       [33;1m_[31m:[33;1m_[31;1m       ,-'   | [0m",
 	"[31;1m  `,    `-,   [33;1m([31m/ \\[33;1m)[31;1m   ,-'    ,'  [0m",
@@ -472,7 +477,7 @@ static char *logo_color[LOGO_LINES] = {
 	"[31m               `,'               [0m",
 	"                                 " };
 
-static char *logo_indigo[LOGO_LINES] = {
+static const char *logo_indigo[LOGO_LINES] = {
 	"[36m ,--,                       ,--[36;1m, [0m",
 	"[36m |   `-,       [34;1m_[34m:[34;1m_[36m       ,-'   [36;1m| [0m",
 	"[36m  `,    `-,   [34;1m([34m/ \\[34;1m)[36m   ,-'    [36;1m,'  [0m",
@@ -490,7 +495,7 @@ static char *logo_indigo[LOGO_LINES] = {
 	"[34m               `,'               [0m",
 	"                                 " };
 
-static char *logo_mono[LOGO_LINES] =  {
+static const char *logo_mono[LOGO_LINES] =  {
 	" ,--,                       ,--, ",
 	" |   `-,       _:_       ,-'   | ",
 	"  `,    `-,   (/ \\)   ,-'    ,'  ",
@@ -509,7 +514,7 @@ static char *logo_mono[LOGO_LINES] =  {
 	"                                 " };
 
 static void
-logo_display(char **logo, int line, int orientation, int barrier)
+logo_display(const char **logo, int line, int orientation, int barrier)
 {
 	const char *fmt;
 
@@ -533,7 +538,7 @@ menu_display(void)
 	int i;
 	int logo_left = 0;		/* default to fred on right */
 	int separated = 0;		/* default blue fred without line */
-	char **logo = logo_indigo;
+	const char **logo = logo_indigo;
 	char *console_val = getenv("console");
 
 	if (dvar_istrue(dvar_get("fred_is_red")))

@@ -189,6 +189,7 @@ autoboot(int timeout, char *prompt)
     int		c, yes;
     char	*argv[2], *cp, *ep;
     char	*kernelname;
+    char pboot[] = "boot";
 
     autoboot_tried = 1;
 
@@ -249,7 +250,7 @@ autoboot(int timeout, char *prompt)
 	printf("\rBooting [%s]...               ", kernelname);
     putchar('\n');
     if (yes) {
-	argv[0] = "boot";
+	argv[0] = pboot;
 	argv[1] = NULL;
 	return(command_boot(1, argv));
     }

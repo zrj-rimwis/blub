@@ -51,7 +51,7 @@ struct devdesc
 
 /* Commands and return values; nonzero return sets command_errmsg != NULL */
 typedef int	(bootblk_cmd_t)(int argc, char *argv[]);
-extern char	*command_errmsg;
+extern const char *command_errmsg;
 extern char	command_errbuf[];	/* XXX blah, length */
 extern int	CurrentCondition;
 #define CMD_OK		0
@@ -227,7 +227,7 @@ struct file_format
 extern struct file_format	*file_formats[];	/* supplied by consumer */
 extern struct preloaded_file	*preloaded_files;
 
-int			mod_load(char *name, struct mod_depend *verinfo, int argc, char *argv[]);
+int			mod_load(const char *name, struct mod_depend *verinfo, int argc, char *argv[]);
 int			mod_loadkld(const char *name, int argc, char *argv[]);
 void			unload(void);
 
