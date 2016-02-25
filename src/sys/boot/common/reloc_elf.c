@@ -32,7 +32,8 @@
 #include <sys/types.h>
 #include <machine/elf.h>
 
-#include <errno.h>
+/* XXX conflicting errno def, check libstand/stand.h */
+/* #include <errno.h> */
 #include <stand.h>
 
 #define FREEBSD_ELF
