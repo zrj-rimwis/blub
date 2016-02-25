@@ -100,7 +100,7 @@ extern void			__pxenventry(void);
 
 struct netif_dif pxe_ifs[] = {
 /*      dif_unit        dif_nsel        dif_stats       dif_private     */
-	{0,             1,              &pxe_st[0],     0}
+	{0,             1,              &pxe_st[0],     NULL,         0 }
 };
 
 struct netif_stats pxe_st[NENTS(pxe_ifs)];
