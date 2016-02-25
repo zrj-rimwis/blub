@@ -215,7 +215,7 @@ command_help(int argc, char *argv[])
 COMMAND_SET(commandlist, "?", "list commands", command_commandlist);
 
 static int
-command_commandlist(int argc, char *argv[])
+command_commandlist(int argc __unused, char *argv[] __unused)
 {
     struct bootblk_command	**cmdp;
     int		res;
@@ -609,7 +609,7 @@ command_elseifexists(int argc, char *argv[])
 COMMAND_SET_COND(else, "else", "conditional if/else/endif", command_else);
 
 static int
-command_else(int argc, char *argv[])
+command_else(int argc __unused, char *argv[] __unused)
 {
 	struct cond *cond;
 
@@ -627,7 +627,7 @@ command_else(int argc, char *argv[])
 COMMAND_SET_COND(endif, "endif", "conditional if/else/endif", command_endif);
 
 static int
-command_endif(int argc, char *argv[])
+command_endif(int argc __unused, char *argv[] __unused)
 {
 	struct cond *cond;
 

@@ -170,7 +170,7 @@ bc_add(int biosdev)
  * Print information about disks
  */
 static void
-bc_print(int verbose)
+bc_print(int verbose __unused)
 {
 	char line[80];
 	int i;
@@ -203,7 +203,7 @@ bc_open(struct open_file *f, ...)
 }
 
 static int
-bc_close(struct open_file *f)
+bc_close(struct open_file *f __unused)
 {
 
 	return(0);

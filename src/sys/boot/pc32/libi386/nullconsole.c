@@ -64,13 +64,13 @@ nullc_probe(struct console *cp)
 }
 
 static int
-nullc_init(int arg)
+nullc_init(int arg __unused)
 {
 	return(0);
 }
 
 static void
-nullc_putchar(int c)
+nullc_putchar(int c __unused)
 {
 }
 

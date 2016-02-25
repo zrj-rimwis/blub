@@ -372,7 +372,7 @@ static uuid_t freebsd_swap = GPT_ENT_TYPE_FREEBSD_SWAP;
 static uuid_t ms_basic_data = GPT_ENT_TYPE_MS_BASIC_DATA;
 
 static void
-bd_printgptpart(struct open_disk *od, struct gpt_part *gp, char *prefix,
+bd_printgptpart(struct open_disk *od __unused, struct gpt_part *gp, char *prefix,
     int verbose)
 {
     char stats[80];

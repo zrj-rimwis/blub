@@ -83,7 +83,7 @@ COMMAND_SET(slow, "slow", "slow print", command_slow);
 static int slomode;
 
 static int
-command_slow(int argc, char *argv[])
+command_slow(int argc __unused, char *argv[] __unused)
 {
 	slomode = 1;
 	return CMD_OK;
@@ -191,7 +191,7 @@ unload(void)
 COMMAND_SET(unload, "unload", "unload all modules", command_unload);
 
 static int
-command_unload(int argc, char *argv[])
+command_unload(int argc __unused, char *argv[] __unused)
 {
     unload();
     return(CMD_OK);

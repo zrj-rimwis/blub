@@ -177,3 +177,8 @@ install:
 		boot2_64 ${DESTDIR}${BINDIR}/boot2_64
 
 .include <bsd.prog.mk>
+
+CWARNFLAGS+=	${CWARNFLAGS.${.TARGET:T:C/^.*\///}}
+
+# XXX: unused_paramater in hammer2.c for BOOT2 case
+CWARNFLAGS.hammer2_64.o+=	-Wno-unused-parameter

@@ -141,7 +141,7 @@ chdir(const char *path)
 COMMAND_SET(pwd, "pwd", "Get current directory", command_pwd);
 
 int
-command_pwd(int ac, char **av)
+command_pwd(int ac __unused, char **av __unused)
 {
 	printf("%s\n", DirBase ? DirBase : "/");
 	return(0);

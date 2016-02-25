@@ -278,7 +278,7 @@ gptbootconv(const char *which, struct dsk *dskp, struct gpt_hdr *hdr,
 }
 
 static int
-gptread_table(const char *which, const uuid_t *uuid, struct dsk *dskp,
+gptread_table(const char *which, const uuid_t *uuid __unused, struct dsk *dskp,
     struct gpt_hdr *hdr, struct gpt_ent *table)
 {
 	struct gpt_ent *ent;

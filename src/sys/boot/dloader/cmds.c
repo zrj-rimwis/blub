@@ -212,7 +212,7 @@ command_lunsetif(int ac, char **av)
  * Load the kernel + all modules specified with MODULE_load="YES"
  */
 static int
-command_loadall(int ac, char **av)
+command_loadall(int ac __unused, char **av __unused)
 {
 	char *argv[4];
 	char *mod_name;
@@ -324,7 +324,7 @@ command_loadall(int ac, char **av)
  * Clear all menus
  */
 static int
-command_menuclear(int ac, char **av)
+command_menuclear(int ac __unused, char **av __unused)
 {
 	dvar_unset("menu_*");
 	dvar_unset("item_*");
@@ -381,7 +381,7 @@ command_menuadd(int ac, char **av)
  * Execute menu system
  */
 static int
-command_menu(int ac, char **av)
+command_menu(int ac __unused, char **av __unused)
 {
 	int timeout = -1;
 	time_t time_target;

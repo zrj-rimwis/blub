@@ -690,8 +690,8 @@ elf_hash(const char *name)
 
 static const char __elfN(bad_symtable)[] = "elf" __XSTRING(__ELF_WORD_SIZE) "_lookup_symbol: corrupt symbol table\n";
 int
-__elfN(lookup_symbol)(struct preloaded_file *fp, elf_file_t ef, const char* name,
-		  Elf_Sym *symp)
+__elfN(lookup_symbol)(struct preloaded_file *fp __unused, elf_file_t ef,
+		      const char* name, Elf_Sym *symp)
 {
     Elf_Hashelt symnum;
     Elf_Sym sym;
@@ -738,7 +738,7 @@ __elfN(lookup_symbol)(struct preloaded_file *fp, elf_file_t ef, const char* name
  * Returns EOPNOTSUPP if no relocation method is supplied.
  */
 static int
-__elfN(reloc_ptr)(struct preloaded_file *mp, elf_file_t ef,
+__elfN(reloc_ptr)(struct preloaded_file *mp __unused, elf_file_t ef,
     Elf_Addr p, void *val, size_t len)
 {
 	size_t n;
@@ -774,7 +774,7 @@ __elfN(reloc_ptr)(struct preloaded_file *mp, elf_file_t ef,
 }
 
 static Elf_Addr
-__elfN(symaddr)(struct elf_file *ef, Elf_Size symidx)
+__elfN(symaddr)(struct elf_file *ef __unused, Elf_Size symidx __unused)
 {
 
 	/* Symbol lookup by index not required here. */

@@ -96,3 +96,8 @@ icrc32gpt.o: icrc32.c
 	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} -c
 
 .include <bsd.prog.mk>
+
+CWARNFLAGS+=	${CWARNFLAGS.${.TARGET:T:C/^.*\///}}
+
+# XXX: unused_paramater in hammer2.c for BOOT2 case
+CWARNFLAGS.hammer2gpt.o+=	-Wno-unused-parameter

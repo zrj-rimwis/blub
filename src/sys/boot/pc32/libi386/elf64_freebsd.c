@@ -119,7 +119,7 @@ elf64_exec(struct preloaded_file *fp)
 }
 
 static int
-elf64_obj_exec(struct preloaded_file *fp)
+elf64_obj_exec(struct preloaded_file *fp __unused)
 {
 	return (EFTYPE);
 }

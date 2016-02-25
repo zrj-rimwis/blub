@@ -27,6 +27,12 @@ INTERNALLIB=	yes
 stack_protector.o: ../../libkern/stack_protector.c
 
 .include <bsd.lib.mk>
+
+CWARNFLAGS+=	${CWARNFLAGS.${.TARGET:T:C/^.*\///}}
+
+# XXX: unused_paramater "damaged" in stack_protector.c
+CWARNFLAGS.stack_protector.o+=	-Wno-unused-parameter
+
 .endif
 
 CFLAGS+=	-I${.CURDIR}

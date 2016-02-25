@@ -242,8 +242,8 @@ pxe_init(void)
 
 
 static int
-pxe_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
-		char *buf, size_t *rsize)
+pxe_strategy(void *devdata __unused, int flag __unused, daddr_t dblk __unused,
+	     size_t size __unused, char *buf __unused, size_t *rsize __unused)
 {
 	return (EIO);
 }
@@ -361,7 +361,7 @@ pxe_close(struct open_file *f)
 }
 
 static void
-pxe_print(int verbose)
+pxe_print(int verbose __unused)
 {
 	if (pxe_call == NULL)
 		return;
@@ -400,7 +400,7 @@ pxe_cleanup(void)
 }
 
 void
-pxe_perror(int err)
+pxe_perror(int err __unused)
 {
 	return;
 }
@@ -503,14 +503,14 @@ getsecs(void)
 }
 
 static int
-pxe_netif_match(struct netif *nif, void *machdep_hint)
+pxe_netif_match(struct netif *nif __unused, void *machdep_hint __unused)
 {
 	return 1;
 }
 
 
 static int
-pxe_netif_probe(struct netif *nif, void *machdep_hint)
+pxe_netif_probe(struct netif *nif __unused, void *machdep_hint __unused)
 {
 	t_PXENV_UDP_OPEN *udpopen_p = (t_PXENV_UDP_OPEN *)scratch_buffer;
 
@@ -529,7 +529,7 @@ pxe_netif_probe(struct netif *nif, void *machdep_hint)
 }
 
 static void
-pxe_netif_end(struct netif *nif)
+pxe_netif_end(struct netif *nif __unused)
 {
 	t_PXENV_UDP_CLOSE *udpclose_p = (t_PXENV_UDP_CLOSE *)scratch_buffer;
 	bzero(udpclose_p, sizeof(*udpclose_p));
@@ -540,7 +540,7 @@ pxe_netif_end(struct netif *nif)
 }
 
 static void
-pxe_netif_init(struct iodesc *desc, void *machdep_hint)
+pxe_netif_init(struct iodesc *desc, void *machdep_hint __unused)
 {
 	int i;
 	for (i = 0; i < 6; ++i)
@@ -549,13 +549,14 @@ pxe_netif_init(struct iodesc *desc, void *machdep_hint)
 }
 
 static int
-pxe_netif_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
+pxe_netif_get(struct iodesc *desc __unused, void *pkt __unused, size_t len,
+	      time_t timeout __unused)
 {
 	return len;
 }
 
 static int
-pxe_netif_put(struct iodesc *desc, void *pkt, size_t len)
+pxe_netif_put(struct iodesc *desc __unused, void *pkt __unused, size_t len)
 {
 	return len;
 }
@@ -594,7 +595,7 @@ sendudp(struct iodesc *h, void *pkt, size_t len)
 }
 
 ssize_t
-readudp(struct iodesc *h, void *pkt, size_t len, time_t timeout)
+readudp(struct iodesc *h, void *pkt, size_t len, time_t timeout __unused)
 {
 	t_PXENV_UDP_READ *udpread_p = (t_PXENV_UDP_READ *)scratch_buffer;
 	struct udphdr *uh;

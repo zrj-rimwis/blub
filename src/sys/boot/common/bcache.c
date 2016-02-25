@@ -122,7 +122,7 @@ bcache_flush(void)
  * cache with the new values.
  */
 static int
-write_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
+write_strategy(void *devdata, int unit __unused, int rw, daddr_t blk, size_t size,
 		char *buf, size_t *rsize)
 {
     struct bcache_devdata	*dd = (struct bcache_devdata *)devdata;
@@ -155,7 +155,7 @@ write_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
  * device I/O and then use the I/O results to populate the cache.
  */
 static int
-read_strategy(void *devdata, int unit, int rw, daddr_t blk, size_t size,
+read_strategy(void *devdata, int unit __unused, int rw, daddr_t blk, size_t size,
 		char *buf, size_t *rsize)
 {
     struct bcache_devdata	*dd = (struct bcache_devdata *)devdata;
@@ -331,7 +331,7 @@ bcache_invalidate(daddr_t blkno)
 COMMAND_SET(bcachestat, "bcachestat", "get disk block cache stats", command_bcache);
 
 static int
-command_bcache(int argc, char *argv[])
+command_bcache(int argc __unused, char *argv[] __unused)
 {
     u_int	i;
 

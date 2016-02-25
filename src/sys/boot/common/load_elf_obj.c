@@ -399,7 +399,7 @@ __elfN(obj_parse_modmetadata)(struct preloaded_file *fp, elf_file_t ef)
 }
 
 static int
-__elfN(obj_lookup_set)(struct preloaded_file *fp, elf_file_t ef,
+__elfN(obj_lookup_set)(struct preloaded_file *fp __unused, elf_file_t ef,
     const char* name, Elf_Addr *startp, Elf_Addr *stopp, int *countp)
 {
 	Elf_Ehdr *hdr;
@@ -437,8 +437,8 @@ __elfN(obj_lookup_set)(struct preloaded_file *fp, elf_file_t ef,
  * the image in-place, because this is done by kern_linker later on.
  */
 static int
-__elfN(obj_reloc_ptr)(struct preloaded_file *mp, elf_file_t ef, Elf_Addr p,
-    void *val, size_t len)
+__elfN(obj_reloc_ptr)(struct preloaded_file *mp __unused,
+    elf_file_t ef, Elf_Addr p, void *val, size_t len)
 {
 	Elf_Ehdr *hdr;
 	Elf_Shdr *shdr;

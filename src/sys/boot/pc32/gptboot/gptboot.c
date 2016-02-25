@@ -288,7 +288,7 @@ printf("zrj drive=%u, type=%u, unit=%u\n", dsk.drive,dsk.type,dsk.unit);
 
 /* XXX - Needed for btxld to link the boot2 binary; do not remove. */
 void
-exit(int x)
+exit(int x __unused)
 {
 }
 

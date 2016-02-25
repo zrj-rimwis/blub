@@ -335,7 +335,7 @@ main(void)
 
 /* XXX - Needed for btxld to link the boot2 binary; do not remove. */
 void
-exit(int x)
+exit(int x __unused)
 {
 }
 
