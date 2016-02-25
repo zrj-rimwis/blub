@@ -37,6 +37,9 @@
 #include "bootstrap.h"
 #include "dloader.h"
 
+dvar_t *dvar_firstp(void);
+dvar_t *dvar_nextp(dvar_t var);
+
 dvar_t dvbase;
 dvar_t *dvlastp = &dvbase;
 
