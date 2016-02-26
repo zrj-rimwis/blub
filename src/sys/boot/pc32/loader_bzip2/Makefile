@@ -1,7 +1,7 @@
-# Works like the normal loader except the kernel, modules, and other loader
-# files are loaded via TFTP instead of NFS.
+# Works like the normal loader except the kernel and modules can be bzip2
+# compressed, this is possible by using high heap(>1MB).
 
-PROG=		loader_tftp
+PROG=		loader_bzip2
 NOMAN=
 STRIP=
 NEWVERSWHAT=	"bootstrap loader" x86
@@ -19,8 +19,12 @@ INSTALLFLAGS=	-b
 # architecture-specific loader code
 SRCS=		main.c conf.c
 
-CFLAGS+=	-DLOADER_TFTP_SUPPORT
-#CFLAGS+=	-DLOADER_NFS_SUPPORT
+# Enable PXE TFTP or NFS support, not both.
+#CFLAGS+=	-DLOADER_TFTP_SUPPORT
+CFLAGS+=	-DLOADER_NFS_SUPPORT
+
+# Enforce BZIP2 support and high heap(useful when small heap is not enough)
+LOADER_BZIP2_SUPPORT=	yes
 
 # Enable PnP and ISA-PnP code.
 HAVE_PNP=	yes
