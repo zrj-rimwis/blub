@@ -62,6 +62,7 @@
 
 extern uint32_t _end;
 
+static const uuid_t dragonfly_ufs_uuid = GPT_ENT_TYPE_DRAGONFLY_UFS1;
 static const uuid_t freebsd_ufs_uuid = GPT_ENT_TYPE_FREEBSD_UFS;
 static const char optstr[NOPT] = { "VhaCcdgmnPprsv" };
 static const unsigned char flags[NOPT] = {
@@ -145,13 +146,38 @@ memsize(void)
 static int
 gptinit(void)
 {
-	if (gptread(&freebsd_ufs_uuid, &dsk, boot2_dmadat->secbuf) == -1) {
+	int part_retry;
+	daddr_t start_retry;
+
+	/* save state for retry if needed */
+	part_retry = dsk.part;
+	start_retry = dsk.start;
+
+	/*
+	 * Prefer to boot from DragonFly UFS1, but allow to fallback
+	 * booting from FreeBSD UFS/UFS2 for compatibility.
+	 */
+
+	if (gptread(&dragonfly_ufs_uuid, &dsk, boot2_dmadat->secbuf) == -1) {
 		printf("%s: unable to load GPT\n", BOOTPROG);
 		return (-1);
 	}
-	if (gptfind(&freebsd_ufs_uuid, &dsk, dsk.part) == -1) {
-		printf("%s: no UFS partition was found\n", BOOTPROG);
-		return (-1);
+	if (gptfind(&dragonfly_ufs_uuid, &dsk, dsk.part) == -1) {
+		printf("%s: no DragonFly UFS1 partition was found\n", BOOTPROG);
+
+		/* retry with freebsd ufs/ufs2 partition */
+		dsk.part = part_retry;
+		dsk.start = start_retry;
+
+		if (gptread(&freebsd_ufs_uuid, &dsk, boot2_dmadat->secbuf) == -1) {
+			printf("%s: unable to load GPT\n", BOOTPROG);
+			return (-1);
+		}
+		if (gptfind(&freebsd_ufs_uuid, &dsk, dsk.part) == -1) {
+			printf("%s: no UFS partition was found\n", BOOTPROG);
+			return (-1);
+		}
+		printf("%s: retrying with FreeBSD UFS partition\n", BOOTPROG);
 	}
 	dsk_meta = 0;
 	return (0);
@@ -256,8 +282,11 @@ printf("zrj drive=%u, type=%u, unit=%u\n", dsk.drive,dsk.type,dsk.unit);
 		memcpy(kname, PATH_KERNEL, sizeof(PATH_KERNEL));
 		load();
 		gptbootfailed(&dsk);
-		if (gptfind(&freebsd_ufs_uuid, &dsk, -1) == -1)
-			break;
+		if (gptfind(&dragonfly_ufs_uuid, &dsk, -1) == -1) {
+			if (gptfind(&freebsd_ufs_uuid, &dsk, -1) == -1) {
+				break;
+			}
+		}
 		dsk_meta = 0;
 	}
 
