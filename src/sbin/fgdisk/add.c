@@ -205,9 +205,9 @@ cmd_add(int argc, char *argv[])
 	if (argc == optind)
 		usage_add();
 
-	/* Create UFS partitions by default. */
+	/* Create UFS1 partitions by default. */
 	if (uuid_is_nil(&add_type, NULL)) {
-		uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
+		uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
 		add_type = ufs;
 	}
 

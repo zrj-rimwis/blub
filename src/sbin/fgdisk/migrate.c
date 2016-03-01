@@ -75,7 +75,7 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 
 	if (le32toh(dl->d_magic) != DISKMAGIC32 ||
 	    le32toh(dl->d_magic2) != DISKMAGIC32) {
-		warnx("%s: warning: FreeBSD slice without disklabel",
+		warnx("%s: warning: DragonFly slice without disklabel",
 		    device_name);
 		return (ent);
 	}
@@ -97,28 +97,28 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 		case FS_UNUSED:
 			continue;
 		case FS_SWAP: {
-			uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
+			uuid_t swap = GPT_ENT_TYPE_DRAGONFLY_SWAP;
 			le_uuid_enc(&ent->ent_type, &swap);
-			utf8_to_utf16("FreeBSD swap partition",
+			utf8_to_utf16("DragonFly swap partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_BSDFFS: {
-			uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
+			uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
 			le_uuid_enc(&ent->ent_type, &ufs);
-			utf8_to_utf16("FreeBSD UFS partition",
+			utf8_to_utf16("DragonFly UFS1 partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_VINUM: {
-			uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
+			uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_VINUM;
 			le_uuid_enc(&ent->ent_type, &vinum);
-			utf8_to_utf16("FreeBSD vinum partition",
+			utf8_to_utf16("DragonFly vinum partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		default:
-			warnx("%s: warning: unknown FreeBSD partition (%d)",
+			warnx("%s: warning: unknown DragonFly partition (%d)",
 			    device_name, dl->d_partitions[i].p_fstype);
 			continue;
 		}
@@ -248,13 +248,14 @@ migrate(int fd)
 		switch (mbr->mbr_part[i].part_typ) {
 		case 0:
 			continue;
-		case 165: {	/* FreeBSD */
+		case 165: {	/* DragonFly/FreeBSD */
 			if (slice) {
-				uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
-				le_uuid_enc(&ent->ent_type, &freebsd);
+				/* XXX: w/o probing for magic play safe */
+				uuid_t legacy = GPT_ENT_TYPE_DRAGONFLY_LEGACY;
+				le_uuid_enc(&ent->ent_type, &legacy);
 				ent->ent_lba_start = htole64((uint64_t)start);
 				ent->ent_lba_end = htole64(start + size - 1LL);
-				utf8_to_utf16("FreeBSD disklabel partition",
+				utf8_to_utf16("DragonFly disklabel partition",
 				    ent->ent_name, 36);
 				ent++;
 			} else
