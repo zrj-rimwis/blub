@@ -180,7 +180,9 @@ bd_init(void)
 static void
 bd_cleanup(void)
 {
+#ifndef LOADER_NO_DISK_SUPPORT
 	disk_cleanup(&biosdisk);
+#endif
 }
 
 /*
@@ -252,6 +254,7 @@ bd_int13probe(struct bdinfo *bd)
 /*
  * Print information about disks
  */
+#ifndef LOADER_NO_DISK_SUPPORT
 static void
 bd_print(int verbose)
 {
@@ -316,6 +319,26 @@ bd_close(struct open_file *f)
 	dev = (struct disk_devdesc *)f->f_devdata;
 	return (disk_close(dev));
 }
+
+#else
+/* stubs */
+static void
+bd_print(int verbose __unused)
+{
+}
+
+static int
+bd_open(struct open_file *f __unused, ...)
+{
+	return (EIO);
+}
+
+static int
+bd_close(struct open_file *f __unused)
+{
+	return (0);
+}
+#endif
 
 static int
 bd_strategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf,
@@ -623,12 +646,14 @@ bd_getdev(struct i386_devdesc *d)
     DEBUG("unit %d BIOS device %d", dev->d_unit, biosdev);
     if (biosdev == -1)				/* not a BIOS device */
 	return(-1);
+#ifndef LOADER_NO_DISK_SUPPORT
     if (disk_open(dev, BD(dev).bd_sectors * BD(dev).bd_sectorsize,
 	BD(dev).bd_sectorsize,(BD(dev).bd_flags & BD_FLOPPY) ?
 	DISK_F_NOCACHE : 0) != 0)		/* oops, not a viable device */
 	    return (-1);
     else
 	disk_close(dev);
+#endif
 
     if (biosdev < 0x80) {
 	/* floppy (or emulated floppy) or ATAPI device */

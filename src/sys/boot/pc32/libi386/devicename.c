@@ -109,11 +109,13 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
     case DEVT_NONE:			/* XXX what to do here?  Do we care? */
 	break;
 
+#ifndef LOADER_NO_DISK_SUPPORT
     case DEVT_DISK:
 	err = disk_parsedev((struct disk_devdesc *)idev, np, path);
 	if (err != 0)
 	    goto fail;
 	break;
+#endif
 
     case DEVT_CD:
     case DEVT_NET:
@@ -173,8 +175,10 @@ i386_fmtdev(void *vdev)
 	sprintf(buf, "%s%d:", dev->d_dev->dv_name, dev->d_unit);
 	break;
 
+#ifndef LOADER_NO_DISK_SUPPORT
     case DEVT_DISK:
 	return (disk_fmtdev(vdev));
+#endif
     }
     return(buf);
 }

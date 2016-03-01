@@ -589,10 +589,14 @@ struct ptable*
 ptable_open(void *dev, off_t sectors, uint16_t sectorsize,
     diskread_t *dread)
 {
+#if defined(LOADER_GPT_SUPPORT) || defined(LOADER_MBR_SUPPORT)
 	struct dos_partition *dp;
+#endif
 	struct ptable *table;
 	u_char *buf;
+#if defined(LOADER_GPT_SUPPORT) || defined(LOADER_MBR_SUPPORT)
 	int i, count;
+#endif
 #ifdef LOADER_MBR_SUPPORT
 	struct pentry *entry;
 	uint32_t start, end;

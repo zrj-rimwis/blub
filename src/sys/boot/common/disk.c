@@ -429,10 +429,13 @@ disk_fmtdev(struct disk_devdesc *dev)
 		if (dev->d_partition == 255) {
 			sprintf(cp, "p%d:", dev->d_slice);
 			return (buf);
-		} else
+		} else {
 #endif
 #ifdef LOADER_MBR_SUPPORT
 			cp += sprintf(cp, "s%d", dev->d_slice);
+#endif
+#ifdef LOADER_GPT_SUPPORT
+		}
 #endif
 	}
 	if (dev->d_partition >= 0)

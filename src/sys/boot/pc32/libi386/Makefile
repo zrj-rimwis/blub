@@ -12,6 +12,11 @@ SRCS=	biosacpi.c bioscd.c biosdisk.c biosmem.c biospnp.c \
 	smbios.c time.c vidconsole.c x86_64_tramp.S
 
 CFLAGS+=	-ffreestanding
+
+.if defined(LOADER_NO_DISK_SUPPORT)
+CFLAGS+=	-DLOADER_NO_DISK_SUPPORT
+.endif
+
 BOOT_COMCONSOLE_PORT?= 0x3f8
 CFLAGS+=	-DCOMPORT=${BOOT_COMCONSOLE_PORT}
 
@@ -25,10 +30,6 @@ CFLAGS+= -DDISK_DEBUG
 
 # Include simple terminal emulation (cons25-compatible)
 CFLAGS+= -DTERM_EMU
-
-.if !defined(LOADER_NO_GPT_SUPPORT)
-CFLAGS+=	-DLOADER_GPT_SUPPORT
-.endif
 
 # XXX: make alloca() useable
 CFLAGS+= -DRALLOCA=__builtin_alloca
