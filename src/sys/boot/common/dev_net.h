@@ -26,4 +26,9 @@
  * $FreeBSD: src/sys/boot/common/dev_net.h,v 1.2 1999/08/28 00:39:46 peter Exp $
  */
 
+#ifndef _BOOT_DEV_NET_H_
+#define _BOOT_DEV_NET_H_
+
 extern struct devsw netdev;
+
+#endif
