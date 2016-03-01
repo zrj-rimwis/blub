@@ -103,6 +103,7 @@ static int bd_realstrategy(void *devdata, int flag, daddr_t dblk,
 static int bd_open(struct open_file *f, ...);
 static int bd_close(struct open_file *f);
 static void bd_print(int verbose);
+static void bd_cleanup(void);
 
 struct devsw biosdisk = {
 	"disk",
@@ -113,7 +114,7 @@ struct devsw biosdisk = {
 	bd_close,
 	noioctl,
 	bd_print,
-	NULL
+	bd_cleanup
 };
 
 /*
@@ -174,6 +175,12 @@ bd_init(void)
 		}
 	}
 	return (0);
+}
+
+static void
+bd_cleanup(void)
+{
+	disk_cleanup(&biosdisk);
 }
 
 /*
