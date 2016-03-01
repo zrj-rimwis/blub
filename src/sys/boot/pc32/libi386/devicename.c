@@ -23,13 +23,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/boot/i386/libi386/devicename.c,v 1.6 2003/08/25 23:28:31 obrien Exp $
+ * $FreeBSD: head/sys/boot/i386/libi386/devicename.c 245424 2013-01-14 15:05:22Z sbruno $
  */
 
 #include <stand.h>
 #include <string.h>
-#include <sys/disklabel32.h>
 #include "bootstrap.h"
+#include "disk.h"
 #include "libi386.h"
 
 static int	i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path);
@@ -84,7 +84,7 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
 {
     struct i386_devdesc *idev;
     struct devsw	*dv;
-    int			i, unit, slice, partition, err;
+    int			i, unit, err;
     char		*cp;
     const char		*np;
 
@@ -110,62 +110,9 @@ i386_parsedev(struct i386_devdesc **dev, const char *devspec, const char **path)
 	break;
 
     case DEVT_DISK:
-	unit = -1;
-	slice = -1;
-	partition = -1;
-	if (*np && (*np != ':')) {
-	    unit = strtol(np, &cp, 10);	/* next comes the unit number */
-	    if (cp == np) {
-		err = EUNIT;
-		goto fail;
-	    }
-#ifdef LOADER_GPT_SUPPORT
-	    if (*cp == 'p') {		/* got a GPT partition */
-		np = cp + 1;
-		slice = strtol(np, &cp, 10);
-		if (cp == np) {
-		    err = ESLICE;
-		    goto fail;
-		}
-		if (*cp && (*cp != ':')) {
-		    err = EINVAL;
-		    goto fail;
-		}
-		partition = 0xff;
-	    } else {
-#endif
-		if (*cp == 's') {		/* got a slice number */
-		    np = cp + 1;
-		    slice = strtol(np, &cp, 10);
-		    if (cp == np) {
-			err = ESLICE;
-			goto fail;
-		    }
-		}
-		if (*cp && (*cp != ':')) {
-		    partition = *cp - 'a';	/* get a partition number */
-		    if ((partition < 0) || (partition >= MAXPARTITIONS32)) {
-			err = EPART;
-			goto fail;
-		    }
-		    cp++;
-		}
-#ifdef LOADER_GPT_SUPPORT
-	    }
-#endif
-	} else {
-		cp = __DECONST(char *,np);
-	}
-	if (*cp && (*cp != ':')) {
-	    err = EINVAL;
+	err = disk_parsedev((struct disk_devdesc *)idev, np, path);
+	if (err != 0)
 	    goto fail;
-	}
-
-	idev->d_unit = unit;
-	idev->d_kind.biosdisk.slice = slice;
-	idev->d_kind.biosdisk.partition = partition;
-	if (path != NULL)
-	    *path = (*cp == 0) ? cp : cp + 1;
 	break;
 
     case DEVT_CD:
@@ -215,7 +162,6 @@ i386_fmtdev(void *vdev)
 {
     struct i386_devdesc	*dev = (struct i386_devdesc *)vdev;
     static char		buf[128];	/* XXX device length constant? */
-    char		*cp;
 
     switch(dev->d_type) {
     case DEVT_NONE:
@@ -223,30 +169,12 @@ i386_fmtdev(void *vdev)
 	break;
 
     case DEVT_CD:
+    case DEVT_NET:
 	sprintf(buf, "%s%d:", dev->d_dev->dv_name, dev->d_unit);
 	break;
 
     case DEVT_DISK:
-	cp = buf;
-	cp += sprintf(cp, "%s%d", dev->d_dev->dv_name, dev->d_unit);
-#ifdef LOADER_GPT_SUPPORT
-	if (dev->d_kind.biosdisk.partition == 0xff) {
-	    cp += sprintf(cp, "p%d", dev->d_kind.biosdisk.slice);
-	} else {
-#endif
-	if (dev->d_kind.biosdisk.slice > 0)
-	    cp += sprintf(cp, "s%d", dev->d_kind.biosdisk.slice);
-	if (dev->d_kind.biosdisk.partition >= 0)
-	    cp += sprintf(cp, "%c", dev->d_kind.biosdisk.partition + 'a');
-#ifdef LOADER_GPT_SUPPORT
-	}
-#endif
-	strcat(cp, ":");
-	break;
-
-    case DEVT_NET:
-	sprintf(buf, "%s%d:", dev->d_dev->dv_name, dev->d_unit);
-	break;
+	return (disk_fmtdev(vdev));
     }
     return(buf);
 }

@@ -13,6 +13,18 @@ SRCS+=	load_elf64.c load_elf64_obj.c reloc_elf64.c
 SRCS+=	dev_net.c
 .endif
 
+.if !defined(LOADER_NO_DISK_SUPPORT)
+SRCS+=	disk.c part.c
+CFLAGS+= -DLOADER_DISK_SUPPORT
+.if !defined(LOADER_NO_GPT_SUPPORT)
+SRCS+=	crc32.c
+CFLAGS+= -DLOADER_GPT_SUPPORT
+.endif
+.if !defined(LOADER_NO_MBR_SUPPORT)
+CFLAGS+= -DLOADER_MBR_SUPPORT
+.endif
+.endif
+
 # Machine-independant ISA PnP
 .if HAVE_ISABUS
 SRCS+=	isapnp.c

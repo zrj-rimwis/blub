@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/boot/i386/libi386/libi386.h,v 1.16 2003/05/01 03:56:29 peter Exp $
+ * $FreeBSD: head/sys/boot/i386/libi386/libi386.h 292344 2015-12-16 17:13:09Z bapt $
  */
 
 
@@ -44,6 +44,7 @@ struct i386_devdesc
 	    void	*data;
 	    int		slice;
 	    int		partition;
+	    off_t	offset;
 	} biosdisk;
 	struct
 	{
