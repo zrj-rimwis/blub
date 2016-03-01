@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/disklabel32.h>
+#include <sys/disklabel64.h>
 #include <sys/dtype.h>
 
 #include <err.h>
@@ -63,20 +64,22 @@ usage_migrate(void)
 }
 
 static struct gpt_ent*
-migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
+migrate_disklabel32(int fd, off_t start, struct gpt_ent *ent, int *status)
 {
 	char *buf;
 	struct disklabel32 *dl;
 	off_t ofs, rawofs;
 	int i;
 
+	*status = 1;
 	buf = gpt_read(fd, start + LABELSECTOR32, 1);
 	dl = (void*)(buf + LABELOFFSET32);
 
 	if (le32toh(dl->d_magic) != DISKMAGIC32 ||
 	    le32toh(dl->d_magic2) != DISKMAGIC32) {
-		warnx("%s: warning: DragonFly slice without disklabel",
+		warnx("%s: warning: disklabel32 slice without disklabel",
 		    device_name);
+		*status = -1;		/* not a disklabel32 */
 		return (ent);
 	}
 
@@ -132,6 +135,106 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 		ent++;
 	}
 
+	*status = 32;		/* return type on success */
+	return (ent);
+}
+
+static struct gpt_ent*
+migrate_disklabel64(int fd, off_t start, struct gpt_ent *ent, int *status)
+{
+	char *buf;
+	struct disklabel64 *dl;
+	off_t ofs;
+	int i;
+
+	*status = 0;
+	/* XXX: assumes 512 byte sectors here? */
+	buf = gpt_read(fd, start, (sizeof(struct disklabel64) + (secsz -1 )) / secsz);
+	dl = (void*)(buf);
+
+	if (le32toh(dl->d_magic) != DISKMAGIC64) {
+		warnx("%s: warning: disklabel64 slice without disklabel",
+		    device_name);
+		*status = -1;		/* not a disklabel64 */
+		return (ent);
+	}
+
+	/* safety check, if any unknown - baylout now */
+	for (i = 0; i < le16toh(dl->d_npartitions); i++) {
+		switch (dl->d_partitions[i].p_fstype) {
+		case FS_UNUSED:
+		case FS_SWAP:
+		case FS_BSDFFS:
+		case FS_VINUM:
+		case FS_HAMMER:
+		case FS_HAMMER2:
+			continue;
+		default:
+			warnx("%s: warning: unknown DragonFly partition (%d)",
+			    device_name, dl->d_partitions[i].p_fstype);
+			*status = -13;
+			return (ent);
+		}
+	}
+
+	for (i = 0; i < le16toh(dl->d_npartitions); i++) {
+		switch (dl->d_partitions[i].p_fstype) {
+		case FS_UNUSED:
+			continue;
+		case FS_SWAP: {
+			uuid_t swap = GPT_ENT_TYPE_DRAGONFLY_SWAP;
+			le_uuid_enc(&ent->ent_type, &swap);
+			utf8_to_utf16("DragonFly swap partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_BSDFFS: {
+			uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
+			le_uuid_enc(&ent->ent_type, &ufs);
+			utf8_to_utf16("DragonFly UFS1 partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_VINUM: {
+			uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_VINUM;
+			le_uuid_enc(&ent->ent_type, &vinum);
+			utf8_to_utf16("DragonFly vinum partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_HAMMER: {
+			uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_HAMMER;
+			le_uuid_enc(&ent->ent_type, &vinum);
+			utf8_to_utf16("DragonFly HAMMER partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_HAMMER2: {
+			uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_HAMMER2;
+			le_uuid_enc(&ent->ent_type, &vinum);
+			utf8_to_utf16("DragonFly HAMMER2 partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		default:
+			warnx("%s: warning: unknown DragonFly partition (%d)",
+			    device_name, dl->d_partitions[i].p_fstype);
+			continue;
+		}
+
+		if ((dl->d_partitions[i].p_boffset) % secsz)
+			warnx("partition [%d] start not multiple of %d", i, secsz);
+		if ((dl->d_partitions[i].p_bsize) % secsz)
+			warnx("partition [%d] size not multiple of %d", i, secsz);
+
+		ofs = (dl->d_partitions[i].p_boffset) / secsz;
+		ent->ent_lba_start = htole64((uint64_t)start + ofs);
+		ent->ent_lba_end = htole64(start + ofs +
+		    (dl->d_partitions[i].p_bsize) / secsz - 1LL);
+		ent++;
+	}
+
+	*status = 64;		/* return type on success */
 	return (ent);
 }
 
@@ -255,11 +358,26 @@ migrate(int fd)
 				le_uuid_enc(&ent->ent_type, &legacy);
 				ent->ent_lba_start = htole64((uint64_t)start);
 				ent->ent_lba_end = htole64(start + size - 1LL);
-				utf8_to_utf16("DragonFly disklabel partition",
+				utf8_to_utf16("DragonFly disklabelXX partition",
 				    ent->ent_name, 36);
 				ent++;
-			} else
-				ent = migrate_disklabel(fd, start, ent);
+			} else {
+				int status = 0;
+				ent = migrate_disklabel64(fd, start, ent, &status);
+				if (status == -1) {
+					ent = migrate_disklabel32(fd, start, ent, &status);
+				}
+				if (status <= 0) {
+					/* we failed, fallback to legacy */
+					uuid_t legacy = GPT_ENT_TYPE_DRAGONFLY_LEGACY;
+					le_uuid_enc(&ent->ent_type, &legacy);
+					ent->ent_lba_start = htole64((uint64_t)start);
+					ent->ent_lba_end = htole64(start + size - 1LL);
+					utf8_to_utf16("DragonFly unknown partition",
+					    ent->ent_name, 36);
+					ent++;
+				}
+			}
 			break;
 		}
 		case 239: {	/* EFI */
