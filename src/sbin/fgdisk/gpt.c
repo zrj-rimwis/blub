@@ -261,6 +261,7 @@ int
 parse_uuid(const char *s, uuid_t *uuid)
 {
 	uint32_t status;
+	uuid_t tmp;
 
 	uuid_from_string(s, uuid, &status);
 	if (status == uuid_s_ok)
@@ -350,6 +351,12 @@ parse_uuid(const char *s, uuid_t *uuid)
 			return (0);
 		}
 		break;
+	}
+
+	uuid_name_lookup(&tmp, s, &status);
+	if (status == uuid_s_ok) {
+		*uuid = tmp;
+		return(0);
 	}
 
 	return (EINVAL);

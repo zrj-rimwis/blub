@@ -71,6 +71,7 @@ friendly(uuid_t *t)
 	static uuid_t linuxdata =	GPT_ENT_TYPE_LINUX_DATA;
 	static uuid_t linuxswap =	GPT_ENT_TYPE_LINUX_SWAP;
 	static uuid_t msr =		GPT_ENT_TYPE_MS_RESERVED;
+	static char *save_name1 /*= NULL*/;
 	static char buf[80];
 	char *s;
 
@@ -120,9 +121,13 @@ friendly(uuid_t *t)
 	if (uuid_equal(t, &hfs, NULL))
 		return ("Apple HFS");
 
+	uuid_addr_lookup(t, &save_name1, NULL);
+	if (save_name1)
+		return (save_name1);
+
 unfriendly:
 	uuid_to_string(t, &s, NULL);
-	strlcpy(buf, s, sizeof buf);
+	strlcpy(buf, s, sizeof(buf));
 	free(s);
 	return (buf);
 }
