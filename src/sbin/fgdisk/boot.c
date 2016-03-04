@@ -53,7 +53,7 @@ static void
 usage_installboot(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-b pmbr] [-g gptboot] [-s count] device ...\n",
+	    "usage: %s [-b pmbr] [-g gptboot] [-s sectors] device ...\n",
 	    getprogname());
 	exit(1);
 }

@@ -48,7 +48,7 @@ usage_remove(void)
 
 	fprintf(stderr,
 	    "usage: %s -a device ...\n"
-	    "       %s [-b lba] [-i index] [-s lba] [-t uuid] device ...\n",
+	    "       %s [-b sector] [-i index] [-s sectors] [-t uuid] device ...\n",
 	    getprogname(), getprogname());
 	exit(1);
 }

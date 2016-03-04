@@ -684,7 +684,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-rv] [-p nparts] command [options] device ...\n",
+	    "usage: %s [-rv] [-p partitions] command [options] device ...\n",
 	    getprogname());
 	exit(1);
 }

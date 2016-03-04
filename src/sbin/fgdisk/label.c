@@ -50,7 +50,7 @@ usage_label(void)
 
 	fprintf(stderr,
 	    "usage: %s -a %s\n"
-	    "       %s [-b lba] [-i index] [-s lba] [-t uuid] %s\n",
+	    "       %s [-b sector] [-i index] [-s sectors] [-t uuid] %s\n",
 	    getprogname(), common, getprogname(), common);
 	exit(1);
 }

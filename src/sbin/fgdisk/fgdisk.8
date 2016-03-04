@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 2, 2016
+.Dd March 3, 2016
 .Dt FGDISK 8
 .Os
 .Sh NAME
@@ -62,9 +62,10 @@ Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Pp
 The
-.Fl p Ar count
-option allows the user to change the number of partitions the GPT can
-accommodate.
+.Fl p Ar partitions
+option allows the user to change the number of
+.Ar partitions
+the GPT can accommodate.
 This is used whenever a new GPT is created.
 By default, the
 .Nm
@@ -91,9 +92,9 @@ There is no formalized definition of the different levels yet.
 .It Xo
 .Nm
 .Ic add
-.Op Fl b Ar number
+.Op Fl b Ar sector
 .Op Fl i Ar index
-.Op Fl s Ar count
+.Op Fl s Ar sectors
 .Op Fl t Ar type
 .Ar device ...
 .Xc
@@ -105,9 +106,10 @@ of an unused disk space.
 The command-specific options can be used to control this behaviour.
 .Pp
 The
-.Fl b Ar number
-option allows the user to specify the starting (beginning) sector number of
-the partition.
+.Fl b Ar sector
+option allows the user to specify the starting (beginning)
+.Ar sector
+number of the partition.
 The minimum sector number is 1, but has to fall inside an unused region of
 disk space that is covered by the GPT.
 .Pp
@@ -119,9 +121,10 @@ By default, the first free entry is selected.
 Entries start at index 1 representing partition 1 of the GPT.
 .Pp
 The
-.Fl s Ar count
-option allows the user to specify the size of the partition in sectors.
-The minimum size is 1.
+.Fl s Ar sectors
+option allows the user to specify the size of the partition in
+.Ar sectors .
+The minimum size is 1 sector.
 .Pp
 The
 .Fl t Ar type
@@ -139,7 +142,7 @@ as aliases for the most commonly used partition types.
 .Ic installboot
 .Op Fl b Ar pmbr
 .Op Fl g Ar gptboot
-.Op Fl s Ar count
+.Op Fl s Ar sectors
 .Ar device ...
 .Xc
 The
@@ -165,12 +168,12 @@ option allows the user to specify an alternate path for the GPT boot loader
 that is installed into the boot partition.
 .Pp
 The
-.Fl s Ar count
-option allows the user to specify the size in sectors of the boot partition
+.Fl s Ar sectors
+option allows the user to specify the size of the boot partition in
+.Ar sectors
 if one does not already exist.
-A boot partition must be at least 16 kilobytes.
-By default,
-a size of 64 kilobytes is used.
+A boot partition recommended to be at least 16 kilobytes.
+By default, a size of 64 kilobytes is used.
 Note that the PMBR boot loader will load the entire boot partition into
 memory.
 As a result, the boot partition may not exceed 545 kilobytes.
@@ -216,9 +219,9 @@ to destroy the table in a way that it can be recovered.
 .It Xo
 .Nm
 .Ic label
-.Op Fl b Ar number
+.Op Fl b Ar sector
 .Op Fl i Ar index
-.Op Fl s Ar count
+.Op Fl s Ar sectors
 .Op Fl t Ar type
 .Aq Fl f Ar file | Fl l Ar label
 .Ar device ...
@@ -234,8 +237,10 @@ option specifies that all partitions should be labeled.
 It is mutually exclusive with all other selection options.
 .Pp
 The
-.Fl b Ar number
-option selects the partition that starts at the given block number.
+.Fl b Ar sector
+option selects the partition that starts at the given
+.Ar sector
+number.
 .Pp
 The
 .Fl i Ar index
@@ -243,9 +248,10 @@ option selects the partition with the given partition number.
 Partition numbers start at 1.
 .Pp
 The
-.Fl s Ar count
-option selects all partitions that have the given size.
-This can cause multiple partitions to be removed.
+.Fl s Ar sectors
+option selects all partitions that have the given size in
+.Ar sectors .
+This can cause multiple partitions to be labeled.
 .Pp
 The
 .Fl t Ar type
@@ -253,7 +259,7 @@ option selects all partitions that have the given type.
 The type is given as an UUID or by the aliases that the
 .Ic add
 command accepts.
-This can cause multiple partitions to be removed.
+This can cause multiple partitions to be labeled.
 .Pp
 The
 .Fl f Ar file
@@ -300,9 +306,9 @@ the GPT equivalent of a slice.
 .It Xo
 .Nm
 .Ic remove
-.Op Fl b Ar number
+.Op Fl b Ar sector
 .Op Fl i Ar index
-.Op Fl s Ar count
+.Op Fl s Ar sectors
 .Op Fl t Ar type
 .Ar device ...
 .Xc
@@ -387,13 +393,6 @@ one thinks one does not make mistakes.
 It is expected that the basic usage model does not change, but it is
 possible that future versions will not be compatible in the strictest sense
 of the word.
-For example, the
-.Fl p Ar count
-option may be changed to a command option rather than a generic option.
-There are only two commands that use it so there is a chance that the natural
-tendency for people is to use it as a command option.
-Also, options primarily intended for diagnostic or debug purposes may be
-removed in future versions.
 .Pp
 Another possibility is that the current usage model is accompanied by
 other interfaces to make the tool usable as a back-end.
