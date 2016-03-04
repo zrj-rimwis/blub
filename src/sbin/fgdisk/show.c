@@ -159,6 +159,9 @@ show(int fd __unused)
 		putchar(' ');
 		putchar(' ');
 		switch (m->map_type) {
+		case MAP_TYPE_UNUSED:
+			printf("Unused");
+			break;
 		case MAP_TYPE_MBR:
 			if (m->map_start != 0)
 				printf("Extended ");
@@ -204,6 +207,9 @@ show(int fd __unused)
 			break;
 		case MAP_TYPE_PMBR:
 			printf("PMBR");
+			break;
+		default:
+			printf("Unknown 0x%x", m->map_type);
 			break;
 		}
 		putchar('\n');
