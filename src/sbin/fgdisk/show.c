@@ -201,7 +201,7 @@ show(int fd __unused)
 				printf("- \"%s\"",
 				    utf16_to_utf8(ent->ent_name));
 			} else {
-				le_uuid_dec(&ent->ent_type, &type);
+				uuid_dec_le(&ent->ent_type, &type);
 				printf("- %s", friendly(&type));
 			}
 			break;

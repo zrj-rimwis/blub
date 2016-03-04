@@ -102,21 +102,21 @@ migrate_disklabel32(int fd, off_t start, struct gpt_ent *ent, int *status)
 			continue;
 		case FS_SWAP: {
 			static const uuid_t swap = GPT_ENT_TYPE_DRAGONFLY_SWAP;
-			le_uuid_enc(&ent->ent_type, &swap);
+			uuid_enc_le(&ent->ent_type, &swap);
 			utf8_to_utf16("DragonFly swap partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_BSDFFS: {
 			static const uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
-			le_uuid_enc(&ent->ent_type, &ufs);
+			uuid_enc_le(&ent->ent_type, &ufs);
 			utf8_to_utf16("DragonFly UFS1 partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_VINUM: {
 			static const uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_VINUM;
-			le_uuid_enc(&ent->ent_type, &vinum);
+			uuid_enc_le(&ent->ent_type, &vinum);
 			utf8_to_utf16("DragonFly vinum partition",
 			    ent->ent_name, 36);
 			break;
@@ -187,35 +187,35 @@ migrate_disklabel64(int fd, off_t start, struct gpt_ent *ent, int *status)
 			continue;
 		case FS_SWAP: {
 			static const uuid_t swap = GPT_ENT_TYPE_DRAGONFLY_SWAP;
-			le_uuid_enc(&ent->ent_type, &swap);
+			uuid_enc_le(&ent->ent_type, &swap);
 			utf8_to_utf16("DragonFly swap partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_BSDFFS: {
 			static const uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
-			le_uuid_enc(&ent->ent_type, &ufs);
+			uuid_enc_le(&ent->ent_type, &ufs);
 			utf8_to_utf16("DragonFly UFS1 partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_VINUM: {
 			static const uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_VINUM;
-			le_uuid_enc(&ent->ent_type, &vinum);
+			uuid_enc_le(&ent->ent_type, &vinum);
 			utf8_to_utf16("DragonFly vinum partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_HAMMER: {
 			static const uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_HAMMER;
-			le_uuid_enc(&ent->ent_type, &vinum);
+			uuid_enc_le(&ent->ent_type, &vinum);
 			utf8_to_utf16("DragonFly HAMMER partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_HAMMER2: {
 			static const uuid_t vinum = GPT_ENT_TYPE_DRAGONFLY_HAMMER2;
-			le_uuid_enc(&ent->ent_type, &vinum);
+			uuid_enc_le(&ent->ent_type, &vinum);
 			utf8_to_utf16("DragonFly HAMMER2 partition",
 			    ent->ent_name, 36);
 			break;
@@ -333,7 +333,7 @@ migrate(int fd)
 	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
 	hdr->hdr_lba_end = htole64(lbt->map_start - 1LL);
 	uuid_create(&uuid, NULL);
-	le_uuid_enc(&hdr->hdr_uuid, &uuid);
+	uuid_enc_le(&hdr->hdr_uuid, &uuid);
 	hdr->hdr_lba_table = htole64(tbl->map_start);
 	hdr->hdr_entries = htole32((blocks * secsz) / sizeof(struct gpt_ent));
 	if (le32toh(hdr->hdr_entries) > parts)
@@ -343,7 +343,7 @@ migrate(int fd)
 	ent = tbl->map_data;
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 		uuid_create(&uuid, NULL);
-		le_uuid_enc(&ent[i].ent_uuid, &uuid);
+		uuid_enc_le(&ent[i].ent_uuid, &uuid);
 	}
 
 	/* Mirror partitions. */
@@ -360,7 +360,7 @@ migrate(int fd)
 			if (slice) {
 				/* XXX: w/o probing for magic play safe */
 				static const uuid_t legacy = GPT_ENT_TYPE_DRAGONFLY_LEGACY;
-				le_uuid_enc(&ent->ent_type, &legacy);
+				uuid_enc_le(&ent->ent_type, &legacy);
 				ent->ent_lba_start = htole64((uint64_t)start);
 				ent->ent_lba_end = htole64(start + size - 1LL);
 				utf8_to_utf16("DragonFly disklabelXX partition",
@@ -375,7 +375,7 @@ migrate(int fd)
 				if (status <= 0) {
 					/* we failed, fallback to legacy */
 					static const uuid_t legacy = GPT_ENT_TYPE_DRAGONFLY_LEGACY;
-					le_uuid_enc(&ent->ent_type, &legacy);
+					uuid_enc_le(&ent->ent_type, &legacy);
 					ent->ent_lba_start = htole64((uint64_t)start);
 					ent->ent_lba_end = htole64(start + size - 1LL);
 					utf8_to_utf16("DragonFly unknown partition",
@@ -387,7 +387,7 @@ migrate(int fd)
 		}
 		case 239: {	/* EFI */
 			static const uuid_t efi_slice = GPT_ENT_TYPE_EFI;
-			le_uuid_enc(&ent->ent_type, &efi_slice);
+			uuid_enc_le(&ent->ent_type, &efi_slice);
 			ent->ent_lba_start = htole64((uint64_t)start);
 			ent->ent_lba_end = htole64(start + size - 1LL);
 			utf8_to_utf16("EFI system partition",
