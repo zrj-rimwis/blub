@@ -123,7 +123,7 @@ label(int fd)
 		ent = (void*)((char*)lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		/* Label the secundary entry. */
+		/* Label the secondary entry. */
 		utf8_to_utf16(name, ent->ent_name, 36);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,

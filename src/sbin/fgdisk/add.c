@@ -116,7 +116,7 @@ gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 
 	map = map_alloc(start, size);
 	if (map == NULL) {
-		warnx("%s: error: no space available on device", device_name);
+		warnx("%s: error: not enough space available on device", device_name);
 		return (NULL);
 	}
 
@@ -167,7 +167,7 @@ cmd_add(int argc, char *argv[])
 	char *p;
 	int ch, fd;
 
-	/* Get the migrate options */
+	/* Get the add options */
 	while ((ch = getopt(argc, argv, "b:i:s:t:")) != -1) {
 		switch(ch) {
 		case 'b':

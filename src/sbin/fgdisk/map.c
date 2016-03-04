@@ -65,8 +65,8 @@ map_add(off_t start, off_t size, int type, void *data)
 		return (NULL);
 
 	if (n->map_start + n->map_size < start + size) {
-		warnx("error: bogus map");
-		return (0);
+		warnx("error: bogus map, size doesn't fit");
+		return (NULL);
 	}
 
 	if (n->map_start == start && n->map_size == size) {
@@ -85,8 +85,8 @@ map_add(off_t start, off_t size, int type, void *data)
 	if (n->map_type != MAP_TYPE_UNUSED) {
 		if (n->map_type != MAP_TYPE_MBR_PART ||
 		    type != MAP_TYPE_GPT_PART) {
-			warnx("error: bogus map");
-			return (0);
+			warnx("error: bogus map type");
+			return (NULL);
 		}
 		n->map_type = MAP_TYPE_UNUSED;
 	}

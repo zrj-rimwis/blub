@@ -121,7 +121,7 @@ rem(int fd)
 		ent = (void*)((char*)lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		/* Remove the secundary entry. */
+		/* Remove the secondary entry. */
 		uuid_create_nil(&ent->ent_type, NULL);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
