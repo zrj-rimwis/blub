@@ -207,7 +207,7 @@ cmd_add(int argc, char *argv[])
 
 	/* Create UFS1 partitions by default. */
 	if (uuid_is_nil(&add_type, NULL)) {
-		uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
+		static const uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
 		add_type = ufs;
 	}
 

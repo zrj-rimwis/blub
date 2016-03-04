@@ -52,25 +52,25 @@ usage_show(void)
 static const char *
 friendly(uuid_t *t)
 {
-	static uuid_t boot =		GPT_ENT_TYPE_FREEBSD_BOOT;
-	static uuid_t efi_slice =	GPT_ENT_TYPE_EFI;
-	static uuid_t hammer =		GPT_ENT_TYPE_DRAGONFLY_HAMMER;
-	static uuid_t hammer2 =		GPT_ENT_TYPE_DRAGONFLY_HAMMER2;
-	static uuid_t swap =		GPT_ENT_TYPE_DRAGONFLY_SWAP;
-	static uuid_t ufs =		GPT_ENT_TYPE_DRAGONFLY_UFS1;
-	static uuid_t dl32 =		GPT_ENT_TYPE_DRAGONFLY_LABEL32;
-	static uuid_t dl64 =		GPT_ENT_TYPE_DRAGONFLY_LABEL64;
-	static uuid_t vinum =		GPT_ENT_TYPE_DRAGONFLY_VINUM;
-	static uuid_t msdata =		GPT_ENT_TYPE_MS_BASIC_DATA;
-	static uuid_t freebsd =		GPT_ENT_TYPE_FREEBSD;
-	static uuid_t fswap =		GPT_ENT_TYPE_FREEBSD_SWAP;
-	static uuid_t fufs =		GPT_ENT_TYPE_FREEBSD_UFS;
-	static uuid_t fvinum =		GPT_ENT_TYPE_FREEBSD_VINUM;
-	static uuid_t hfs =		GPT_ENT_TYPE_APPLE_HFS;
-	static uuid_t bios_boot =	GPT_ENT_TYPE_BIOS_BOOT;
-	static uuid_t linuxdata =	GPT_ENT_TYPE_LINUX_DATA;
-	static uuid_t linuxswap =	GPT_ENT_TYPE_LINUX_SWAP;
-	static uuid_t msr =		GPT_ENT_TYPE_MS_RESERVED;
+	static const uuid_t boot =	GPT_ENT_TYPE_FREEBSD_BOOT;
+	static const uuid_t efi_slice =	GPT_ENT_TYPE_EFI;
+	static const uuid_t hammer =	GPT_ENT_TYPE_DRAGONFLY_HAMMER;
+	static const uuid_t hammer2 =	GPT_ENT_TYPE_DRAGONFLY_HAMMER2;
+	static const uuid_t swap =	GPT_ENT_TYPE_DRAGONFLY_SWAP;
+	static const uuid_t ufs =	GPT_ENT_TYPE_DRAGONFLY_UFS1;
+	static const uuid_t dl32 =	GPT_ENT_TYPE_DRAGONFLY_LABEL32;
+	static const uuid_t dl64 =	GPT_ENT_TYPE_DRAGONFLY_LABEL64;
+	static const uuid_t vinum =	GPT_ENT_TYPE_DRAGONFLY_VINUM;
+	static const uuid_t msdata =	GPT_ENT_TYPE_MS_BASIC_DATA;
+	static const uuid_t freebsd =	GPT_ENT_TYPE_FREEBSD;
+	static const uuid_t fswap =	GPT_ENT_TYPE_FREEBSD_SWAP;
+	static const uuid_t fufs =	GPT_ENT_TYPE_FREEBSD_UFS;
+	static const uuid_t fvinum =	GPT_ENT_TYPE_FREEBSD_VINUM;
+	static const uuid_t hfs =	GPT_ENT_TYPE_APPLE_HFS;
+	static const uuid_t bios_boot =	GPT_ENT_TYPE_BIOS_BOOT;
+	static const uuid_t linuxdata =	GPT_ENT_TYPE_LINUX_DATA;
+	static const uuid_t linuxswap =	GPT_ENT_TYPE_LINUX_SWAP;
+	static const uuid_t msr =	GPT_ENT_TYPE_MS_RESERVED;
 	static char *save_name1 /*= NULL*/;
 	static char buf[80];
 	char *s;

@@ -44,7 +44,7 @@
 #include "map.h"
 #include "gpt.h"
 
-static uuid_t boot_uuid = GPT_ENT_TYPE_FREEBSD_BOOT;
+static const uuid_t boot_uuid = GPT_ENT_TYPE_FREEBSD_BOOT;
 static const char *pmbr_path = "/boot/pmbr";
 static const char *gptboot_path = "/boot/gptboot";
 static u_long boot_size;
@@ -59,7 +59,7 @@ usage_installboot(void)
 }
 
 static int
-gpt_find(uuid_t *type, map_t **mapp)
+gpt_find(const uuid_t *type, map_t **mapp)
 {
 	map_t *gpt, *tbl, *map;
 	struct gpt_hdr *hdr;

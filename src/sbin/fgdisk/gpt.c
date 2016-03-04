@@ -270,83 +270,83 @@ parse_uuid(const char *s, uuid_t *uuid)
 	switch (*s) {
 	case 'b':
 		if (strcmp(s, "boot") == 0) {
-			uuid_t boot = GPT_ENT_TYPE_FREEBSD_BOOT;
+			static const uuid_t boot = GPT_ENT_TYPE_FREEBSD_BOOT;
 			*uuid = boot;
 			return (0);
 		}
 		break;
 	case 'd':
 		if (strcmp(s, "dl32") == 0) {
-			uuid_t dl32 = GPT_ENT_TYPE_DRAGONFLY_LABEL32;
+			static const uuid_t dl32 = GPT_ENT_TYPE_DRAGONFLY_LABEL32;
 			*uuid = dl32;
 			return (0);
 		}
 		if (strcmp(s, "dl64") == 0) {
-			uuid_t dl64 = GPT_ENT_TYPE_DRAGONFLY_LABEL64;
+			static const uuid_t dl64 = GPT_ENT_TYPE_DRAGONFLY_LABEL64;
 			*uuid = dl64;
 			return (0);
 		}
 		break;
 	case 'e':
 		if (strcmp(s, "efi") == 0) {
-			uuid_t efi = GPT_ENT_TYPE_EFI;
+			static const uuid_t efi = GPT_ENT_TYPE_EFI;
 			*uuid = efi;
 			return (0);
 		}
 		break;
 	case 'f':
 		if (strcmp(s, "fufs") == 0) {
-			uuid_t fufs = GPT_ENT_TYPE_FREEBSD_UFS;
+			static const uuid_t fufs = GPT_ENT_TYPE_FREEBSD_UFS;
 			*uuid = fufs;
 			return (0);
 		}
 		if (strcmp(s, "fswap") == 0) {
-			uuid_t fsw = GPT_ENT_TYPE_FREEBSD_SWAP;
+			static const uuid_t fsw = GPT_ENT_TYPE_FREEBSD_SWAP;
 			*uuid = fsw;
 			return (0);
 		}
 		break;
 	case 'h':
 		if (strcmp(s, "hammer") == 0) {
-			uuid_t h1 = GPT_ENT_TYPE_DRAGONFLY_HAMMER;
+			static const uuid_t h1 = GPT_ENT_TYPE_DRAGONFLY_HAMMER;
 			*uuid = h1;
 			return (0);
 		}
 		if (strcmp(s, "hammer2") == 0) {
-			uuid_t h2 = GPT_ENT_TYPE_DRAGONFLY_HAMMER2;
+			static const uuid_t h2 = GPT_ENT_TYPE_DRAGONFLY_HAMMER2;
 			*uuid = h2;
 			return (0);
 		}
 		if (strcmp(s, "hfs") == 0) {
-			uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
+			static const uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
 			*uuid = hfs;
 			return (0);
 		}
 		break;
 	case 'l':
 		if (strcmp(s, "linux") == 0) {
-			uuid_t lnx = GPT_ENT_TYPE_LINUX_DATA;
+			static const uuid_t lnx = GPT_ENT_TYPE_LINUX_DATA;
 			*uuid = lnx;
 			return (0);
 		}
 		break;
 	case 's':
 		if (strcmp(s, "swap") == 0) {
-			uuid_t sw = GPT_ENT_TYPE_DRAGONFLY_SWAP;
+			static const uuid_t sw = GPT_ENT_TYPE_DRAGONFLY_SWAP;
 			*uuid = sw;
 			return (0);
 		}
 		break;
 	case 'u':
 		if (strcmp(s, "ufs") == 0) {
-			uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
+			static const uuid_t ufs = GPT_ENT_TYPE_DRAGONFLY_UFS1;
 			*uuid = ufs;
 			return (0);
 		}
 		break;
 	case 'w':
 		if (strcmp(s, "windows") == 0) {
-			uuid_t win = GPT_ENT_TYPE_MS_BASIC_DATA;
+			static const uuid_t win = GPT_ENT_TYPE_MS_BASIC_DATA;
 			*uuid = win;
 			return (0);
 		}
