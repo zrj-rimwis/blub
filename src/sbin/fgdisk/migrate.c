@@ -80,6 +80,7 @@ migrate_disklabel32(int fd, off_t start, struct gpt_ent *ent, int *status)
 		warnx("%s: warning: disklabel32 slice without disklabel",
 		    device_name);
 		*status = -1;		/* not a disklabel32 */
+		free(buf);
 		return (ent);
 	}
 
@@ -136,6 +137,7 @@ migrate_disklabel32(int fd, off_t start, struct gpt_ent *ent, int *status)
 	}
 
 	*status = 32;		/* return type on success */
+	free(buf);
 	return (ent);
 }
 
@@ -156,6 +158,7 @@ migrate_disklabel64(int fd, off_t start, struct gpt_ent *ent, int *status)
 		warnx("%s: warning: disklabel64 slice without disklabel",
 		    device_name);
 		*status = -1;		/* not a disklabel64 */
+		free(buf);
 		return (ent);
 	}
 
@@ -173,6 +176,7 @@ migrate_disklabel64(int fd, off_t start, struct gpt_ent *ent, int *status)
 			warnx("%s: warning: unknown DragonFly partition (%d)",
 			    device_name, dl->d_partitions[i].p_fstype);
 			*status = -13;
+			free(buf);
 			return (ent);
 		}
 	}
@@ -235,6 +239,7 @@ migrate_disklabel64(int fd, off_t start, struct gpt_ent *ent, int *status)
 	}
 
 	*status = 64;		/* return type on success */
+	free(buf);
 	return (ent);
 }
 
