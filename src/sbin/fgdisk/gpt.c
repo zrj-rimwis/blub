@@ -452,7 +452,7 @@ gpt_mbr(int fd, off_t lba)
 }
 
 static int
-gpt_gpt(int fd, off_t lba)
+gpt_gpt(int fd, off_t lba, int found)
 {
 	uuid_t type;
 	off_t size;
@@ -485,8 +485,16 @@ gpt_gpt(int fd, off_t lba)
 
 	/* Use generic pointer to deal with hdr->hdr_entsz != sizeof(*ent). */
 	p = gpt_read(fd, le64toh(hdr->hdr_lba_table), blocks);
-	if (p == NULL)
-		return (-1);
+	if (p == NULL) {
+		if (found) {
+			if (verbose)
+				warn("%s: Cannot read LBA table at sector %llu",
+				    device_name, (unsigned long long)
+				    le64toh(hdr->hdr_lba_table));
+			return (-1);
+		}
+		goto fail_hdr;
+	}
 
 	if (crc32(p, tblsz) != le32toh(hdr->hdr_crc_table)) {
 		if (verbose)
@@ -511,7 +519,7 @@ gpt_gpt(int fd, off_t lba)
 		return (-1);
 
 	if (lba != 1)
-		return (0);
+		return (1);
 
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 		ent = (void*)(p + i * le32toh(hdr->hdr_entsz));
@@ -535,7 +543,7 @@ gpt_gpt(int fd, off_t lba)
 			return (-1);
 		m->map_index = i + 1;
 	}
-	return (0);
+	return (1);
 
 fail_ent:
 	free(p);
@@ -549,7 +557,7 @@ int
 gpt_open(const char *dev)
 {
 	struct stat sb;
-	int fd, mode;
+	int fd, mode, found;
 
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
@@ -606,9 +614,9 @@ found:
 
 	if (gpt_mbr(fd, 0LL) == -1)
 		goto close;
-	if (gpt_gpt(fd, 1LL) == -1)
+	if ((found = gpt_gpt(fd, 1LL, 1)) == -1)
 		goto close;
-	if (gpt_gpt(fd, mediasz / secsz - 1LL) == -1)
+	if (gpt_gpt(fd, mediasz / secsz - 1LL, found) == -1)
 		goto close;
 
 	return (fd);
