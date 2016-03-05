@@ -36,6 +36,14 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
+
+/*
+ * Note: struct gpt_hdr is not a multiple of 8 bytes in size and thus
+ * contains padding we must not include in the size.
+ */
+CTASSERT(GPT_MIN_HDR_SIZE == offsetof(struct gpt_hdr, padding));
+CTASSERT(GPT_MIN_HDR_SIZE == 0x5c);
 
 static int force;
 static int primary_only;
@@ -156,11 +164,7 @@ create(int fd)
 	hdr = gpt->map_data;
 	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));
 	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
-	/*
-	 * XXX struct gpt_hdr is not a multiple of 8 bytes in size and thus
-	 * contains padding we must not include in the size.
-	 */
-	hdr->hdr_size = htole32(offsetof(struct gpt_hdr, padding));
+	hdr->hdr_size = htole32(GPT_MIN_HDR_SIZE);
 	hdr->hdr_lba_self = htole64(gpt->map_start);
 	hdr->hdr_lba_alt = htole64(last);
 	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
