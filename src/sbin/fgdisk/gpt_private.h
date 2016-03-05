@@ -40,5 +40,12 @@
 #define __CTASSERT(x, y)        typedef char __assert ## y[(x) ? 1 : -1]
 #endif
 
+/* XXX: should be in sys/diskmbr.h */
+#ifndef DOSPTYP_UNUSED
+#define DOSPTYP_UNUSED	0x00
+#endif
+#ifndef DOSPTYP_EFI
+#define DOSPTYP_EFI	DOSPTYP_GPT
+#endif
 
 #endif /* _GPT_H_ */

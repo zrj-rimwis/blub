@@ -29,6 +29,7 @@
 #include <sys/disklabel32.h>
 #include <sys/disklabel64.h>
 #include <sys/dtype.h>
+#include <sys/diskmbr.h>
 
 #include <err.h>
 #include <stddef.h>
@@ -347,9 +348,9 @@ migrate(int fd)
 		size = (size << 16) + le16toh(mbr->mbr_part[i].part_size_lo);
 
 		switch (mbr->mbr_part[i].part_typ) {
-		case 0:
+		case DOSPTYP_UNUSED:
 			continue;
-		case 165: {	/* DragonFly/FreeBSD */
+		case DOSPTYP_386BSD: {	/* DragonFly/FreeBSD */
 			if (slice) {
 				/* XXX: w/o probing for magic play safe */
 				static const uuid_t legacy = GPT_ENT_TYPE_DRAGONFLY_LEGACY;
@@ -378,7 +379,7 @@ migrate(int fd)
 			}
 			break;
 		}
-		case 239: {	/* EFI */
+		case DOSPTYP_EFI: {	/* EFI */
 			static const uuid_t efi_slice = GPT_ENT_TYPE_EFI;
 			uuid_enc_le(&ent->ent_type, &efi_slice);
 			ent->ent_lba_start = htole64((uint64_t)start);
@@ -428,7 +429,7 @@ migrate(int fd)
 	mbr->mbr_part[0].part_shd = 0xff;
 	mbr->mbr_part[0].part_ssect = 0xff;
 	mbr->mbr_part[0].part_scyl = 0xff;
-	mbr->mbr_part[0].part_typ = 0xee;
+	mbr->mbr_part[0].part_typ = DOSPTYP_PMBR;
 	mbr->mbr_part[0].part_ehd = 0xff;
 	mbr->mbr_part[0].part_esect = 0xff;
 	mbr->mbr_part[0].part_ecyl = 0xff;

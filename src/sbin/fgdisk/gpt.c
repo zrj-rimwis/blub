@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/diskslice.h>
+#include <sys/diskmbr.h>
 
 #include <err.h>
 #include <errno.h>
@@ -44,6 +45,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 char	device_path[MAXPATHLEN];
 char	*device_name;
@@ -387,13 +389,13 @@ gpt_mbr(int fd, off_t lba)
 	/*
 	 * Differentiate between a regular MBR and a PMBR. This is more
 	 * convenient in general. A PMBR is one with a single partition
-	 * of type 0xee.
+	 * of type DOSPTYP_PMBR(0xee).
 	 */
 	pmbr = 0;
 	for (i = 0; i < 4; i++) {
-		if (mbr->mbr_part[i].part_typ == 0)
+		if (mbr->mbr_part[i].part_typ == DOSPTYP_UNUSED)
 			continue;
-		if (mbr->mbr_part[i].part_typ == 0xee)
+		if (mbr->mbr_part[i].part_typ == DOSPTYP_PMBR)
 			pmbr++;
 		else
 			break;
@@ -418,8 +420,8 @@ gpt_mbr(int fd, off_t lba)
 	if (p == NULL)
 		return (-1);
 	for (i = 0; i < 4; i++) {
-		if (mbr->mbr_part[i].part_typ == 0 ||
-		    mbr->mbr_part[i].part_typ == 0xee)
+		if (mbr->mbr_part[i].part_typ == DOSPTYP_UNUSED ||
+		    mbr->mbr_part[i].part_typ == DOSPTYP_PMBR)
 			continue;
 		start = le16toh(mbr->mbr_part[i].part_start_hi);
 		start = (start << 16) + le16toh(mbr->mbr_part[i].part_start_lo);
@@ -436,7 +438,7 @@ gpt_mbr(int fd, off_t lba)
 			warnx("%s: MBR part: type=%d, start=%llu, size=%llu",
 			    device_name, mbr->mbr_part[i].part_typ,
 			    (long long)start, (long long)size);
-		if (mbr->mbr_part[i].part_typ != 15) {
+		if (mbr->mbr_part[i].part_typ != DOSPTYP_EXTLBA) {
 			m = map_add(start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
 				return (-1);
