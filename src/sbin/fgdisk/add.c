@@ -54,6 +54,7 @@ usage_add(void)
 map_t *
 gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 {
+	uuid_t uuid;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	map_t *map;
@@ -93,7 +94,8 @@ gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 		i = *entry - 1;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		if (!uuid_is_nil(&ent->ent_type, NULL)) {
+		uuid_dec_le(&ent->ent_type, &uuid);
+		if (!uuid_is_nil(&uuid, NULL)) {
 			warnx("%s: error: entry at index %u is not free",
 			    device_name, *entry);
 			return (NULL);
@@ -104,7 +106,8 @@ gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 		for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 			ent = (void*)((char*)tbl->map_data + i *
 			    le32toh(hdr->hdr_entsz));
-			if (uuid_is_nil(&ent->ent_type, NULL))
+			uuid_dec_le(&ent->ent_type, &uuid);
+			if (uuid_is_nil(&uuid, NULL))
 				break;
 		}
 		if (i == le32toh(hdr->hdr_entries)) {

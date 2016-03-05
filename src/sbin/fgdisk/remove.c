@@ -107,7 +107,8 @@ rem(int fd)
 			continue;
 
 		/* Remove the primary entry by clearing the partition type. */
-		uuid_create_nil(&ent->ent_type, NULL);
+		uuid_create_nil(&uuid, NULL);
+		uuid_enc_le(&ent->ent_type, &uuid);
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -122,7 +123,7 @@ rem(int fd)
 		    le32toh(hdr->hdr_entsz));
 
 		/* Remove the secondary entry. */
-		uuid_create_nil(&ent->ent_type, NULL);
+		uuid_enc_le(&ent->ent_type, &uuid);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));

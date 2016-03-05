@@ -59,8 +59,9 @@ usage_installboot(void)
 }
 
 static int
-gpt_find(const uuid_t *type, map_t **mapp)
+gpt_lookup(const uuid_t *type, map_t **mapp)
 {
+	uuid_t uuid;
 	map_t *gpt, *tbl, *map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
@@ -83,7 +84,8 @@ gpt_find(const uuid_t *type, map_t **mapp)
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 		ent = (void *)((char *)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		if (uuid_equal(&ent->ent_type, type, NULL))
+		uuid_dec_le(&ent->ent_type, &uuid);
+		if (uuid_equal(&uuid, type, NULL))
 			break;
 	}
 	if (i == le32toh(hdr->hdr_entries)) {
@@ -168,7 +170,7 @@ installboot(int fd)
 	}
 
 	/* Fourth step: find an existing boot partition or create one. */
-	if (gpt_find(&boot_uuid, &gptboot) != 0)
+	if (gpt_lookup(&boot_uuid, &gptboot) != 0)
 		return;
 	if (gptboot != NULL) {
 		if (gptboot->map_size * secsz < sb.st_size) {
