@@ -100,11 +100,11 @@ create(int fd)
 		mbr = gpt_read(fd, 0LL, 1);
 		bzero(mbr, sizeof(*mbr));
 		mbr->mbr_sig = htole16(MBR_SIG);
-		mbr->mbr_part[0].part_shd = 0xff;
-		mbr->mbr_part[0].part_ssect = 0xff;
-		mbr->mbr_part[0].part_scyl = 0xff;
+		mbr->mbr_part[0].part_shd = 0x00;
+		mbr->mbr_part[0].part_ssect = 0x02;
+		mbr->mbr_part[0].part_scyl = 0x00;
 		mbr->mbr_part[0].part_typ = DOSPTYP_PMBR;
-		mbr->mbr_part[0].part_ehd = 0xff;
+		mbr->mbr_part[0].part_ehd = 0xfe;
 		mbr->mbr_part[0].part_esect = 0xff;
 		mbr->mbr_part[0].part_ecyl = 0xff;
 		mbr->mbr_part[0].part_start_lo = htole16(1);
