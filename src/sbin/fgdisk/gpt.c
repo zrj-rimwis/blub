@@ -647,6 +647,7 @@ static struct {
 	{ cmd_migrate, "migrate" },
 	{ cmd_recover, "recover" },
 	{ cmd_remove, "remove" },
+	{ cmd_resize, "resize" },
 	{ NULL, "rename" },
 	{ cmd_show, "show" },
 	{ NULL, "verify" },

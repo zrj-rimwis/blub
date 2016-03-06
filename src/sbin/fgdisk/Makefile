@@ -1,6 +1,6 @@
 PROG=	fgdisk
 SRCS=	add.c boot.c create.c destroy.c gpt.c label.c map.c migrate.c \
-	recover.c remove.c show.c
+	recover.c remove.c resize.c show.c
 WARNS?=	6
 MAN=	fgdisk.8
 
