@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <err.h>
 #include <stddef.h>
@@ -141,6 +142,7 @@ show(int fd __unused)
 	struct mbr *mbr;
 	struct gpt_ent *ent;
 	unsigned int i;
+	uint8_t utfbuf[NELEM(ent->ent_name) * 3 + 1];
 
 	printf("  %*s", lbawidth, "start");
 	printf("  %*s", lbawidth, "size");
@@ -198,8 +200,9 @@ show(int fd __unused)
 			printf("GPT part ");
 			ent = m->map_data;
 			if (show_label) {
-				printf("- \"%s\"",
-				    utf16_to_utf8(ent->ent_name));
+				utf16_to_utf8(ent->ent_name, utfbuf,
+				    sizeof(utfbuf));
+				printf("- \"%s\"", (char *)utfbuf);
 			} else {
 				uuid_dec_le(&ent->ent_type, &type);
 				printf("- %s", friendly(&type));

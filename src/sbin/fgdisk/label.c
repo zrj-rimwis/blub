@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <err.h>
 #include <stddef.h>
@@ -109,7 +110,7 @@ label(int fd)
 			continue;
 
 		/* Label the primary entry. */
-		utf8_to_utf16(name, ent->ent_name, 36);
+		utf8_to_utf16(name, ent->ent_name, NELEM(ent->ent_name));
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -124,7 +125,7 @@ label(int fd)
 		    le32toh(hdr->hdr_entsz));
 
 		/* Label the secondary entry. */
-		utf8_to_utf16(name, ent->ent_name, 36);
+		utf8_to_utf16(name, ent->ent_name, NELEM(ent->ent_name));
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
