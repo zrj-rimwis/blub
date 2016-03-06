@@ -40,13 +40,15 @@
 
 static int show_label = 0;
 static int show_uuid = 0;
+static int show_guid = 0;
+static unsigned int entry = 0;
 
 static void
 usage_show(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-lu] device ...\n", getprogname());
+	    "usage: %s [-glu] [-i index] device ...\n", getprogname());
 	exit(1);
 }
 
@@ -134,14 +136,15 @@ unfriendly:
 }
 
 static void
-show(int fd __unused)
+show(void)
 {
-	uuid_t type;
+	uuid_t guid, type;
 	off_t start;
 	map_t *m, *p;
 	struct mbr *mbr;
 	struct gpt_ent *ent;
 	unsigned int i;
+	char *s;
 	uint8_t utfbuf[NELEM(ent->ent_name) * 3 + 1];
 
 	printf("  %*s", lbawidth, "start");
@@ -203,6 +206,11 @@ show(int fd __unused)
 				utf16_to_utf8(ent->ent_name, utfbuf,
 				    sizeof(utfbuf));
 				printf("- \"%s\"", (char *)utfbuf);
+			} else if (show_guid) {
+				uuid_dec_le(&ent->ent_uuid, &guid);
+				uuid_to_string(&guid, &s, NULL);
+				printf("- %s", s);
+				free(s);
 			} else {
 				uuid_dec_le(&ent->ent_type, &type);
 				printf("- %s", friendly(&type));
@@ -220,13 +228,77 @@ show(int fd __unused)
 	}
 }
 
+static void
+show_one(void)
+{
+	uuid_t guid, type;
+	map_t *m;
+	struct gpt_ent *ent;
+	const char *s1;
+	char *s2;
+	uint8_t utfbuf[NELEM(ent->ent_name) * 3 + 1];
+
+	for (m = map_first(); m != NULL; m = m->map_next)
+		if (entry == m->map_index)
+			break;
+	if (m == NULL) {
+		warnx("%s: error: could not find index %d",
+		    device_name, entry);
+		return;
+	}
+	ent = m->map_data;
+
+	printf("Details for index %d:\n", entry);
+	printf("Start: %llu\n", (long long)m->map_start);
+	printf("Size:  %llu\n", (long long)m->map_size);
+
+	uuid_dec_le(&ent->ent_type, &type);
+	s1 = friendly(&type);
+	uuid_to_string(&type, &s2, NULL);
+	if (strcmp(s1, s2) == 0)
+		s1 = "unknown";
+	printf("Type: %s (%s)\n", s1, s2);
+	free(s2);
+
+	uuid_dec_le(&ent->ent_uuid, &guid);
+	uuid_to_string(&guid, &s2, NULL);
+	printf("GUID: %s\n", s2);
+	free(s2);
+
+	utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
+	printf("Label: %s\n", (char *)utfbuf);
+
+	printf("Attributes:\n");
+	if (ent->ent_attr == 0)
+		printf("  None\n");
+	else {
+		if (ent->ent_attr & GPT_ENT_ATTR_BOOTME)
+			printf("  indicates a bootable partition\n");
+		if (ent->ent_attr & GPT_ENT_ATTR_BOOTONCE)
+			printf("  attempt to boot this partition only once\n");
+		if (ent->ent_attr & GPT_ENT_ATTR_BOOTFAILED)
+			printf("  partition that was marked bootonce but failed to boot\n");
+	}
+}
+
 int
 cmd_show(int argc, char *argv[])
 {
+	char *p;
 	int ch, fd;
 
-	while ((ch = getopt(argc, argv, "lu")) != -1) {
+	while ((ch = getopt(argc, argv, "gi:lu")) != -1) {
 		switch(ch) {
+		case 'g':
+			show_guid = 1;
+			break;
+		case 'i':
+			if (entry > 0)
+				usage_show();
+			entry = strtoul(optarg, &p, 10);
+			if (*p != 0 || entry < 1)
+				usage_show();
+			break;
 		case 'l':
 			show_label = 1;
 			break;
@@ -248,7 +320,10 @@ cmd_show(int argc, char *argv[])
 			continue;
 		}
 
-		show(fd);
+		if (entry > 0)
+			show_one();
+		else
+			show();
 
 		gpt_close(fd);
 	}
