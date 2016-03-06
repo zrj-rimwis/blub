@@ -195,7 +195,9 @@ installboot(int fd)
 		return;
 	} else {
 		entry = 0;
-		gptboot = gpt_add_part(fd, boot_uuid, 0, bsize, &entry);
+		/* Requirements for gptboot are low, so care about size only */
+		gptboot = gpt_add_part(fd, boot_uuid, 0, 0, "GPTBOOT",
+		    bsize, &entry);
 		if (gptboot == NULL)
 			return;
 	}

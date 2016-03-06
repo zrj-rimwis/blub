@@ -92,8 +92,10 @@ There is no formalized definition of the different levels yet.
 .It Xo
 .Nm
 .Ic add
+.Op Fl a Ar alignment
 .Op Fl b Ar sector
 .Op Fl i Ar index
+.Op Fl l Ar label
 .Op Fl s Ar sectors
 .Op Fl t Ar type
 .Ar device ...
@@ -104,6 +106,12 @@ command allows the user to add a new partition to an existing table.
 By default, it will create a UFS partition covering the first available block
 of an unused disk space.
 The command-specific options can be used to control this behaviour.
+.Pp
+The
+.Fl a Ar alignment
+option allows the user to specify a
+.Ar alignment
+requirement (in bytes) for the start and size of partition.
 .Pp
 The
 .Fl b Ar sector
@@ -119,6 +127,12 @@ option allows the user to specify which (free) entry in the GPT table is to
 be used for the new partition.
 By default, the first free entry is selected.
 Entries start at index 1 representing partition 1 of the GPT.
+.Pp
+The
+.Fl l Ar label
+option allows the user to specify a
+.Ar label
+for the partition.
 .Pp
 The
 .Fl s Ar sectors

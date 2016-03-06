@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <err.h>
 #include <stddef.h>
@@ -38,21 +39,23 @@
 #include "gpt.h"
 
 static uuid_t add_type;
-static off_t add_block, add_size;
+static off_t add_align, add_block, add_size;
 static unsigned int add_entry;
+static char *add_name;
 
 static void
 usage_add(void)
 {
-
 	fprintf(stderr,
-	    "usage: %s [-b sector] [-i index] [-s sectors] [-t uuid] device ...\n",
-	    getprogname());
+	    "usage: %s [-a alignment] [-b sector] [-i index] [-l label] \n"
+	    "       %*s [-s sectors] [-t uuid] device ...\n",
+	    getprogname(), (int)strlen(getprogname()),"");
 	exit(1);
 }
 
 map_t *
-gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
+gpt_add_part(int fd, uuid_t type, off_t align, off_t start, const char *name,
+    off_t size, unsigned int *entry)
 {
 	uuid_t uuid;
 	map_t *gpt, *tpg;
@@ -61,6 +64,7 @@ gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
+	off_t alignsecs;
 
 	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
 	if (gpt == NULL) {
@@ -117,15 +121,28 @@ gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 		}
 	}
 
-	map = map_alloc(start, size);
-	if (map == NULL) {
-		warnx("%s: error: not enough space available on device", device_name);
-		return (NULL);
+	if (align > 0) {
+		alignsecs = align / secsz;
+		map = map_alloc(start, size, alignsecs);
+		if (map == NULL) {
+			warnx("%s: error: not enough space available on "
+			      "device for an aligned partition", device_name);
+			return (NULL);
+		}
+	} else {
+		map = map_alloc(start, size, 0);
+		if (map == NULL) {
+			warnx("%s: error: not enough space available on device",
+			    device_name);
+			return (NULL);
+		}
 	}
 
 	uuid_enc_le(&ent->ent_type, &type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
+	if (name != NULL)
+		utf8_to_utf16(name, ent->ent_name, NELEM(ent->ent_name));
 
 	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -141,6 +158,8 @@ gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 	uuid_enc_le(&ent->ent_type, &type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
+	if (name != NULL)
+		utf8_to_utf16(name, ent->ent_name, NELEM(ent->ent_name));
 
 	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -158,8 +177,10 @@ gpt_add_part(int fd, uuid_t type, off_t start, off_t size, unsigned int *entry)
 static void
 add(int fd)
 {
-	if (gpt_add_part(fd, add_type, add_block, add_size, &add_entry) != 0)
+	if (gpt_add_part(fd, add_type, add_align, add_block, add_name,
+	    add_size, &add_entry) != 0) {
 		return;
+	}
 
 	printf("%sp%u added\n", device_name, add_entry);
 }
@@ -171,8 +192,15 @@ cmd_add(int argc, char *argv[])
 	int ch, fd;
 
 	/* Get the add options */
-	while ((ch = getopt(argc, argv, "b:i:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:i:l:s:t:")) != -1) {
 		switch(ch) {
+		case 'a':
+			if (add_align > 0)
+				usage_add();
+			add_align = strtoll(optarg, &p, 10);
+			if (add_align < 1)
+				usage_add();
+			break;
 		case 'b':
 			if (add_block > 0)
 				usage_add();
@@ -186,6 +214,11 @@ cmd_add(int argc, char *argv[])
 			add_entry = strtol(optarg, &p, 10);
 			if (*p != 0 || add_entry < 1)
 				usage_add();
+			break;
+		case 'l':
+			if (add_name != NULL)
+				usage_add();
+			add_name = (uint8_t *)strdup(optarg);
 			break;
 		case 's':
 			if (add_size > 0)
@@ -221,10 +254,20 @@ cmd_add(int argc, char *argv[])
 			continue;
 		}
 
+		if (add_align % secsz != 0) {
+			warnx("Alignment must be a multiple of sector size;");
+			warnx("the sector size for %s is %d bytes.",
+			    device_name, secsz);
+			continue;
+		}
+
 		add(fd);
 
 		gpt_close(fd);
 	}
+
+	if (add_name != NULL)
+		free(add_name);
 
 	return (0);
 }
