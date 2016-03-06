@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 5, 2016
+.Dd March 6, 2016
 .Dt FGDISK 8
 .Os
 .Sh NAME
@@ -140,6 +140,7 @@ as aliases for the most commonly used partition types.
 .It Xo
 .Nm
 .Ic installboot
+.Op Fl H
 .Op Fl b Ar pmbr
 .Op Fl g Ar gptboot
 .Op Fl s Ar sectors
@@ -157,6 +158,11 @@ boot loader is installed into the PMBR and the
 boot loader is installed into the first boot partition.
 If no boot partition exists and there is available space,
 a boot partition will be created.
+.Pp
+The
+.Fl H
+option toggles boot flag for PMBR partition during pmbr image installation.
+Needed for certain bioses to detect disk and boot from it in BIOS/GPT setup.
 .Pp
 The
 .Fl b Ar pmbr

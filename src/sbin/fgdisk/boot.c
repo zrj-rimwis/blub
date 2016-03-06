@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/diskmbr.h>
 
 #include <assert.h>
 #include <err.h>
@@ -48,12 +49,13 @@ static const uuid_t boot_uuid = GPT_ENT_TYPE_FREEBSD_BOOT;
 static const char *pmbr_path = "/boot/pmbr";
 static const char *gptboot_path = "/boot/gptboot";
 static u_long boot_size;
+static int pmbr_boot;
 
 static void
 usage_installboot(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-b pmbr] [-g gptboot] [-s sectors] device ...\n",
+	    "usage: %s [-H] [-b pmbr] [-g gptboot] [-s sectors] device ...\n",
 	    getprogname());
 	exit(1);
 }
@@ -160,6 +162,14 @@ installboot(int fd)
 		return;
 	}
 	close(bfd);
+
+	if (pmbr_boot && (mbr->mbr_part[0].part_typ == DOSPTYP_PMBR)) {
+		/* Sprinkle some magic dust by toggling 0xee bootflags . */
+		mbr->mbr_part[0].part_flag ^= 0x80;
+		printf("%s: toggled bootable flag in 0xEE part_flags\n",
+		    device_name);
+	}
+
 	gpt_write(fd, pmbr);
 
 	/* Third step: open gptboot and obtain its size. */
@@ -232,8 +242,11 @@ cmd_installboot(int argc, char *argv[])
 	char *p;
 	int ch, fd;
 
-	while ((ch = getopt(argc, argv, "b:g:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "Hb:g:s:")) != -1) {
 		switch (ch) {
+		case 'H':
+			pmbr_boot = 1;
+			break;
 		case 'b':
 			pmbr_path = optarg;
 			break;
