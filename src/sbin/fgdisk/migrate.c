@@ -338,6 +338,8 @@ migrate(int fd)
 	ent = tbl->map_data;
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 		uuid_create(&uuid, NULL);
+		/* slightly obfuscate mac address for radomness */
+		uuid.node[0] = (uuid.node[0] + i) & 0xff;
 		uuid_enc_le(&ent[i].ent_uuid, &uuid);
 	}
 
