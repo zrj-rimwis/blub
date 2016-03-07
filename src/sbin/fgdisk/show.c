@@ -53,7 +53,7 @@ usage_show(void)
 }
 
 static const char *
-friendly(uuid_t *t)
+friendly(uuid_t *t, int u)
 {
 	static const uuid_t boot =	GPT_ENT_TYPE_FREEBSD_BOOT;
 	static const uuid_t efi_slice =	GPT_ENT_TYPE_EFI;
@@ -78,7 +78,7 @@ friendly(uuid_t *t)
 	static char buf[80];
 	char *s;
 
-	if (show_uuid)
+	if (u == 1)
 		goto unfriendly;
 
 	if (uuid_equal(t, &efi_slice, NULL))
@@ -213,7 +213,7 @@ show(void)
 				free(s);
 			} else {
 				uuid_dec_le(&ent->ent_type, &type);
-				printf("- %s", friendly(&type));
+				printf("- %s", friendly(&type, show_uuid));
 			}
 			break;
 		case MAP_TYPE_PMBR:
@@ -253,7 +253,7 @@ show_one(void)
 	printf("Size:  %llu\n", (long long)m->map_size);
 
 	uuid_dec_le(&ent->ent_type, &type);
-	s1 = friendly(&type);
+	s1 = friendly(&type, 0);
 	uuid_to_string(&type, &s2, NULL);
 	if (strcmp(s1, s2) == 0)
 		s1 = "unknown";
