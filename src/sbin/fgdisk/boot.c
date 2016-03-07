@@ -61,7 +61,7 @@ usage_installboot(void)
 }
 
 static int
-gpt_lookup(const uuid_t *type, map_t **mapp)
+gpt_lookup(const uuid_t *type, map_t **mapp, unsigned int *index)
 {
 	uuid_t uuid;
 	map_t *gpt, *tbl, *map;
@@ -95,6 +95,9 @@ gpt_lookup(const uuid_t *type, map_t **mapp)
 		return (0);
 	}
 
+	/* Update entry. */
+	*index = i + 1;
+
 	/* Lookup the map corresponding to this partition. */
 	for (map = map_find(MAP_TYPE_GPT_PART); map != NULL;
 	     map = map->map_next) {
@@ -124,11 +127,13 @@ installboot(int fd)
 	unsigned int entry;
 	int bfd;
 
+	entry = 0;	/* To keep track of boot partition. */
+
 	/* First step: verify boot partition size. */
-	if (boot_size == 0)
+	if (boot_size == 0) {
 		/* Default to 64k. */
 		bsize = 65536 / secsz;
-	else {
+	} else {
 		if (boot_size * secsz < 16384) {
 			warnx("invalid boot partition size %lu", boot_size);
 			return;
@@ -180,7 +185,7 @@ installboot(int fd)
 	}
 
 	/* Fourth step: find an existing boot partition or create one. */
-	if (gpt_lookup(&boot_uuid, &gptboot) != 0)
+	if (gpt_lookup(&boot_uuid, &gptboot, &entry) != 0)
 		return;
 	if (gptboot != NULL) {
 		if (gptboot->map_size * secsz < sb.st_size) {
@@ -194,16 +199,17 @@ installboot(int fd)
 		    device_name);
 		return;
 	} else {
-		entry = 0;
 		/* Requirements for gptboot are low, so care about size only */
 		gptboot = gpt_add_part(fd, boot_uuid, 0, 0, "GPTBOOT",
 		    bsize, &entry);
 		if (gptboot == NULL)
 			return;
+		printf("%sp%u (compat %ss%u) added\n", device_name, entry,
+		    device_name, entry-1);
 	}
 
 	/*
-	 * Fourth step, write out the gptboot binary to the boot partition.
+	 * Fifth step, write out the gptboot binary to the boot partition.
 	 * When writing to a disk device, the write must be sector aligned
 	 * and not write to any partial sectors, so round up the buffer size
 	 * to the next sector and zero it.
@@ -236,6 +242,9 @@ installboot(int fd)
 		return;
 	}
 	free(buf);
+
+	printf("PMBR and %sp%u (compat %ss%u) updated\n",
+	    device_name, entry, device_name, entry-1);
 }
 
 int

@@ -177,12 +177,17 @@ gpt_add_part(int fd, uuid_t type, off_t align, off_t start, const char *name,
 static void
 add(int fd)
 {
-	if (gpt_add_part(fd, add_type, add_align, add_block, add_name,
-	    add_size, &add_entry) != 0) {
-		return;
-	}
+	map_t *map;
+	unsigned int index;
 
-	printf("%sp%u added\n", device_name, add_entry);
+	index = add_entry;
+	map = gpt_add_part(fd, add_type, add_align, add_block, add_name,
+	    add_size, &index);
+	if (map == NULL)
+		return;
+
+	printf("%sp%u (compat %ss%u) added\n", device_name, index,
+	    device_name, index-1);
 }
 
 int

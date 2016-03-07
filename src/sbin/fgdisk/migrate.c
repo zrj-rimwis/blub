@@ -445,6 +445,9 @@ migrate(int fd)
 		mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
 	}
 	gpt_write(fd, map);
+
+	printf("%s: slices migrated to gpt partitions, update fstab.\n",
+	    device_name);
 }
 
 int

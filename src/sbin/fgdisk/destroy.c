@@ -75,6 +75,8 @@ destroy(int fd)
 		bzero(sec_hdr->map_data, secsz);
 		gpt_write(fd, sec_hdr);
 	}
+
+	printf("%s: destroyed gpt label.\n", device_name);
 }
 
 int

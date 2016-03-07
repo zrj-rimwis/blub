@@ -211,6 +211,8 @@ create(int fd)
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
 	}
+
+	printf("%s: created gpt label.\n", device_name);
 }
 
 int

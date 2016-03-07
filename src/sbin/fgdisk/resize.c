@@ -155,7 +155,8 @@ resize(int fd)
 	gpt_write(fd, lbt);
 	gpt_write(fd, tpg);
 
-	printf("%sp%u resized\n", device_name, entry);
+	printf("%sp%u (compat %ss%u) resized\n", device_name, entry,
+	    device_name, entry - 1);
 }
 
 int

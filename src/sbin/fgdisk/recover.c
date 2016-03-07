@@ -163,7 +163,7 @@ rewrite_pmbr(int fd)
 			warnx("%s: error: device contains a PMBR", device_name);
 			return;
 		}
-		warnx("%s: warning: about to rewrite a PMBR", device_name);
+		printf("%s: warning: about to rewrite a PMBR\n", device_name);
 
 		/* Nuke the PMBR in our internal map. */
 		map->map_type = MAP_TYPE_UNUSED;
@@ -188,7 +188,7 @@ rewrite_pmbr(int fd)
 			warnx("%s: error: device contains a MBR", device_name);
 			return;
 		}
-		warnx("%s: warning: about to overwrite a MBR", device_name);
+		printf("%s: warning: about to overwrite a MBR\n", device_name);
 
 		/* Nuke the MBR in our internal map. */
 		map->map_type = MAP_TYPE_UNUSED;
@@ -222,7 +222,7 @@ rewrite_pmbr(int fd)
 		}
 		map = map_add(0LL, 1LL, MAP_TYPE_PMBR, mbr);
 		gpt_write(fd, map);
-		warnx("%s: written a fresh PMBR", device_name);
+		printf("%s: written a fresh PMBR\n", device_name);
 	}
 }
 
