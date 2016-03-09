@@ -41,7 +41,7 @@ mkmap(off_t start, off_t size, int type)
 {
 	map_t *m;
 
-	m = malloc(sizeof(*m));
+	m = calloc(1, sizeof(*m));
 	if (m == NULL)
 		return (NULL);
 	m->map_start = start;
@@ -73,8 +73,8 @@ map_add(off_t start, off_t size, int type, void *data)
 		if (n->map_type != MAP_TYPE_UNUSED) {
 			if (n->map_type != MAP_TYPE_MBR_PART ||
 			    type != MAP_TYPE_GPT_PART) {
-				warnx("warning: partition(%llu,%llu) mirrored",
-				    (long long)start, (long long)size);
+				warnx("warning: partition(%ju,%ju) mirrored",
+				    (uintmax_t)start, (uintmax_t)size);
 			}
 		}
 		n->map_type = type;
@@ -323,7 +323,7 @@ map_init(off_t size)
 	char buf[32];
 
 	mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
-	lbawidth = sprintf(buf, "%llu", (long long)size);
+	lbawidth = snprintf(buf, sizeof(buf), "%ju", (uintmax_t)size);
 	if (lbawidth < 5)
 		lbawidth = 5;
 }

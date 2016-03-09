@@ -381,8 +381,8 @@ gpt_mbr(int fd, off_t lba)
 
 	if (mbr->mbr_sig != htole16(MBR_SIG)) {
 		if (verbose)
-			warnx("%s: MBR not found at sector %llu", device_name,
-			    (long long)lba);
+			warnx("%s: MBR not found at sector %ju", device_name,
+			    (uintmax_t)lba);
 		free(mbr);
 		return (0);
 	}
@@ -403,19 +403,19 @@ gpt_mbr(int fd, off_t lba)
 	}
 	if (pmbr && i == 4 && lba == 0) {
 		if (pmbr != 1)
-			warnx("%s: Suspicious PMBR at sector %llu",
-			    device_name, (long long)lba);
+			warnx("%s: Suspicious PMBR at sector %ju",
+			    device_name, (uintmax_t)lba);
 		else if (verbose > 1)
-			warnx("%s: PMBR at sector %llu", device_name,
-			    (long long)lba);
+			warnx("%s: PMBR at sector %ju", device_name,
+			    (uintmax_t)lba);
 		p = map_add(lba, 1LL, MAP_TYPE_PMBR, mbr);
 		return ((p == NULL) ? -1 : 0);
 	}
 	if (pmbr)
-		warnx("%s: Suspicious MBR at sector %llu", device_name,
-		    (long long)lba);
+		warnx("%s: Suspicious MBR at sector %ju", device_name,
+		    (uintmax_t)lba);
 	else if (verbose > 1)
-		warnx("%s: MBR at sector %llu", device_name, (long long)lba);
+		warnx("%s: MBR at sector %ju", device_name, (uintmax_t)lba);
 
 	p = map_add(lba, 1LL, MAP_TYPE_MBR, mbr);
 	if (p == NULL)
@@ -429,16 +429,16 @@ gpt_mbr(int fd, off_t lba)
 		size = le16toh(mbr->mbr_part[i].part_size_hi);
 		size = (size << 16) + le16toh(mbr->mbr_part[i].part_size_lo);
 		if (start == 0 && size == 0) {
-			warnx("%s: Malformed MBR at sector %llu", device_name,
-			    (long long)lba);
+			warnx("%s: Malformed MBR at sector %ju", device_name,
+			    (uintmax_t)lba);
 			continue;
 		}
 		/* start is relative to the offset of the MBR itself. */
 		start += lba;
 		if (verbose > 2)
-			warnx("%s: MBR part: type=%d, start=%llu, size=%llu",
+			warnx("%s: MBR part: type=%d, start=%ju, size=%ju",
 			    device_name, mbr->mbr_part[i].part_typ,
-			    (long long)start, (long long)size);
+			    (uintmax_t)start, (uintmax_t)size);
 		if (mbr->mbr_part[i].part_typ != DOSPTYP_EXTLBA) {
 			m = map_add(start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
@@ -476,8 +476,8 @@ gpt_gpt(int fd, off_t lba, int found)
 	hdr->hdr_crc_self = 0;
 	if (crc32(hdr, le32toh(hdr->hdr_size)) != crc) {
 		if (verbose)
-			warnx("%s: Bad CRC in GPT header at sector %llu",
-			    device_name, (long long)lba);
+			warnx("%s: Bad CRC in GPT header at sector %ju",
+			    device_name, (uintmax_t)lba);
 		goto fail_hdr;
 	}
 
@@ -489,9 +489,9 @@ gpt_gpt(int fd, off_t lba, int found)
 	if (p == NULL) {
 		if (found) {
 			if (verbose)
-				warn("%s: Cannot read LBA table at sector %llu",
-				    device_name, (unsigned long long)
-				    le64toh(hdr->hdr_lba_table));
+				warn("%s: Cannot read LBA table at sector %ju",
+				    device_name,
+				    (uintmax_t)le64toh(hdr->hdr_lba_table));
 			return (-1);
 		}
 		goto fail_hdr;
@@ -499,15 +499,15 @@ gpt_gpt(int fd, off_t lba, int found)
 
 	if (crc32(p, tblsz) != le32toh(hdr->hdr_crc_table)) {
 		if (verbose)
-			warnx("%s: Bad CRC in GPT table at sector %llu",
+			warnx("%s: Bad CRC in GPT table at sector %ju",
 			    device_name,
-			    (long long)le64toh(hdr->hdr_lba_table));
+			    (uintmax_t)le64toh(hdr->hdr_lba_table));
 		goto fail_ent;
 	}
 
 	if (verbose > 1)
-		warnx("%s: %s GPT at sector %llu", device_name,
-		    (lba == 1) ? "Pri" : "Sec", (long long)lba);
+		warnx("%s: %s GPT at sector %ju", device_name,
+		    (lba == 1) ? "Pri" : "Sec", (uintmax_t)lba);
 
 	m = map_add(lba, 1, (lba == 1)
 	    ? MAP_TYPE_PRI_GPT_HDR : MAP_TYPE_SEC_GPT_HDR, hdr);
@@ -533,9 +533,9 @@ gpt_gpt(int fd, off_t lba, int found)
 			uuid_dec_le(&ent->ent_type, &type);
 			uuid_to_string(&type, &s, NULL);
 			warnx(
-	"%s: GPT partition: type=%s, start=%llu, size=%llu", device_name, s,
-			    (long long)le64toh(ent->ent_lba_start),
-			    (long long)size);
+	"%s: GPT partition: type=%s, start=%ju, size=%ju", device_name, s,
+			    (uintmax_t)le64toh(ent->ent_lba_start),
+			    (uintmax_t)size);
 			free(s);
 		}
 		m = map_add(le64toh(ent->ent_lba_start), size,
@@ -607,9 +607,9 @@ found:
 	}
 
 	if (verbose)
-		warnx("%s: mediasize=%llu; sectorsize=%u; blocks=%llu",
-		    device_name, (long long)mediasz, secsz,
-		    (long long)(mediasz / secsz));
+		warnx("%s: mediasize=%ju; sectorsize=%u; blocks=%ju",
+		    device_name, (uintmax_t)mediasz, secsz,
+		    (uintmax_t)(mediasz / secsz));
 
 	map_init(mediasz / secsz);
 

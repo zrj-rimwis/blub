@@ -249,8 +249,8 @@ show_one(void)
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
-	printf("Start: %llu\n", (long long)m->map_start);
-	printf("Size:  %llu\n", (long long)m->map_size);
+	printf("Start: %ju\n", (uintmax_t)m->map_start);
+	printf("Size:  %ju\n", (uintmax_t)m->map_size);
 
 	uuid_dec_le(&ent->ent_type, &type);
 	s1 = friendly(&type, 0);
