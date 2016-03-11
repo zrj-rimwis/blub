@@ -559,6 +559,7 @@ gpt_open(const char *dev)
 {
 	struct stat sb;
 	int fd, mode, found;
+	off_t devsz;
 
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
@@ -601,23 +602,26 @@ found:
 	 * user data. Let's catch this extreme border case here so that
 	 * we don't have to worry about it later.
 	 */
-	if (mediasz / secsz < 6) {
+	devsz = mediasz / secsz;
+	if (devsz < 6) {
 		errno = ENODEV;
+		warnx("%s: too small, need 6 sectors, have %ju",
+		    device_name, (uintmax_t)devsz);
 		goto close;
 	}
 
-	if (verbose)
+	if (verbose) {
 		warnx("%s: mediasize=%ju; sectorsize=%u; blocks=%ju",
-		    device_name, (uintmax_t)mediasz, secsz,
-		    (uintmax_t)(mediasz / secsz));
+		    device_name, (uintmax_t)mediasz, secsz, (uintmax_t)devsz);
+	}
 
-	map_init(mediasz / secsz);
+	map_init(devsz);
 
 	if (gpt_mbr(fd, 0LL) == -1)
 		goto close;
 	if ((found = gpt_gpt(fd, 1LL, 1)) == -1)
 		goto close;
-	if (gpt_gpt(fd, mediasz / secsz - 1LL, found) == -1)
+	if (gpt_gpt(fd, devsz - 1LL, found) == -1)
 		goto close;
 
 	return (fd);
