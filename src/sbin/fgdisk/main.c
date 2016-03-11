@@ -36,6 +36,8 @@
 #include "map.h"
 #include "gpt.h"
 
+static int pcmd_help(int argc, char *argv[]);
+
 static struct {
 	int (*fptr)(int, char *[]);
 	const char *name;
@@ -43,7 +45,7 @@ static struct {
 	{ cmd_add, "add" },
 	{ cmd_create, "create" },
 	{ cmd_destroy, "destroy" },
-	{ NULL, "help" },
+	{ pcmd_help, "help" },
 	{ cmd_label, "label" },
 	{ cmd_installboot, "installboot" },
 	{ cmd_migrate, "migrate" },
@@ -63,6 +65,26 @@ usage(void)
 	    "usage: %s [-rv] [-p partitions] command [options] device ...\n",
 	    getprogname());
 	exit(1);
+}
+
+static int
+pcmd_help(int argc __unused, char *argv[] __unused)
+{
+	fprintf(stderr,
+	    "Available commands:\n%s\n",
+	    "    add         - add new gpt partition\n"
+	    "    create      - create new gpt disk layout\n"
+	    "    destroy     - destroy gpt disk layout\n"
+	    "    help        - print this help\n"
+	    "    label       - change labels of gpt partions\n"
+	    "    installboot - install gptboot with pmbr for bios-gpt boot\n"
+	    "    migrate     - migrate slices to gpt partitions\n"
+	    "    recover     - gpt disk recovery\n"
+	    "    remove      - remove gpt partition\n"
+	    "    resize      - resize gpt partition\n"
+	    "    show        - print info about gpt disk/partitions\n"
+	    );
+	return (0);
 }
 
 static void

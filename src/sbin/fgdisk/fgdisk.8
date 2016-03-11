@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 6, 2016
+.Dd March 11, 2016
 .Dt FGDISK 8
 .Os
 .Sh NAME
@@ -60,32 +60,25 @@ The general options allow the user to change default settings or otherwise
 change the behaviour that is applicable to all commands.
 Not all commands use all default settings, so some general options may not
 have an effect on all commands.
-.Pp
-The
-.Fl p Ar partitions
-option allows the user to change the number of
+.Bl -tag -width XXXXXX
+.It Fl p Ar partitions
+Change the default number of
 .Ar partitions
 the GPT can accommodate.
 This is used whenever a new GPT is created.
 By default, the
 .Nm
 utility will create space for 128 partitions (or 32 sectors of 512 bytes).
-.Pp
-The
-.Fl r
-option causes the
-.Nm
-utility to open the device for reading only.
+.It Fl r
+Open the device for reading only.
 Currently this option is primarily useful for the
 .Ic show
-command, but the intent
-is to use it to implement dry-run behaviour.
-.Pp
-The
-.Fl v
-option controls the verbosity level.
+command, but the intent is to use it to implement dry-run behaviour.
+.It Fl v
+Controls the verbosity level.
 The level increases with every occurrence of this option.
 There is no formalized definition of the different levels yet.
+.El
 .Ss Commands
 .Bl -tag -width indent
 .\" ==== add ====
@@ -228,6 +221,12 @@ The
 option instructs
 .Nm
 to destroy the table in a way that it can be recovered.
+.\" ==== help ====
+.It Nm Ic help
+The
+.Ic help
+command displays a compact list of available commands
+with their short descriptions.
 .\" ==== label ====
 .It Xo
 .Nm
