@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 11, 2016
+.Dd March 12, 2016
 .Dt FGDISK 8
 .Os
 .Sh NAME
@@ -38,7 +38,9 @@
 The
 .Nm
 utility provides the necessary functionality to manipulate GUID partition
-tables (GPTs), but see
+tables
+.Pq GPTs ,
+but see
 .Sx BUGS
 below for how and where functionality is missing.
 The basic usage model of the
@@ -61,14 +63,6 @@ change the behaviour that is applicable to all commands.
 Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Bl -tag -width XXXXXX
-.It Fl p Ar partitions
-Change the default number of
-.Ar partitions
-the GPT can accommodate.
-This is used whenever a new GPT is created.
-By default, the
-.Nm
-utility will create space for 128 partitions (or 32 sectors of 512 bytes).
 .It Fl r
 Open the device for reading only.
 Currently this option is primarily useful for the
@@ -191,7 +185,7 @@ Note that the PMBR boot loader will load the entire boot partition into
 memory.
 As a result, the boot partition may not exceed 545 kilobytes.
 .\" ==== create ====
-.It Nm Ic create Oo Fl fp Oc Ar device ...
+.It Nm Ic create Oo Fl fP Oc Oo Fl p Ar partitions Oc Ar device ...
 The
 .Ic create
 command allows the user to create a new (empty) GPT.
@@ -205,11 +199,21 @@ option is specified, an existing MBR is destroyed and any partitions
 described by the MBR are lost.
 .Pp
 The
-.Fl p
+.Fl P
 option tells
 .Nm
 to create only the primary table and not the backup table.
 This option is only useful for debugging and should not be used otherwise.
+.Pp
+The
+.Fl p Ar partitions
+option changes the default number of
+.Ar partitions
+the GPT can accommodate.
+This is used whenever a new GPT is created.
+By default, the
+.Nm
+utility will create space for 128 partitions (or 32 sectors of 512 bytes).
 .\" ==== destroy ====
 .It Nm Ic destroy Oo Fl r Oc Ar device ...
 The
@@ -299,7 +303,7 @@ The
 option is used to specify the label in the command line.
 The label is assumed to be encoded in UTF-8.
 .\" ==== migrate ====
-.It Nm Ic migrate Oo Fl fs Oc Ar device ...
+.It Nm Ic migrate Oo Fl fs Oc Oo Fl p Ar partitions Oc Ar device ...
 The
 .Ic migrate
 command allows the user to migrate an MBR-based disk partitioning into a
@@ -320,6 +324,32 @@ option prevents migrating
 .Bx
 disk labels into GPT partitions by creating
 the GPT equivalent of a slice.
+.Pp
+The
+.Fl p Ar partitions
+option changes the default number of
+.Ar partitions
+the GPT can accommodate.
+This is used whenever a new GPT is created.
+By default, the
+.Nm
+utility will create space for 128 partitions (or 32 sectors of 512 bytes).
+.Pp
+The
+.Ic migrate
+command requires space at the beginning and the end of the device outside
+any partitions to store the GPTs.
+Space is required for the GPT header
+.Pq which takes one sector
+and the GPT partition table.
+See the
+.Fl p
+option
+for the size of the GPT partition table.
+By default, just about all devices have a minimum of 62 sectors free at the
+beginning of the device, but don't have any free space at the end.
+For the default GPT partition table size on a 512 byte sector size device,
+33 sectors at the end of the device would need to be freed.
 .\" ==== recover ====
 .It Nm Ic recover Oo Fl fP Oc Ar device ...
 The

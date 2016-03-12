@@ -62,7 +62,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-rv] [-p partitions] command [options] device ...\n",
+	    "usage: %s [-rv] command [options] device ...\n",
 	    getprogname());
 	exit(1);
 }
@@ -106,19 +106,12 @@ prefix(const char *cmd)
 int
 main(int argc, char *argv[])
 {
-	char *cmd, *p;
+	char *cmd;
 	int ch, i;
 
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, "p:rv")) != -1) {
+	while ((ch = getopt(argc, argv, "rv")) != -1) {
 		switch(ch) {
-		case 'p':
-			if (parts > 0)
-				usage();
-			parts = strtol(optarg, &p, 10);
-			if (*p != 0 || parts < 1)
-				usage();
-			break;
 		case 'r':
 			readonly = 1;
 			break;
@@ -129,8 +122,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-	if (!parts)
-		parts = 128;
 
 	if (argc == optind)
 		usage();

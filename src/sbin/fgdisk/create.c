@@ -47,14 +47,14 @@ CTASSERT(GPT_MIN_HDR_SIZE == offsetof(struct gpt_hdr, padding));
 CTASSERT(GPT_MIN_HDR_SIZE == 0x5c);
 
 static int force;
+static u_int parts;
 static int primary_only;
 
 static void
 usage_create(void)
 {
-
 	fprintf(stderr,
-	    "usage: %s [-fp] device ...\n", getprogname());
+	    "usage: %s [-fP] [-p partitions] device ...\n", getprogname());
 	exit(1);
 }
 
@@ -218,15 +218,23 @@ create(int fd)
 int
 cmd_create(int argc, char *argv[])
 {
+	char *p;
 	int ch, fd;
 
-	while ((ch = getopt(argc, argv, "fp")) != -1) {
+	parts = 128;
+
+	while ((ch = getopt(argc, argv, "fPp:")) != -1) {
 		switch(ch) {
 		case 'f':
 			force = 1;
 			break;
-		case 'p':
+		case 'P':
 			primary_only = 1;
+			break;
+		case 'p':
+			parts = strtol(optarg, &p, 10);
+			if (*p != 0 || parts < 1)
+				usage_create();
 			break;
 		default:
 			usage_create();

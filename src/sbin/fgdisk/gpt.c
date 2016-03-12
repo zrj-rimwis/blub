@@ -51,8 +51,6 @@ char	device_path[MAXPATHLEN];
 char	*device_name;
 
 off_t	mediasz;
-
-u_int	parts;
 u_int	secsz;
 
 int	readonly, verbose;
