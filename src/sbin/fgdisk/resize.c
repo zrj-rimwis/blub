@@ -36,6 +36,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static off_t res_align, size;
 static unsigned int entry;
@@ -50,66 +51,40 @@ usage_resize(void)
 }
 
 static void
-resize(int fd)
+resize(gd_t gd)
 {
 	uuid_t uuid;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
+	map_t map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	off_t alignsecs, newsize;
 
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
+	if ((hdr = gpt_gethdr(gd)) == NULL)
+		return;
+
 	ent = NULL;
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
-		return;
-	}
-
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return;
-	}
-
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
-	}
-
-	hdr = gpt->map_data;
-	if (entry > le32toh(hdr->hdr_entries)) {
-		warnx("%s: error: index %u out of range (%u max)", device_name,
-		    entry, le32toh(hdr->hdr_entries));
-		return;
-	}
 
 	i = entry - 1;
-	ent = (void*)((char*)tbl->map_data + i *
+	ent = (void*)((char*)gd->tbl->map_data + i *
 	    le32toh(hdr->hdr_entsz));
 	uuid_dec_le(&ent->ent_type, &uuid);
 	if (uuid_is_nil(&uuid, NULL)) {
 		warnx("%s: error: entry at index %u is unused",
-		    device_name, entry);
+		    gd->device_name, entry);
 		return;
 	}
 
-	alignsecs = res_align / secsz;
+	alignsecs = res_align / gd->secsz;
 
-	for (map = map_first(); map != NULL; map = map->map_next) {
+	for (map = map_first(gd); map != NULL; map = map->map_next) {
 		if (entry == map->map_index)
 			break;
 	}
 	if (map == NULL) {
 		warnx("%s: error: could not find map entry corresponding "
-		      "to index", device_name);
+		      "to index", gd->device_name);
 		return;
 	}
 
@@ -118,52 +93,54 @@ resize(int fd)
 		    (res_align > 0 && size % alignsecs == 0)) {
 			/* nothing to do */
 			warnx("%s: partition does not need resizing",
-			    device_name);
+			    gd->device_name);
 			return;
 		}
 
 	newsize = map_resize(map, size, alignsecs);
 	if (newsize == 0 && res_align > 0) {
 		warnx("%s: could not resize partition with alignment "
-		      "constraint", device_name);
+		      "constraint", gd->device_name);
 		return;
 	} else if (newsize == 0) {
-		warnx("%s: could not resize partition", device_name);
+		warnx("%s: could not resize partition", gd->device_name);
 		return;
 	}
 
 	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
 
-	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
+	hdr->hdr_crc_table = htole32(crc32(gd->tbl->map_data,
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
+	gpt_write(gd, gd->gpt);
+	gpt_write(gd, gd->tbl);
 
-	hdr = tpg->map_data;
-	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
+	hdr = gd->tpg->map_data;
+	ent = (void*)((char*)gd->lbt->map_data + i * le32toh(hdr->hdr_entsz));
 
 	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
 
-	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
+	hdr->hdr_crc_table = htole32(crc32(gd->lbt->map_data,
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
+	gpt_write(gd, gd->lbt);
+	gpt_write(gd, gd->tpg);
 
-	printf("%sp%u (compat %ss%u) resized\n", device_name, entry,
-	    device_name, entry - 1);
+	printf("%sp%u (compat %ss%u) resized\n", gd->device_name, entry,
+	    gd->device_name, entry - 1);
 }
 
 int
 cmd_resize(int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	/* Get the resize options */
 	while ((ch = getopt(argc, argv, "a:i:s:")) != -1) {
@@ -201,22 +178,22 @@ cmd_resize(int argc, char *argv[])
 		usage_resize();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
-		if (res_align % secsz != 0) {
+		if (res_align % gd->secsz != 0) {
 			warnx("Alignment must be a multiple of sector size;");
 			warnx("the sector size for %s is %d bytes.",
-			    device_name, secsz);
+			    gd->device_name, gd->secsz);
+			gpt_close(gd);
 			continue;
 		}
 
-		resize(fd);
+		resize(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	return 0;

@@ -44,6 +44,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static const uuid_t boot_uuid = GPT_ENT_TYPE_FREEBSD_BOOT;
 static const char *pmbr_path = "/boot/pmbr";
@@ -61,30 +62,19 @@ usage_installboot(void)
 }
 
 static int
-gpt_lookup(const uuid_t *type, map_t **mapp, unsigned int *index)
+gpt_lookup(gd_t gd, const uuid_t *type, map_t *mapp, unsigned int *index)
 {
 	uuid_t uuid;
-	map_t *gpt, *tbl, *map;
+	map_t map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 
-	/* Find a GPT partition with the requested UUID type. */
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header", device_name);
+	if ((hdr = gpt_gethdr(gd)) == NULL)
 		return (ENXIO);
-	}
 
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	if (tbl == NULL) {
-		warnx("%s: error: no primary partition table", device_name);
-		return (ENXIO);
-	}
-
-	hdr = gpt->map_data;
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-		ent = (void *)((char *)tbl->map_data + i *
+		ent = (void *)((char *)gd->tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 		uuid_dec_le(&ent->ent_type, &uuid);
 		if (uuid_equal(&uuid, type, NULL))
@@ -99,7 +89,7 @@ gpt_lookup(const uuid_t *type, map_t **mapp, unsigned int *index)
 	*index = i + 1;
 
 	/* Lookup the map corresponding to this partition. */
-	for (map = map_find(MAP_TYPE_GPT_PART); map != NULL;
+	for (map = map_find(gd, MAP_TYPE_GPT_PART); map != NULL;
 	     map = map->map_next) {
 		if (map->map_type != MAP_TYPE_GPT_PART)
 			continue;
@@ -116,11 +106,11 @@ gpt_lookup(const uuid_t *type, map_t **mapp, unsigned int *index)
 }
 
 static void
-installboot(int fd)
+installboot(gd_t gd)
 {
 	struct stat sb;
 	off_t bsize, ofs;
-	map_t *pmbr, *gptboot;
+	map_t pmbr, gptboot;
 	struct mbr *mbr;
 	char *buf;
 	ssize_t nbytes;
@@ -132,9 +122,9 @@ installboot(int fd)
 	/* First step: verify boot partition size. */
 	if (boot_size == 0) {
 		/* Default to 64k. */
-		bsize = 65536 / secsz;
+		bsize = 65536 / gd->secsz;
 	} else {
-		if (boot_size * secsz < 16384) {
+		if (boot_size * gd->secsz < 16384) {
 			warnx("invalid boot partition size %lu", boot_size);
 			return;
 		}
@@ -142,9 +132,9 @@ installboot(int fd)
 	}
 
 	/* Second step: write the PMBR boot loader into the PMBR. */
-	pmbr = map_find(MAP_TYPE_PMBR);
+	pmbr = map_find(gd, MAP_TYPE_PMBR);
 	if (pmbr == NULL) {
-		warnx("%s: error: PMBR not found", device_name);
+		warnx("%s: error: PMBR not found", gd->device_name);
 		return;
 	}
 	bfd = open(pmbr_path, O_RDONLY);
@@ -152,7 +142,7 @@ installboot(int fd)
 		warn("unable to open PMBR boot loader");
 		return;
 	}
-	if (sb.st_size != secsz) {
+	if (sb.st_size != gd->secsz) {
 		warnx("invalid PMBR boot loader");
 		return;
 	}
@@ -172,10 +162,10 @@ installboot(int fd)
 		/* Sprinkle some magic dust by toggling 0xee bootflags . */
 		mbr->mbr_part[0].part_flag ^= 0x80;
 		printf("%s: toggled bootable flag in 0xEE part_flags\n",
-		    device_name);
+		    gd->device_name);
 	}
 
-	gpt_write(fd, pmbr);
+	gpt_write(gd, pmbr);
 
 	/* Third step: open gptboot and obtain its size. */
 	bfd = open(gptboot_path, O_RDONLY);
@@ -185,27 +175,27 @@ installboot(int fd)
 	}
 
 	/* Fourth step: find an existing boot partition or create one. */
-	if (gpt_lookup(&boot_uuid, &gptboot, &entry) != 0)
+	if (gpt_lookup(gd, &boot_uuid, &gptboot, &entry) != 0)
 		return;
 	if (gptboot != NULL) {
-		if (gptboot->map_size * secsz < sb.st_size) {
+		if (gptboot->map_size * gd->secsz < sb.st_size) {
 			warnx("%s: error: boot partition is too small",
-			    device_name);
+			    gd->device_name);
 			return;
 		}
-	} else if (bsize * secsz < sb.st_size) {
+	} else if (bsize * gd->secsz < sb.st_size) {
 		warnx(
 		    "%s: error: proposed size for boot partition is too small",
-		    device_name);
+		    gd->device_name);
 		return;
 	} else {
 		/* Requirements for gptboot are low, so care about size only */
-		gptboot = gpt_add_part(fd, boot_uuid, 0, 0, "GPTBOOT",
+		gptboot = gpt_add_part(gd, boot_uuid, 0, 0, "GPTBOOT",
 		    bsize, &entry);
 		if (gptboot == NULL)
 			return;
-		printf("%sp%u (compat %ss%u) added\n", device_name, entry,
-		    device_name, entry-1);
+		printf("%sp%u (compat %ss%u) added\n", gd->device_name, entry,
+		    gd->device_name, entry-1);
 	}
 
 	/*
@@ -214,7 +204,7 @@ installboot(int fd)
 	 * and not write to any partial sectors, so round up the buffer size
 	 * to the next sector and zero it.
 	 */
-	bsize = (sb.st_size + secsz - 1) / secsz * secsz;
+	bsize = ((sb.st_size + gd->secsz - 1) / gd->secsz) * gd->secsz;
 	buf = calloc(1, bsize);
 	nbytes = read(bfd, buf, sb.st_size);
 	if (nbytes < 0) {
@@ -226,13 +216,13 @@ installboot(int fd)
 		return;
 	}
 	close(bfd);
-	ofs = gptboot->map_start * secsz;
-	if (lseek(fd, ofs, SEEK_SET) != ofs) {
+	ofs = gptboot->map_start * gd->secsz;
+	if (lseek(gd->fd, ofs, SEEK_SET) != ofs) {
 		warn("%s: error: unable to seek to boot partition",
-		    device_name);
+		    gd->device_name);
 		return;
 	}
-	nbytes = write(fd, buf, bsize);
+	nbytes = write(gd->fd, buf, bsize);
 	if (nbytes < 0) {
 		warn("unable to write GPT boot loader");
 		return;
@@ -244,14 +234,16 @@ installboot(int fd)
 	free(buf);
 
 	printf("PMBR and %sp%u (compat %ss%u) updated\n",
-	    device_name, entry, device_name, entry-1);
+	    gd->device_name, entry, gd->device_name, entry-1);
 }
 
 int
 cmd_installboot(int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	while ((ch = getopt(argc, argv, "Hb:g:s:")) != -1) {
 		switch (ch) {
@@ -280,15 +272,14 @@ cmd_installboot(int argc, char *argv[])
 		usage_installboot();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd < 0) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
-		installboot(fd);
+		installboot(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	return (0);

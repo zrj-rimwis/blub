@@ -37,6 +37,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static uuid_t add_type;
 static off_t add_align, add_block, add_size;
@@ -53,62 +54,43 @@ usage_add(void)
 	exit(1);
 }
 
-map_t *
-gpt_add_part(int fd, uuid_t type, off_t align, off_t start, const char *name,
+map_t
+gpt_add_part(gd_t gd, uuid_t type, off_t align, off_t start, const char *name,
     off_t size, unsigned int *entry)
 {
 	uuid_t uuid;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
+	map_t map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	off_t alignsecs;
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
+	if ((hdr = gpt_gethdr(gd)) == NULL)
 		return (NULL);
-	}
 
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return (NULL);
-	}
+	ent = NULL;
 
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return (NULL);
-	}
-
-	hdr = gpt->map_data;
 	if (*entry > le32toh(hdr->hdr_entries)) {
-		warnx("%s: error: index %u out of range (%u max)", device_name,
-		    *entry, le32toh(hdr->hdr_entries));
+		warnx("%s: error: index %u out of range (%u max)",
+		    gd->device_name, *entry, le32toh(hdr->hdr_entries));
 		return (NULL);
 	}
 
 	if (*entry > 0) {
 		i = *entry - 1;
-		ent = (void*)((char*)tbl->map_data + i *
+		ent = (void*)((char*)gd->tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 		uuid_dec_le(&ent->ent_type, &uuid);
 		if (!uuid_is_nil(&uuid, NULL)) {
 			warnx("%s: error: entry at index %u is not free",
-			    device_name, *entry);
+			    gd->device_name, *entry);
 			return (NULL);
 		}
 	} else {
 		/* Find empty slot in GPT table. */
 		ent = NULL;
 		for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-			ent = (void*)((char*)tbl->map_data + i *
+			ent = (void*)((char*)gd->tbl->map_data + i *
 			    le32toh(hdr->hdr_entsz));
 			uuid_dec_le(&ent->ent_type, &uuid);
 			if (uuid_is_nil(&uuid, NULL))
@@ -116,24 +98,24 @@ gpt_add_part(int fd, uuid_t type, off_t align, off_t start, const char *name,
 		}
 		if (i == le32toh(hdr->hdr_entries)) {
 			warnx("%s: error: no available table entries",
-			    device_name);
+			    gd->device_name);
 			return (NULL);
 		}
 	}
 
 	if (align > 0) {
-		alignsecs = align / secsz;
-		map = map_alloc(start, size, alignsecs);
+		alignsecs = align / gd->secsz;
+		map = map_alloc(gd, start, size, alignsecs);
 		if (map == NULL) {
 			warnx("%s: error: not enough space available on "
-			      "device for an aligned partition", device_name);
+			      "device for an aligned partition", gd->device_name);
 			return (NULL);
 		}
 	} else {
-		map = map_alloc(start, size, 0);
+		map = map_alloc(gd, start, size, 0);
 		if (map == NULL) {
 			warnx("%s: error: not enough space available on device",
-			    device_name);
+			    gd->device_name);
 			return (NULL);
 		}
 	}
@@ -144,16 +126,16 @@ gpt_add_part(int fd, uuid_t type, off_t align, off_t start, const char *name,
 	if (name != NULL)
 		utf8_to_utf16(name, ent->ent_name, NELEM(ent->ent_name));
 
-	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
+	hdr->hdr_crc_table = htole32(crc32(gd->tbl->map_data,
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
+	gpt_write(gd, gd->gpt);
+	gpt_write(gd, gd->tbl);
 
-	hdr = tpg->map_data;
-	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
+	hdr = gd->tpg->map_data;
+	ent = (void*)((char*)gd->lbt->map_data + i * le32toh(hdr->hdr_entsz));
 
 	uuid_enc_le(&ent->ent_type, &type);
 	ent->ent_lba_start = htole64(map->map_start);
@@ -161,13 +143,13 @@ gpt_add_part(int fd, uuid_t type, off_t align, off_t start, const char *name,
 	if (name != NULL)
 		utf8_to_utf16(name, ent->ent_name, NELEM(ent->ent_name));
 
-	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
+	hdr->hdr_crc_table = htole32(crc32(gd->lbt->map_data,
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
+	gpt_write(gd, gd->lbt);
+	gpt_write(gd, gd->tpg);
 
 	*entry = i + 1;
 
@@ -175,26 +157,28 @@ gpt_add_part(int fd, uuid_t type, off_t align, off_t start, const char *name,
 }
 
 static void
-add(int fd)
+add(gd_t gd)
 {
-	map_t *map;
+	map_t map;
 	unsigned int index;
 
 	index = add_entry;
-	map = gpt_add_part(fd, add_type, add_align, add_block, add_name,
+	map = gpt_add_part(gd, add_type, add_align, add_block, add_name,
 	    add_size, &index);
 	if (map == NULL)
 		return;
 
-	printf("%sp%u (compat %ss%u) added\n", device_name, index,
-	    device_name, index-1);
+	printf("%sp%u (compat %ss%u) added\n", gd->device_name, index,
+	    gd->device_name, index-1);
 }
 
 int
 cmd_add(int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	/* Get the add options */
 	while ((ch = getopt(argc, argv, "a:b:i:l:s:t:")) != -1) {
@@ -253,22 +237,22 @@ cmd_add(int argc, char *argv[])
 	}
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
-		if (add_align % secsz != 0) {
+		if (add_align % gd->secsz != 0) {
 			warnx("Alignment must be a multiple of sector size;");
 			warnx("the sector size for %s is %d bytes.",
-			    device_name, secsz);
+			    gd->device_name, gd->secsz);
+			gpt_close(gd);
 			continue;
 		}
 
-		add(fd);
+		add(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	if (add_name != NULL)

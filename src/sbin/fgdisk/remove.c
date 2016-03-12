@@ -36,6 +36,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int all;
 static uuid_t type;
@@ -54,39 +55,19 @@ usage_remove(void)
 }
 
 static void
-rem(int fd)
+rem(gd_t gd)
 {
 	uuid_t uuid;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *m;
+	map_t m;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
+	if ((hdr = gpt_gethdr(gd)) == NULL)
 		return;
-	}
-
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return;
-	}
-
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
-	}
 
 	/* Remove all matching entries in the map. */
-	for (m = map_first(); m != NULL; m = m->map_next) {
+	for (m = map_first(gd); m != NULL; m = m->map_next) {
 		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
 			continue;
 		if (entry > 0 && entry != m->map_index)
@@ -98,8 +79,8 @@ rem(int fd)
 
 		i = m->map_index - 1;
 
-		hdr = gpt->map_data;
-		ent = (void*)((char*)tbl->map_data + i *
+		hdr = gd->gpt->map_data;
+		ent = (void*)((char*)gd->tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 		uuid_dec_le(&ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
@@ -110,30 +91,30 @@ rem(int fd)
 		uuid_create_nil(&uuid, NULL);
 		uuid_enc_le(&ent->ent_type, &uuid);
 
-		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
+		hdr->hdr_crc_table = htole32(crc32(gd->tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
 		hdr->hdr_crc_self = 0;
 		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
-		gpt_write(fd, gpt);
-		gpt_write(fd, tbl);
+		gpt_write(gd, gd->gpt);
+		gpt_write(gd, gd->tbl);
 
-		hdr = tpg->map_data;
-		ent = (void*)((char*)lbt->map_data + i *
+		hdr = gd->tpg->map_data;
+		ent = (void*)((char*)gd->lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
 		/* Remove the secondary entry. */
 		uuid_enc_le(&ent->ent_type, &uuid);
 
-		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
+		hdr->hdr_crc_table = htole32(crc32(gd->lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
 		hdr->hdr_crc_self = 0;
 		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
-		gpt_write(fd, lbt);
-		gpt_write(fd, tpg);
+		gpt_write(gd, gd->lbt);
+		gpt_write(gd, gd->tpg);
 
-		printf("%sp%u removed\n", device_name, m->map_index);
+		printf("%sp%u removed\n", gd->device_name, m->map_index);
 	}
 }
 
@@ -141,7 +122,9 @@ int
 cmd_remove(int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	/* Get the remove options */
 	while ((ch = getopt(argc, argv, "ab:i:s:t:")) != -1) {
@@ -191,15 +174,14 @@ cmd_remove(int argc, char *argv[])
 		usage_remove();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
-		rem(fd);
+		rem(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	return (0);

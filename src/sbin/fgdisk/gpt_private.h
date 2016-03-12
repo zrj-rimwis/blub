@@ -33,6 +33,10 @@
 #ifndef _GPT_PRIVATE_H_
 #define _GPT_PRIVATE_H_
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+
 /* stolen from sys/boot/common/bootstrap.h */
 #ifndef CTASSERT                /* Allow lint to override */
 #define CTASSERT(x)             _CTASSERT(x, __LINE__)
@@ -48,4 +52,17 @@
 #define DOSPTYP_EFI	DOSPTYP_GPT
 #endif
 
-#endif /* _GPT_H_ */
+struct gd {
+	char device_name[MAXPATHLEN];
+	int fd;
+	int flags;
+	int verbose;
+	int lbawidth;
+	struct map *mediamap;
+	struct map *tbl, *lbt, *gpt, *tpg;
+	u_int secsz;
+	off_t mediasz;
+	struct stat sb;
+};
+
+#endif /* _GPT_PRIVATE_H_ */

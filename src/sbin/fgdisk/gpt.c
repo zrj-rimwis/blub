@@ -47,13 +47,8 @@
 #include "gpt.h"
 #include "gpt_private.h"
 
-char	device_path[MAXPATHLEN];
-char	*device_name;
-
-off_t	mediasz;
-u_int	secsz;
-
-int	readonly, verbose;
+/* Global params for gpt_open() */
+int	greadonly, gverbose;
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -331,20 +326,20 @@ parse_uuid(const char *s, uuid_t *uuid)
 	return (EINVAL);
 }
 
-void*
-gpt_read(int fd, off_t lba, size_t count)
+void *
+gpt_read(gd_t gd, off_t lba, size_t count)
 {
 	off_t ofs;
 	void *buf;
 
-	count *= secsz;
+	count *= gd->secsz;
 	buf = malloc(count);
 	if (buf == NULL)
 		return (NULL);
 
-	ofs = lba * secsz;
-	if (lseek(fd, ofs, SEEK_SET) == ofs &&
-	    read(fd, buf, count) == (ssize_t)count)
+	ofs = lba * gd->secsz;
+	if (lseek(gd->fd, ofs, SEEK_SET) == ofs &&
+	    read(gd->fd, buf, count) == (ssize_t)count)
 		return (buf);
 
 	free(buf);
@@ -352,34 +347,36 @@ gpt_read(int fd, off_t lba, size_t count)
 }
 
 int
-gpt_write(int fd, map_t *map)
+gpt_write(gd_t gd, map_t map)
 {
 	off_t ofs;
 	size_t count;
 
-	count = map->map_size * secsz;
-	ofs = map->map_start * secsz;
-	if (lseek(fd, ofs, SEEK_SET) == ofs &&
-	    write(fd, map->map_data, count) == (ssize_t)count)
+	count = map->map_size * gd->secsz;
+	ofs = map->map_start * gd->secsz;
+	if (lseek(gd->fd, ofs, SEEK_SET) == ofs &&
+	    write(gd->fd, map->map_data, count) == (ssize_t)count)
 		return (0);
 	return (-1);
 }
 
 static int
-gpt_mbr(int fd, off_t lba)
+gpt_mbr(gd_t gd, off_t lba)
 {
 	struct mbr *mbr;
-	map_t *m, *p;
+	map_t m, p;
 	off_t size, start;
 	unsigned int i, pmbr;
 
-	mbr = gpt_read(fd, lba, 1);
-	if (mbr == NULL)
+	mbr = gpt_read(gd, lba, 1);
+	if (mbr == NULL) {
+		warnx("%s: Read failed", gd->device_name);
 		return (-1);
+	}
 
 	if (mbr->mbr_sig != htole16(MBR_SIG)) {
-		if (verbose)
-			warnx("%s: MBR not found at sector %ju", device_name,
+		if (gd->verbose)
+			warnx("%s: MBR not found at sector %ju", gd->device_name,
 			    (uintmax_t)lba);
 		free(mbr);
 		return (0);
@@ -402,22 +399,23 @@ gpt_mbr(int fd, off_t lba)
 	if (pmbr && i == 4 && lba == 0) {
 		if (pmbr != 1)
 			warnx("%s: Suspicious PMBR at sector %ju",
-			    device_name, (uintmax_t)lba);
-		else if (verbose > 1)
-			warnx("%s: PMBR at sector %ju", device_name,
+			    gd->device_name, (uintmax_t)lba);
+		else if (gd->verbose > 1)
+			warnx("%s: PMBR at sector %ju", gd->device_name,
 			    (uintmax_t)lba);
-		p = map_add(lba, 1LL, MAP_TYPE_PMBR, mbr);
-		return ((p == NULL) ? -1 : 0);
+		p = map_add(gd, lba, 1LL, MAP_TYPE_PMBR, mbr);
+		goto out;
 	}
 	if (pmbr)
-		warnx("%s: Suspicious MBR at sector %ju", device_name,
+		warnx("%s: Suspicious MBR at sector %ju", gd->device_name,
 		    (uintmax_t)lba);
-	else if (verbose > 1)
-		warnx("%s: MBR at sector %ju", device_name, (uintmax_t)lba);
+	else if (gd->verbose > 1)
+		warnx("%s: MBR at sector %ju", gd->device_name, (uintmax_t)lba);
 
-	p = map_add(lba, 1LL, MAP_TYPE_MBR, mbr);
+	p = map_add(gd, lba, 1LL, MAP_TYPE_MBR, mbr);
 	if (p == NULL)
-		return (-1);
+		goto out;
+
 	for (i = 0; i < 4; i++) {
 		if (mbr->mbr_part[i].part_typ == DOSPTYP_UNUSED ||
 		    mbr->mbr_part[i].part_typ == DOSPTYP_PMBR)
@@ -427,43 +425,50 @@ gpt_mbr(int fd, off_t lba)
 		size = le16toh(mbr->mbr_part[i].part_size_hi);
 		size = (size << 16) + le16toh(mbr->mbr_part[i].part_size_lo);
 		if (start == 0 && size == 0) {
-			warnx("%s: Malformed MBR at sector %ju", device_name,
+			warnx("%s: Malformed MBR at sector %ju", gd->device_name,
 			    (uintmax_t)lba);
 			continue;
 		}
 		/* start is relative to the offset of the MBR itself. */
 		start += lba;
-		if (verbose > 2)
+		if (gd->verbose > 2)
 			warnx("%s: MBR part: type=%d, start=%ju, size=%ju",
-			    device_name, mbr->mbr_part[i].part_typ,
+			    gd->device_name, mbr->mbr_part[i].part_typ,
 			    (uintmax_t)start, (uintmax_t)size);
 		if (mbr->mbr_part[i].part_typ != DOSPTYP_EXTLBA) {
-			m = map_add(start, size, MAP_TYPE_MBR_PART, p);
+			// XXX: map add with non-allocated memory
+			m = map_add(gd, start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
 				return (-1);
 			m->map_index = i + 1;
 		} else {
-			if (gpt_mbr(fd, start) == -1)
+			if (gpt_mbr(gd, start) == -1)
 				return (-1);
 		}
+	}
+	return (0);
+out:
+	if (p == NULL) {
+		free(mbr);
+		return -1;
 	}
 	return (0);
 }
 
 static int
-gpt_gpt(int fd, off_t lba, int found)
+gpt_gpt(gd_t gd, off_t lba, int found)
 {
 	uuid_t type;
 	off_t size;
 	struct gpt_ent *ent;
 	struct gpt_hdr *hdr;
 	char *p, *s;
-	map_t *m;
+	map_t m;
 	size_t blocks, tblsz;
 	unsigned int i;
 	uint32_t crc;
 
-	hdr = gpt_read(fd, lba, 1);
+	hdr = gpt_read(gd, lba, 1);
 	if (hdr == NULL)
 		return (-1);
 
@@ -473,22 +478,22 @@ gpt_gpt(int fd, off_t lba, int found)
 	crc = le32toh(hdr->hdr_crc_self);
 	hdr->hdr_crc_self = 0;
 	if (crc32(hdr, le32toh(hdr->hdr_size)) != crc) {
-		if (verbose)
+		if (gd->verbose)
 			warnx("%s: Bad CRC in GPT header at sector %ju",
-			    device_name, (uintmax_t)lba);
+			    gd->device_name, (uintmax_t)lba);
 		goto fail_hdr;
 	}
 
 	tblsz = le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz);
-	blocks = tblsz / secsz + ((tblsz % secsz) ? 1 : 0);
+	blocks = tblsz / gd->secsz + ((tblsz % gd->secsz) ? 1 : 0);
 
 	/* Use generic pointer to deal with hdr->hdr_entsz != sizeof(*ent). */
-	p = gpt_read(fd, le64toh(hdr->hdr_lba_table), blocks);
+	p = gpt_read(gd, le64toh(hdr->hdr_lba_table), blocks);
 	if (p == NULL) {
 		if (found) {
-			if (verbose)
+			if (gd->verbose)
 				warn("%s: Cannot read LBA table at sector %ju",
-				    device_name,
+				    gd->device_name,
 				    (uintmax_t)le64toh(hdr->hdr_lba_table));
 			return (-1);
 		}
@@ -496,23 +501,23 @@ gpt_gpt(int fd, off_t lba, int found)
 	}
 
 	if (crc32(p, tblsz) != le32toh(hdr->hdr_crc_table)) {
-		if (verbose)
+		if (gd->verbose)
 			warnx("%s: Bad CRC in GPT table at sector %ju",
-			    device_name,
+			    gd->device_name,
 			    (uintmax_t)le64toh(hdr->hdr_lba_table));
 		goto fail_ent;
 	}
 
-	if (verbose > 1)
-		warnx("%s: %s GPT at sector %ju", device_name,
+	if (gd->verbose > 1)
+		warnx("%s: %s GPT at sector %ju", gd->device_name,
 		    (lba == 1) ? "Pri" : "Sec", (uintmax_t)lba);
 
-	m = map_add(lba, 1, (lba == 1)
+	m = map_add(gd, lba, 1, (lba == 1)
 	    ? MAP_TYPE_PRI_GPT_HDR : MAP_TYPE_SEC_GPT_HDR, hdr);
 	if (m == NULL)
 		return (-1);
 
-	m = map_add(le64toh(hdr->hdr_lba_table), blocks, (lba == 1)
+	m = map_add(gd, le64toh(hdr->hdr_lba_table), blocks, (lba == 1)
 	    ? MAP_TYPE_PRI_GPT_TBL : MAP_TYPE_SEC_GPT_TBL, p);
 	if (m == NULL)
 		return (-1);
@@ -527,16 +532,17 @@ gpt_gpt(int fd, off_t lba, int found)
 
 		size = le64toh(ent->ent_lba_end) - le64toh(ent->ent_lba_start) +
 		    1LL;
-		if (verbose > 2) {
+		if (gd->verbose > 2) {
 			uuid_dec_le(&ent->ent_type, &type);
 			uuid_to_string(&type, &s, NULL);
 			warnx(
-	"%s: GPT partition: type=%s, start=%ju, size=%ju", device_name, s,
+	"%s: GPT partition: type=%s, start=%ju, size=%ju", gd->device_name, s,
 			    (uintmax_t)le64toh(ent->ent_lba_start),
 			    (uintmax_t)size);
 			free(s);
 		}
-		m = map_add(le64toh(ent->ent_lba_start), size,
+		// XXX: map add with not allocated memory.
+		m = map_add(gd, le64toh(ent->ent_lba_start), size,
 		    MAP_TYPE_GPT_PART, ent);
 		if (m == NULL)
 			return (-1);
@@ -552,46 +558,61 @@ fail_hdr:
 	return (0);
 }
 
-int
-gpt_open(const char *dev)
+gd_t
+gpt_open(const char *dev, int flags)
 {
-	struct stat sb;
-	int fd, mode, found;
+	int mode, found;
 	off_t devsz;
+	gd_t gd;
 
-	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
+	if ((gd = calloc(1, sizeof(*gd))) == NULL) {
+		warn("Cannot allocate '%s'", dev);
+		return (NULL);
+	}
+	gd->flags = flags;
+	gd->verbose = gverbose;
+	gd->mediasz = 0;
+	gd->secsz = 0;
 
-	strlcpy(device_path, dev, sizeof(device_path));
-	device_name = device_path;
+	mode = (greadonly || (gd->flags & GPT_READONLY)) ?
+	    O_RDONLY : O_RDWR|O_EXCL;
 
-	if ((fd = open(device_path, mode)) != -1)
-		goto found;
+	strlcpy(gd->device_name, dev, sizeof(gd->device_name));
 
-	snprintf(device_path, sizeof(device_path), "%s%s", _PATH_DEV, dev);
-	device_name = device_path + strlen(_PATH_DEV);
-	if ((fd = open(device_path, mode)) != -1)
-		goto found;
+	gd->fd = open(gd->device_name, mode);
+	if (gd->fd == -1) {
+		/* Retry with _PATH_DEV */
+		snprintf(gd->device_name, sizeof(gd->device_name),
+		    "%s%s", _PATH_DEV, dev);
+		gd->fd = open(gd->device_name, mode);
+	}
 
-	return (-1);
-
-found:
-	if (fstat(fd, &sb) == -1)
+	if (gd->fd == -1) {
+		warnx("unable to open device '%s'", dev);
 		goto close;
+	}
 
-	if ((sb.st_mode & S_IFMT) != S_IFREG) {
+	if (fstat(gd->fd, &gd->sb) == -1) {
+		warnx("%s: fstat failed", gd->device_name);
+		goto close;
+	}
+
+	if ((gd->sb.st_mode & S_IFMT) != S_IFREG) {
 		struct partinfo partinfo;
 
-		if (ioctl(fd, DIOCGPART, &partinfo) < 0)
+		if (ioctl(gd->fd, DIOCGPART, &partinfo) < 0) {
+			warnx("%s: couldn't retrieve partinfo", gd->device_name);
 			goto close;
-		secsz = partinfo.media_blksize;
-		mediasz = partinfo.media_size;
+		}
+		gd->secsz = partinfo.media_blksize;
+		gd->mediasz = partinfo.media_size;
 	} else {
-		secsz = 512;	/* Fixed size for files. */
-		if (sb.st_size % secsz) {
+		gd->secsz = 512;	/* Fixed size for files. */
+		if (gd->sb.st_size % gd->secsz) {
 			errno = EINVAL;
 			goto close;
 		}
-		mediasz = sb.st_size;
+		gd->mediasz = gd->sb.st_size;
 	}
 
 	/*
@@ -600,38 +621,68 @@ found:
 	 * user data. Let's catch this extreme border case here so that
 	 * we don't have to worry about it later.
 	 */
-	devsz = mediasz / secsz;
+	devsz = gd->mediasz / gd->secsz;
 	if (devsz < 6) {
 		errno = ENODEV;
 		warnx("%s: too small, need 6 sectors, have %ju",
-		    device_name, (uintmax_t)devsz);
+		    gd->device_name, (uintmax_t)devsz);
 		goto close;
 	}
 
-	if (verbose) {
+	if (gd->verbose) {
 		warnx("%s: mediasize=%ju; sectorsize=%u; blocks=%ju",
-		    device_name, (uintmax_t)mediasz, secsz, (uintmax_t)devsz);
+		    gd->device_name, (uintmax_t)(gd->mediasz), gd->secsz,
+		    (uintmax_t)devsz);
 	}
 
-	map_init(devsz);
+	map_init(gd, devsz);
 
-	if (gpt_mbr(fd, 0LL) == -1)
+	if (gpt_mbr(gd, 0LL) == -1)
 		goto close;
-	if ((found = gpt_gpt(fd, 1LL, 1)) == -1)
+	if ((found = gpt_gpt(gd, 1LL, 1)) == -1)
 		goto close;
-	if (gpt_gpt(fd, devsz - 1LL, found) == -1)
+	if (gpt_gpt(gd, devsz - 1LL, found) == -1)
 		goto close;
 
-	return (fd);
+	return (gd);
 
 close:
-	close(fd);
-	return (-1);
+	if (gd->fd != -1)
+		close(gd->fd);
+	free(gd);
+	return (NULL);
 }
 
 void
-gpt_close(int fd)
+gpt_close(gd_t gd)
 {
 	/* XXX post processing? */
-	close(fd);
+	close(gd->fd);
+}
+
+struct gpt_hdr *
+gpt_gethdr(gd_t gd)
+{
+	gd->gpt = map_find(gd, MAP_TYPE_PRI_GPT_HDR);
+	if (gd->gpt == NULL) {
+		warnx("%s: error: no primary GPT header; run create or recover",
+		    gd->device_name);
+		return (NULL);
+	}
+
+	gd->tpg = map_find(gd, MAP_TYPE_SEC_GPT_HDR);
+	if (gd->tpg == NULL) {
+		warnx("%s: error: no secondary GPT header; run recover",
+		    gd->device_name);
+		return (NULL);
+	}
+
+	gd->tbl = map_find(gd, MAP_TYPE_PRI_GPT_TBL);
+	gd->lbt = map_find(gd, MAP_TYPE_SEC_GPT_TBL);
+	if (gd->tbl == NULL || gd->lbt == NULL) {
+		warnx("%s: error: run recover -- trust me", gd->device_name);
+		return (NULL);
+	}
+
+	return gd->gpt->map_data;
 }

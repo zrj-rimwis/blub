@@ -37,6 +37,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int show_label = 0;
 static int show_uuid = 0;
@@ -136,25 +137,25 @@ unfriendly:
 }
 
 static void
-show(void)
+show(gd_t gd)
 {
 	uuid_t guid, type;
 	off_t start;
-	map_t *m, *p;
+	map_t m, p;
 	struct mbr *mbr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	char *s;
 	uint8_t utfbuf[NELEM(ent->ent_name) * 3 + 1];
 
-	printf("  %*s", lbawidth, "start");
-	printf("  %*s", lbawidth, "size");
+	printf("  %*s", gd->lbawidth, "start");
+	printf("  %*s", gd->lbawidth, "size");
 	printf("  index  contents\n");
 
-	m = map_first();
+	m = map_first(gd);
 	while (m != NULL) {
-		printf("  %*llu", lbawidth, (long long)m->map_start);
-		printf("  %*llu", lbawidth, (long long)m->map_size);
+		printf("  %*llu", gd->lbawidth, (long long)m->map_start);
+		printf("  %*llu", gd->lbawidth, (long long)m->map_size);
 		putchar(' ');
 		putchar(' ');
 		if (m->map_index > 0)
@@ -229,21 +230,21 @@ show(void)
 }
 
 static void
-show_one(void)
+show_one(gd_t gd)
 {
 	uuid_t guid, type;
-	map_t *m;
+	map_t m;
 	struct gpt_ent *ent;
 	const char *s1;
 	char *s2;
 	uint8_t utfbuf[NELEM(ent->ent_name) * 3 + 1];
 
-	for (m = map_first(); m != NULL; m = m->map_next)
+	for (m = map_first(gd); m != NULL; m = m->map_next)
 		if (entry == m->map_index)
 			break;
 	if (m == NULL) {
 		warnx("%s: error: could not find index %d",
-		    device_name, entry);
+		    gd->device_name, entry);
 		return;
 	}
 	ent = m->map_data;
@@ -285,7 +286,9 @@ int
 cmd_show(int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	while ((ch = getopt(argc, argv, "gi:lu")) != -1) {
 		switch(ch) {
@@ -314,18 +317,17 @@ cmd_show(int argc, char *argv[])
 		usage_show();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
 		if (entry > 0)
-			show_one();
+			show_one(gd);
 		else
-			show();
+			show(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	return (0);

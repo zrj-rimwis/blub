@@ -59,29 +59,28 @@ usage_create(void)
 }
 
 static void
-create(int fd)
+create(gd_t gd)
 {
 	uuid_t uuid;
 	off_t blocks, last;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
+	map_t map;
 	struct mbr *mbr;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
+	void *p;
 
-	last = mediasz / secsz - 1LL;
+	last = gd->mediasz / gd->secsz - 1LL;
 
-	if (map_find(MAP_TYPE_PRI_GPT_HDR) != NULL ||
-	    map_find(MAP_TYPE_SEC_GPT_HDR) != NULL) {
-		warnx("%s: error: device already contains a GPT", device_name);
+	if (map_find(gd, MAP_TYPE_PRI_GPT_HDR) != NULL ||
+	    map_find(gd, MAP_TYPE_SEC_GPT_HDR) != NULL) {
+		warnx("%s: error: device already contains a GPT", gd->device_name);
 		return;
 	}
-	map = map_find(MAP_TYPE_MBR);
+	map = map_find(gd, MAP_TYPE_MBR);
 	if (map != NULL) {
 		if (!force) {
-			warnx("%s: error: device contains a MBR", device_name);
+			warnx("%s: error: device contains a MBR", gd->device_name);
 			return;
 		}
 
@@ -92,12 +91,12 @@ create(int fd)
 	/*
 	 * Create PMBR.
 	 */
-	if (map_find(MAP_TYPE_PMBR) == NULL) {
-		if (map_free(0LL, 1LL) == 0) {
-			warnx("%s: error: no room for the PMBR", device_name);
+	if (map_find(gd, MAP_TYPE_PMBR) == NULL) {
+		if (map_free(gd, 0LL, 1LL) == 0) {
+			warnx("%s: error: no room for the PMBR", gd->device_name);
 			return;
 		}
-		mbr = gpt_read(fd, 0LL, 1);
+		mbr = gpt_read(gd, 0LL, 1);
 		bzero(mbr, sizeof(*mbr));
 		mbr->mbr_sig = htole16(MBR_SIG);
 		mbr->mbr_part[0].part_shd = 0x00;
@@ -115,21 +114,22 @@ create(int fd)
 			mbr->mbr_part[0].part_size_lo = htole16(last);
 			mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
 		}
-		map = map_add(0LL, 1LL, MAP_TYPE_PMBR, mbr);
-		gpt_write(fd, map);
+		map = map_add(gd, 0LL, 1LL, MAP_TYPE_PMBR, mbr);
+		gpt_write(gd, map);
 	}
 
 	/* Get the amount of free space after the MBR */
-	blocks = map_free(1LL, 0LL);
+	blocks = map_free(gd, 1LL, 0LL);
 	if (blocks == 0LL) {
-		warnx("%s: error: no room for the GPT header", device_name);
+		warnx("%s: error: no room for the GPT header", gd->device_name);
 		return;
 	}
 
 	/* Don't create more than parts entries. */
-	if ((uint64_t)(blocks - 1) * secsz > parts * sizeof(struct gpt_ent)) {
-		blocks = (parts * sizeof(struct gpt_ent)) / secsz;
-		if ((parts * sizeof(struct gpt_ent)) % secsz)
+	if ((uint64_t)(blocks - 1) * gd->secsz >
+	    parts * sizeof(struct gpt_ent)) {
+		blocks = (parts * sizeof(struct gpt_ent)) / gd->secsz;
+		if ((parts * sizeof(struct gpt_ent)) % gd->secsz)
 			blocks++;
 		blocks++;		/* Don't forget the header itself */
 	}
@@ -142,43 +142,60 @@ create(int fd)
 	 * Get the amount of free space at the end of the device and
 	 * calculate the size for the GPT structures.
 	 */
-	map = map_last();
+	map = map_last(gd);
 	if (map->map_type != MAP_TYPE_UNUSED) {
-		warnx("%s: error: no room for the backup header", device_name);
+		warnx("%s: error: no room for the backup header", gd->device_name);
 		return;
 	}
 
 	if (map->map_size < blocks)
 		blocks = map->map_size;
 	if (blocks == 1LL) {
-		warnx("%s: error: no room for the GPT table", device_name);
+		warnx("%s: error: no room for the GPT table", gd->device_name);
+		return;
+	}
+
+	if ((p = calloc(1, gd->secsz)) == NULL) {
+		warnx("%s: error: can't allocate the GPT", gd->device_name);
+		return;
+	}
+	if ((gd->gpt = map_add(gd, 1LL, 1LL,
+	    MAP_TYPE_PRI_GPT_HDR, p)) == NULL) {
+		free(p);
+		warnx("%s: error: can't add the GPT", gd->device_name);
 		return;
 	}
 
 	blocks--;		/* Number of blocks in the GPT table. */
-	gpt = map_add(1LL, 1LL, MAP_TYPE_PRI_GPT_HDR, calloc(1, secsz));
-	tbl = map_add(2LL, blocks, MAP_TYPE_PRI_GPT_TBL,
-	    calloc(blocks, secsz));
-	if (gpt == NULL || tbl == NULL)
+	if ((p = calloc(blocks, gd->secsz)) == NULL) {
+		warnx("%s: error: can't allocate the GPT table", gd-> device_name);
 		return;
+	}
+	if ((gd->tbl = map_add(gd, 2LL, blocks,
+	    MAP_TYPE_PRI_GPT_TBL, p)) == NULL) {
+		free(p);
+		warnx("%s: error: can't add the GPT table", gd->device_name);
+		return;
+	}
 
-	hdr = gpt->map_data;
+	hdr = gd->gpt->map_data;
 	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));
 	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
 	hdr->hdr_size = htole32(GPT_MIN_HDR_SIZE);
-	hdr->hdr_lba_self = htole64(gpt->map_start);
+	hdr->hdr_lba_self = htole64(gd->gpt->map_start);
 	hdr->hdr_lba_alt = htole64(last);
-	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
+	hdr->hdr_lba_start = htole64(gd->tbl->map_start + blocks);
 	hdr->hdr_lba_end = htole64(last - blocks - 1LL);
 	uuid_create(&uuid, NULL);
 	uuid_enc_le(&hdr->hdr_uuid, &uuid);
-	hdr->hdr_lba_table = htole64(tbl->map_start);
-	hdr->hdr_entries = htole32((blocks * secsz) / sizeof(struct gpt_ent));
+	hdr->hdr_lba_table = htole64(gd->tbl->map_start);
+	hdr->hdr_entries = htole32((blocks * gd->secsz) /
+	    sizeof(struct gpt_ent));
 	if (le32toh(hdr->hdr_entries) > parts)
 		hdr->hdr_entries = htole32(parts);
 	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
 
-	ent = tbl->map_data;
+	ent = gd->tbl->map_data;
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 		uuid_create(&uuid, NULL);
 		/* slightly obfuscate mac address for radomness */
@@ -190,36 +207,38 @@ create(int fd)
 	    le32toh(hdr->hdr_entsz)));
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
+	gpt_write(gd, gd->gpt);
+	gpt_write(gd, gd->tbl);
 
 	/*
 	 * Create backup GPT if the user didn't suppress it.
 	 */
 	if (!primary_only) {
-		tpg = map_add(last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, secsz));
-		lbt = map_add(last - blocks, blocks, MAP_TYPE_SEC_GPT_TBL,
-		    tbl->map_data);
-		memcpy(tpg->map_data, gpt->map_data, secsz);
-		hdr = tpg->map_data;
-		hdr->hdr_lba_self = htole64(tpg->map_start);
-		hdr->hdr_lba_alt = htole64(gpt->map_start);
-		hdr->hdr_lba_table = htole64(lbt->map_start);
+		gd->tpg = map_add(gd, last, 1LL, MAP_TYPE_SEC_GPT_HDR,
+		    calloc(1, gd->secsz));
+		gd->lbt = map_add(gd, last - blocks, blocks,
+		    MAP_TYPE_SEC_GPT_TBL, gd->tbl->map_data);
+		memcpy(gd->tpg->map_data, gd->gpt->map_data, gd->secsz);
+		hdr = gd->tpg->map_data;
+		hdr->hdr_lba_self = htole64(gd->tpg->map_start);
+		hdr->hdr_lba_alt = htole64(gd->gpt->map_start);
+		hdr->hdr_lba_table = htole64(gd->lbt->map_start);
 		hdr->hdr_crc_self = 0;		/* Don't ever forget this! */
 		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-		gpt_write(fd, lbt);
-		gpt_write(fd, tpg);
+		gpt_write(gd, gd->lbt);
+		gpt_write(gd, gd->tpg);
 	}
 
-	printf("%s: created gpt label.\n", device_name);
+	printf("%s: created gpt label.\n", gd->device_name);
 }
 
 int
 cmd_create(int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	parts = 128;
 
@@ -245,15 +264,14 @@ cmd_create(int argc, char *argv[])
 		usage_create();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
-		create(fd);
+		create(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	return (0);

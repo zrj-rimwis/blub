@@ -57,17 +57,18 @@ struct mbr {
 #define	MBR_SIG		0xAA55
 };
 
-extern char *device_name;
-extern off_t mediasz;
-extern u_int secsz;
-extern int readonly, verbose;
+typedef struct gd *gd_t;
+typedef struct map *map_t;
+
+extern int greadonly, gverbose;
 
 uint32_t crc32(const void *, size_t);
-map_t	*gpt_add_part(int, uuid_t, off_t, off_t, const char *, off_t, unsigned int *);
-void	gpt_close(int);
-int	gpt_open(const char *);
-void*	gpt_read(int, off_t, size_t);
-int	gpt_write(int, map_t *);
+map_t	gpt_add_part(gd_t, uuid_t, off_t, off_t, const char *, off_t, unsigned int *);
+void	gpt_close(gd_t);
+gd_t	gpt_open(const char *, int flags);
+void*	gpt_read(gd_t, off_t, size_t);
+int	gpt_write(gd_t, map_t);
+struct gpt_hdr *gpt_gethdr(gd_t);
 
 void	utf16_to_utf8(const uint16_t *, uint8_t *, size_t);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
@@ -82,5 +83,7 @@ int	cmd_recover(int, char *[]);
 int	cmd_remove(int, char *[]);
 int	cmd_resize(int, char *[]);
 int	cmd_show(int, char *[]);
+
+#define GPT_READONLY	1
 
 #endif /* _GPT_H_ */

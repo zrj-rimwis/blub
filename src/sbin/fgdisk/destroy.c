@@ -36,6 +36,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int recoverable;
 
@@ -49,40 +50,50 @@ usage_destroy(void)
 }
 
 static void
-destroy(int fd)
+destroy(gd_t gd)
 {
-	map_t *pri_hdr, *sec_hdr;
+	map_t pri_hdr, sec_hdr;
 
-	pri_hdr = map_find(MAP_TYPE_PRI_GPT_HDR);
-	sec_hdr = map_find(MAP_TYPE_SEC_GPT_HDR);
+	pri_hdr = map_find(gd, MAP_TYPE_PRI_GPT_HDR);
+	sec_hdr = map_find(gd, MAP_TYPE_SEC_GPT_HDR);
 
 	if (pri_hdr == NULL && sec_hdr == NULL) {
-		warnx("%s: error: device doesn't contain a GPT", device_name);
+		warnx("%s: error: device doesn't contain a GPT", gd->device_name);
 		return;
 	}
 
 	if (recoverable && sec_hdr == NULL) {
-		warnx("%s: error: recoverability not possible", device_name);
+		warnx("%s: error: recoverability not possible", gd->device_name);
 		return;
 	}
 
 	if (pri_hdr != NULL) {
-		bzero(pri_hdr->map_data, secsz);
-		gpt_write(fd, pri_hdr);
+		bzero(pri_hdr->map_data, gd->secsz);
+		if (gpt_write(gd, pri_hdr) == -1) {
+			warnx("%s: error: overwriting primary header",
+			   gd->device_name);
+			return;
+		}
 	}
 
 	if (!recoverable && sec_hdr != NULL) {
-		bzero(sec_hdr->map_data, secsz);
-		gpt_write(fd, sec_hdr);
+		bzero(sec_hdr->map_data, gd->secsz);
+		if (gpt_write(gd, sec_hdr) == -1) {
+			warnx("%s: error: overwriting backup header",
+			   gd->device_name);
+			return;
+		}
 	}
 
-	printf("%s: destroyed gpt label.\n", device_name);
+	printf("%s: destroyed gpt label.\n", gd->device_name);
 }
 
 int
 cmd_destroy(int argc, char *argv[])
 {
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	while ((ch = getopt(argc, argv, "r")) != -1) {
 		switch(ch) {
@@ -98,15 +109,14 @@ cmd_destroy(int argc, char *argv[])
 		usage_destroy();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
-		destroy(fd);
+		destroy(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	return (0);

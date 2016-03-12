@@ -113,10 +113,10 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "rv")) != -1) {
 		switch(ch) {
 		case 'r':
-			readonly = 1;
+			greadonly = 1;
 			break;
 		case 'v':
-			verbose++;
+			gverbose++;
 			break;
 		default:
 			usage();

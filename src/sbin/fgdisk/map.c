@@ -31,15 +31,13 @@
 #include <stdlib.h>
 
 #include "map.h"
+#include "gpt.h"
+#include "gpt_private.h"
 
-int lbawidth;
-
-static map_t *mediamap;
-
-static map_t *
+static map_t
 mkmap(off_t start, off_t size, int type)
 {
-	map_t *m;
+	map_t m;
 
 	m = calloc(1, sizeof(*m));
 	if (m == NULL)
@@ -53,12 +51,12 @@ mkmap(off_t start, off_t size, int type)
 	return (m);
 }
 
-map_t *
-map_add(off_t start, off_t size, int type, void *data)
+map_t
+map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 {
-	map_t *m, *n, *p;
+	map_t m, n, p;
 
-	n = mediamap;
+	n = gd->mediamap;
 	while (n != NULL && n->map_start + n->map_size <= start)
 		n = n->map_next;
 	if (n == NULL)
@@ -103,7 +101,7 @@ map_add(off_t start, off_t size, int type, void *data)
 		if (m->map_prev != NULL)
 			m->map_prev->map_next = m;
 		else
-			mediamap = m;
+			gd->mediamap = m;
 		n->map_prev = m;
 		n->map_start += size;
 		n->map_size -= size;
@@ -127,17 +125,17 @@ map_add(off_t start, off_t size, int type, void *data)
 		if (p->map_prev != NULL)
 			p->map_prev->map_next = p;
 		else
-			mediamap = p;
+			gd->mediamap = p;
 	}
 
 	return (m);
 }
 
-map_t *
-map_alloc(off_t start, off_t size, off_t alignment)
+map_t
+map_alloc(gd_t gd, off_t start, off_t size, off_t alignment)
 {
 	off_t delta;
-	map_t *m;
+	map_t m;
 
 	if (alignment > 0) {
 		if ((start % alignment) != 0)
@@ -146,7 +144,7 @@ map_alloc(off_t start, off_t size, off_t alignment)
 			size = (size + alignment) / alignment * alignment;
 	}
 
-	for (m = mediamap; m != NULL; m = m->map_next) {
+	for (m = gd->mediamap; m != NULL; m = m->map_next) {
 		if (m->map_type != MAP_TYPE_UNUSED || m->map_start < 2)
 			continue;
 		if (start != 0 && m->map_start > start)
@@ -171,7 +169,7 @@ map_alloc(off_t start, off_t size, off_t alignment)
 				else
 					size = m->map_size - delta;
 			}
-			return map_add(m->map_start + delta, size,
+			return map_add(gd, m->map_start + delta, size,
 				    MAP_TYPE_GPT_PART, NULL);
 		}
 	}
@@ -180,9 +178,9 @@ map_alloc(off_t start, off_t size, off_t alignment)
 }
 
 off_t
-map_resize(map_t *m, off_t size, off_t alignment)
+map_resize(map_t m, off_t size, off_t alignment)
 {
-	map_t *n, *o;
+	map_t n, o;
 	off_t alignsize, prevsize;
 
 	n = m->map_next;
@@ -273,40 +271,40 @@ map_resize(map_t *m, off_t size, off_t alignment)
 		return (alignsize);
 }
 
-map_t *
-map_find(int type)
+map_t
+map_find(gd_t gd, int type)
 {
-	map_t *m;
+	map_t m;
 
-	m = mediamap;
+	m = gd->mediamap;
 	while (m != NULL && m->map_type != type)
 		m = m->map_next;
 	return (m);
 }
 
-map_t *
-map_first(void)
+map_t
+map_first(gd_t gd)
 {
-	return mediamap;
+	return gd->mediamap;
 }
 
-map_t *
-map_last(void)
+map_t
+map_last(gd_t gd)
 {
-	map_t *m;
+	map_t m;
 
-	m = mediamap;
+	m = gd->mediamap;
 	while (m != NULL && m->map_next != NULL)
 		m = m->map_next;
 	return (m);
 }
 
 off_t
-map_free(off_t start, off_t size)
+map_free(gd_t gd, off_t start, off_t size)
 {
-	map_t *m;
+	map_t m;
 
-	m = mediamap;
+	m = gd->mediamap;
 
 	while (m != NULL && m->map_start + m->map_size <= start)
 		m = m->map_next;
@@ -318,12 +316,12 @@ map_free(off_t start, off_t size)
 }
 
 void
-map_init(off_t size)
+map_init(gd_t gd, off_t size)
 {
 	char buf[32];
 
-	mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
-	lbawidth = snprintf(buf, sizeof(buf), "%ju", (uintmax_t)size);
-	if (lbawidth < 5)
-		lbawidth = 5;
+	gd->mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
+	gd->lbawidth = snprintf(buf, sizeof(buf), "%ju", (uintmax_t)size);
+	if (gd->lbawidth < 5)
+		gd->lbawidth = 5;
 }

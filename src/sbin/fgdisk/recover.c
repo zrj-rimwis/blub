@@ -37,6 +37,7 @@
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int force;
 static int rec_pmbr;
@@ -52,143 +53,141 @@ usage_recover(void)
 }
 
 static void
-recover(int fd)
+recover(gd_t gd)
 {
 	off_t last;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
 	struct gpt_hdr *hdr;
 
-	if (map_find(MAP_TYPE_MBR) != NULL) {
+	if (map_find(gd, MAP_TYPE_MBR) != NULL) {
 		if (!force) {
-			warnx("%s: error: device contains a MBR", device_name);
+			warnx("%s: error: device contains a MBR", gd->device_name);
 			return;
 		}
 	}
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
+	gd->gpt = map_find(gd, MAP_TYPE_PRI_GPT_HDR);
+	gd->tpg = map_find(gd, MAP_TYPE_SEC_GPT_HDR);
+	gd->tbl = map_find(gd, MAP_TYPE_PRI_GPT_TBL);
+	gd->lbt = map_find(gd, MAP_TYPE_SEC_GPT_TBL);
 
-	if (gpt == NULL && tpg == NULL) {
+	if (gd->gpt == NULL && gd->tpg == NULL) {
 		warnx("%s: no primary or secondary GPT headers, can't recover",
-		    device_name);
+		    gd->device_name);
 		return;
 	}
-	if (tbl == NULL && lbt == NULL) {
+	if (gd->tbl == NULL && gd->lbt == NULL) {
 		warnx("%s: no primary or secondary GPT tables, can't recover",
-		    device_name);
+		    gd->device_name);
 		return;
 	}
 
-	last = mediasz / secsz - 1LL;
+	last = gd->mediasz / gd->secsz - 1LL;
 
-	if (tbl != NULL && lbt == NULL) {
-		lbt = map_add(last - tbl->map_size, tbl->map_size,
-		    MAP_TYPE_SEC_GPT_TBL, tbl->map_data);
-		if (lbt == NULL) {
+	if (gd->tbl != NULL && gd->lbt == NULL) {
+		gd->lbt = map_add(gd, last - gd->tbl->map_size,
+		    gd->tbl->map_size, MAP_TYPE_SEC_GPT_TBL,
+		    gd->tbl->map_data);
+		if (gd->lbt == NULL) {
 			warnx("%s: adding secondary GPT table failed",
-			    device_name);
+			    gd->device_name);
 			return;
 		}
-		gpt_write(fd, lbt);
+		gpt_write(gd, gd->lbt);
 		warnx("%s: recovered secondary GPT table from primary",
-		    device_name);
-	} else if (tbl == NULL && lbt != NULL) {
-		tbl = map_add(2LL, lbt->map_size, MAP_TYPE_PRI_GPT_TBL,
-		    lbt->map_data);
-		if (tbl == NULL) {
+		    gd->device_name);
+	} else if (gd->tbl == NULL && gd->lbt != NULL) {
+		gd->tbl = map_add(gd, 2LL, gd->lbt->map_size,
+		    MAP_TYPE_PRI_GPT_TBL, gd->lbt->map_data);
+		if (gd->tbl == NULL) {
 			warnx("%s: adding primary GPT table failed",
-			    device_name);
+			    gd->device_name);
 			return;
 		}
-		gpt_write(fd, tbl);
+		gpt_write(gd, gd->tbl);
 		warnx("%s: recovered primary GPT table from secondary",
-		    device_name);
+		    gd->device_name);
 	}
 
-	if (gpt != NULL && tpg == NULL) {
-		tpg = map_add(last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, secsz));
-		if (tpg == NULL) {
+	if (gd->gpt != NULL && gd->tpg == NULL) {
+		gd->tpg = map_add(gd, last, 1LL, MAP_TYPE_SEC_GPT_HDR,
+		    calloc(1, gd->secsz));
+		if (gd->tpg == NULL) {
 			warnx("%s: adding secondary GPT header failed",
-			    device_name);
+			    gd->device_name);
 			return;
 		}
-		memcpy(tpg->map_data, gpt->map_data, secsz);
-		hdr = tpg->map_data;
-		hdr->hdr_lba_self = htole64(tpg->map_start);
-		hdr->hdr_lba_alt = htole64(gpt->map_start);
-		hdr->hdr_lba_table = htole64(lbt->map_start);
+		memcpy(gd->tpg->map_data, gd->gpt->map_data, gd->secsz);
+		hdr = gd->tpg->map_data;
+		hdr->hdr_lba_self = htole64(gd->tpg->map_start);
+		hdr->hdr_lba_alt = htole64(gd->gpt->map_start);
+		hdr->hdr_lba_table = htole64(gd->lbt->map_start);
 		hdr->hdr_crc_self = 0;
 		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-		gpt_write(fd, tpg);
+		gpt_write(gd, gd->tpg);
 		warnx("%s: recovered secondary GPT header from primary",
-		    device_name);
-	} else if (gpt == NULL && tpg != NULL) {
-		gpt = map_add(1LL, 1LL, MAP_TYPE_PRI_GPT_HDR,
-		    calloc(1, secsz));
-		if (gpt == NULL) {
+		    gd->device_name);
+	} else if (gd->gpt == NULL && gd->tpg != NULL) {
+		gd->gpt = map_add(gd, 1LL, 1LL, MAP_TYPE_PRI_GPT_HDR,
+		    calloc(1, gd->secsz));
+		if (gd->gpt == NULL) {
 			warnx("%s: adding primary GPT header failed",
-			    device_name);
+			    gd->device_name);
 			return;
 		}
-		memcpy(gpt->map_data, tpg->map_data, secsz);
-		hdr = gpt->map_data;
-		hdr->hdr_lba_self = htole64(gpt->map_start);
-		hdr->hdr_lba_alt = htole64(tpg->map_start);
-		hdr->hdr_lba_table = htole64(tbl->map_start);
+		memcpy(gd->gpt->map_data, gd->tpg->map_data, gd->secsz);
+		hdr = gd->gpt->map_data;
+		hdr->hdr_lba_self = htole64(gd->gpt->map_start);
+		hdr->hdr_lba_alt = htole64(gd->tpg->map_start);
+		hdr->hdr_lba_table = htole64(gd->tbl->map_start);
 		hdr->hdr_crc_self = 0;
 		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-		gpt_write(fd, gpt);
+		gpt_write(gd, gd->gpt);
 		warnx("%s: recovered primary GPT header from secondary",
-		    device_name);
+		    gd->device_name);
 	}
 }
 
 static void
-rewrite_pmbr(int fd)
+rewrite_pmbr(gd_t gd)
 {
 	off_t last;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
+	map_t map;
 	struct mbr *mbr;
 
 	/* First check if we already have a PMBR */
-	map = map_find(MAP_TYPE_PMBR);
+	map = map_find(gd, MAP_TYPE_PMBR);
 	if (map != NULL) {
 		if (!force) {
-			warnx("%s: error: device contains a PMBR", device_name);
+			warnx("%s: error: device contains a PMBR", gd->device_name);
 			return;
 		}
-		printf("%s: warning: about to rewrite a PMBR\n", device_name);
+		printf("%s: warning: about to rewrite a PMBR\n", gd->device_name);
 
 		/* Nuke the PMBR in our internal map. */
 		map->map_type = MAP_TYPE_UNUSED;
 	}
 
-	last = mediasz / secsz - 1LL;
+	last = gd->mediasz / gd->secsz - 1LL;
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
+	gd->gpt = map_find(gd, MAP_TYPE_PRI_GPT_HDR);
+	gd->tpg = map_find(gd, MAP_TYPE_SEC_GPT_HDR);
+	gd->tbl = map_find(gd, MAP_TYPE_PRI_GPT_TBL);
+	gd->lbt = map_find(gd, MAP_TYPE_SEC_GPT_TBL);
 
-	if ((gpt == NULL && tpg == NULL) || (tbl == NULL && lbt == NULL)) {
+	if ((gd->gpt == NULL && gd->tpg == NULL) ||
+	    (gd->tbl == NULL && gd->lbt == NULL)) {
 		warnx("%s: no GPT headers or tables, run recover first",
-		    device_name);
+		    gd->device_name);
 		return;
 	}
 
-	map = map_find(MAP_TYPE_MBR);
+	map = map_find(gd, MAP_TYPE_MBR);
 	if (map != NULL) {
 		if (!force) {
-			warnx("%s: error: device contains a MBR", device_name);
+			warnx("%s: error: device contains a MBR", gd->device_name);
 			return;
 		}
-		printf("%s: warning: about to overwrite a MBR\n", device_name);
+		printf("%s: warning: about to overwrite a MBR\n", gd->device_name);
 
 		/* Nuke the MBR in our internal map. */
 		map->map_type = MAP_TYPE_UNUSED;
@@ -197,12 +196,12 @@ rewrite_pmbr(int fd)
 	/*
 	 * Create PMBR.
 	 */
-	if (map_find(MAP_TYPE_PMBR) == NULL) {
-		if (map_free(0LL, 1LL) == 0) {
-			warnx("%s: error: no room for the PMBR", device_name);
+	if (map_find(gd, MAP_TYPE_PMBR) == NULL) {
+		if (map_free(gd, 0LL, 1LL) == 0) {
+			warnx("%s: error: no room for the PMBR", gd->device_name);
 			return;
 		}
-		mbr = gpt_read(fd, 0LL, 1);
+		mbr = gpt_read(gd, 0LL, 1);
 		bzero(mbr, sizeof(*mbr));
 		mbr->mbr_sig = htole16(MBR_SIG);
 		mbr->mbr_part[0].part_shd = 0x00;
@@ -220,16 +219,18 @@ rewrite_pmbr(int fd)
 			mbr->mbr_part[0].part_size_lo = htole16(last);
 			mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
 		}
-		map = map_add(0LL, 1LL, MAP_TYPE_PMBR, mbr);
-		gpt_write(fd, map);
-		printf("%s: written a fresh PMBR\n", device_name);
+		map = map_add(gd, 0LL, 1LL, MAP_TYPE_PMBR, mbr);
+		gpt_write(gd, map);
+		printf("%s: written a fresh PMBR\n", gd->device_name);
 	}
 }
 
 int
 cmd_recover(int argc, char *argv[])
 {
-	int ch, fd;
+	int ch;
+	int flags = 0;
+	gd_t gd;
 
 	while ((ch = getopt(argc, argv, "frP")) != -1) {
 		switch(ch) {
@@ -251,18 +252,17 @@ cmd_recover(int argc, char *argv[])
 		usage_recover();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		gd = gpt_open(argv[optind++], flags);
+		if (gd == NULL) {
 			continue;
 		}
 
 		if (rec_pmbr)
-			rewrite_pmbr(fd);
+			rewrite_pmbr(gd);
 		else
-			recover(fd);
+			recover(gd);
 
-		gpt_close(fd);
+		gpt_close(gd);
 	}
 
 	return (0);
