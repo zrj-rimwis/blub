@@ -635,7 +635,8 @@ gpt_open(const char *dev, int flags)
 		    (uintmax_t)devsz);
 	}
 
-	map_init(gd, devsz);
+	if (map_init(gd, devsz) == -1)
+		goto close;
 
 	if (gpt_mbr(gd, 0LL) == -1)
 		goto close;

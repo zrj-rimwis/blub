@@ -98,14 +98,8 @@ resize(gd_t gd)
 		}
 
 	newsize = map_resize(map, size, alignsecs);
-	if (newsize == 0 && res_align > 0) {
-		warnx("%s: could not resize partition with alignment "
-		      "constraint", gd->device_name);
+	if (newsize == -1)
 		return;
-	} else if (newsize == 0) {
-		warnx("%s: could not resize partition", gd->device_name);
-		return;
-	}
 
 	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
 

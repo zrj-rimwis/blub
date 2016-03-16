@@ -59,8 +59,10 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 	n = gd->mediamap;
 	while (n != NULL && n->map_start + n->map_size <= start)
 		n = n->map_next;
-	if (n == NULL)
+	if (n == NULL) {
+		warnx("error: can't find map");
 		return (NULL);
+	}
 
 	if (n->map_start + n->map_size < start + size) {
 		warnx("error: bogus map, size doesn't fit");
@@ -91,7 +93,7 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 
 	m = mkmap(start, size, type);
 	if (m == NULL)
-		return (NULL);
+		goto oomem;
 
 	m->map_data = data;
 
@@ -115,6 +117,8 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 		p->map_size -= size;
 	} else {
 		p = mkmap(n->map_start, start - n->map_start, n->map_type);
+		if (p == NULL)
+			goto oomem;
 		n->map_start += p->map_size + m->map_size;
 		n->map_size -= (p->map_size + m->map_size);
 		p->map_prev = n->map_prev;
@@ -129,6 +133,9 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 	}
 
 	return (m);
+oomem:
+	warnx("error: can't create map");
+	return (NULL);
 }
 
 map_t
@@ -187,12 +194,20 @@ map_resize(map_t m, off_t size, off_t alignment)
 
 	if (size < 0 || alignment < 0) {
 		warnx("negative size or alignment");
-		return (0);
+		return (-1);
 	}
-	if (size == 0 && alignment == 0) {
-		if (n == NULL || n->map_type != MAP_TYPE_UNUSED)
-			return (0);
-		else {
+	/* Size == 0 means delete, if the next map is unused */
+	if (size == 0) {
+		if (n == NULL) {
+			// XXX: we could just turn the map to UNUSED!
+			warnx("error: can't delete, next map is not found");
+			return -1;
+		}
+		if (n->map_type != MAP_TYPE_UNUSED) {
+			warnx("error: can't delete, next map is in use");
+			return -1;
+		}
+		if (alignment == 0) {
 			size = m->map_size + n->map_size;
 			m->map_size = size;
 			m->map_next = n->map_next;
@@ -202,18 +217,15 @@ map_resize(map_t m, off_t size, off_t alignment)
 				free(n->map_data);
 			free(n);
 			return (size);
-		}
-	}
-
-	if (size == 0 && alignment > 0) {
-		if (n == NULL || n->map_type != MAP_TYPE_UNUSED)
-			return 0;
-		else {
+		} else { /* alignment > 0 */
 			prevsize = m->map_size;
-			size = (m->map_size + n->map_size) /
-			       alignment * alignment;
-			if (size <= prevsize)
-				return 0;
+			size = ((m->map_size + n->map_size) / alignment)
+			    * alignment;
+			if (size <= prevsize) {
+				warnx("can't coalesce %ju <= %ju",
+				    (uintmax_t)prevsize, (uintmax_t)size);
+				return (-1);
+			}
 			m->map_size = size;
 			n->map_start += size - prevsize;
 			n->map_size -= size - prevsize;
@@ -239,6 +251,10 @@ map_resize(map_t m, off_t size, off_t alignment)
 		if (n == NULL || n->map_type != MAP_TYPE_UNUSED) {
 			o = mkmap(m->map_start + alignsize,
 				  prevsize - alignsize, MAP_TYPE_UNUSED);
+			if (o == NULL) {
+				warnx("can't create map");
+				return (-1);
+			}
 			m->map_next = o;
 			o->map_prev = m;
 			o->map_next = n;
@@ -251,9 +267,18 @@ map_resize(map_t m, off_t size, off_t alignment)
 			return (alignsize);
 		}
 	} else if (alignsize > m->map_size) {		/* expanding */
-		if (n == NULL || n->map_type != MAP_TYPE_UNUSED ||
-		    n->map_size < alignsize - m->map_size) {
-			return (0);
+		if (n == NULL) {
+			warnx("can't expand map, no space after it");
+			return (-1);
+		}
+		if (n->map_type != MAP_TYPE_UNUSED) {
+			warnx("can't expand map, next map after it in use");
+			return (-1);
+		}
+		if (n->map_size < alignsize - m->map_size) {
+			warnx("can't expand map, not enough space in the"
+			    " next map after it");
+			return (-1);
 		}
 		n->map_size -= alignsize - m->map_size;
 		n->map_start += alignsize - m->map_size;
@@ -285,7 +310,7 @@ map_find(gd_t gd, int type)
 map_t
 map_first(gd_t gd)
 {
-	return gd->mediamap;
+	return (gd->mediamap);
 }
 
 map_t
@@ -315,13 +340,18 @@ map_free(gd_t gd, off_t start, off_t size)
 	return (m->map_size - (start - m->map_start));
 }
 
-void
+int
 map_init(gd_t gd, off_t size)
 {
 	char buf[32];
 
 	gd->mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
+	if (gd->mediamap == NULL) {
+		warnx("%s: can't create map", gd->device_name);
+		return (-1);
+	}
 	gd->lbawidth = snprintf(buf, sizeof(buf), "%ju", (uintmax_t)size);
 	if (gd->lbawidth < 5)
 		gd->lbawidth = 5;
+	return (0);
 }
