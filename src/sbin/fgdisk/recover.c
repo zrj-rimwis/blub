@@ -93,8 +93,7 @@ recover(gd_t gd)
 			return;
 		}
 		gpt_write(gd, gd->lbt);
-		warnx("%s: recovered secondary GPT table from primary",
-		    gd->device_name);
+		gpt_status(gd, -1, "recovered secondary GPT table from primary");
 	} else if (gd->tbl == NULL && gd->lbt != NULL) {
 		gd->tbl = map_add(gd, 2LL, gd->lbt->map_size,
 		    MAP_TYPE_PRI_GPT_TBL, gd->lbt->map_data, 0);
@@ -104,8 +103,7 @@ recover(gd_t gd)
 			return;
 		}
 		gpt_write(gd, gd->tbl);
-		warnx("%s: recovered primary GPT table from secondary",
-		    gd->device_name);
+		gpt_status(gd, -1, "recovered primary GPT table from secondary");
 	}
 
 	if (gd->gpt != NULL && gd->tpg == NULL) {
@@ -124,8 +122,7 @@ recover(gd_t gd)
 		hdr->hdr_crc_self = 0;
 		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 		gpt_write(gd, gd->tpg);
-		warnx("%s: recovered secondary GPT header from primary",
-		    gd->device_name);
+		gpt_status(gd, -1, "recovered secondary GPT header from primary");
 	} else if (gd->gpt == NULL && gd->tpg != NULL) {
 		gd->gpt = map_add(gd, 1LL, 1LL, MAP_TYPE_PRI_GPT_HDR,
 		    calloc(1, gd->secsz), 1);
@@ -142,8 +139,7 @@ recover(gd_t gd)
 		hdr->hdr_crc_self = 0;
 		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 		gpt_write(gd, gd->gpt);
-		warnx("%s: recovered primary GPT header from secondary",
-		    gd->device_name);
+		gpt_status(gd, -1, "recovered primary GPT header from secondary");
 	}
 }
 
@@ -221,7 +217,7 @@ rewrite_pmbr(gd_t gd)
 		}
 		map = map_add(gd, 0LL, 1LL, MAP_TYPE_PMBR, mbr, 1);
 		gpt_write(gd, map);
-		printf("%s: written a fresh PMBR\n", gd->device_name);
+		gpt_status(gd, -1, "written a fresh PMBR");
 	}
 }
 

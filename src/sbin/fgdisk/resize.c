@@ -124,8 +124,7 @@ resize(gd_t gd)
 	gpt_write(gd, gd->lbt);
 	gpt_write(gd, gd->tpg);
 
-	printf("%sp%u (compat %ss%u) resized\n", gd->device_name, entry,
-	    gd->device_name, entry - 1);
+	gpt_status(gd, entry, "resized");
 }
 
 int

@@ -62,21 +62,57 @@ map_destroy(map_t m)
 	free(m);
 }
 
+static const char *maptypes[] = {
+	"unused",
+	"mbr",
+	"mbr partition",
+	"primary gpt header",
+	"secondary gpt header",
+	"primary gpt table",
+	"secondary gpt table",
+	"gpt partition",
+	"protective mbr",
+};
+
+static const char *
+map_name(int t)
+{
+	if ((size_t)t >= NELEM(maptypes))
+		return "*unknown*";
+	return maptypes[t];
+}
+
 map_t
 map_add(gd_t gd, off_t start, off_t size, int type, void *data, int alloc)
 {
 	map_t m, n, p;
 
+#ifdef DEBUG
+	printf("add: %s %#jx %#jx\n", map_name(type), (uintmax_t)start,
+	    (uintmax_t)size);
+	for (n = gd->mediamap; n; n = n->map_next)
+		printf("have: %s %#jx %#jx\n", map_name(n->map_type),
+		    (uintmax_t)n->map_start, (uintmax_t)n->map_size);
+#endif
+
 	n = gd->mediamap;
 	while (n != NULL && n->map_start + n->map_size <= start)
 		n = n->map_next;
 	if (n == NULL) {
-		warnx("error: can't find map");
+		if (!(gd->flags & GPT_QUIET))
+			warnx("error: can't find map");
 		return (NULL);
 	}
 
 	if (n->map_start + n->map_size < start + size) {
-		warnx("error: bogus map, size doesn't fit");
+		if (!(gd->flags & GPT_QUIET)) {
+			warnx("error: bogus map, size doesn't fit");
+			if ((n->map_next != 0) &&
+			   (n->map_next->map_type == MAP_TYPE_MBR_PART ||
+			    n->map_next->map_type == MAP_TYPE_UNUSED)) {
+				warnx("error: MBR part clobers GPT, rerun with -M");
+			}
+		}
 		return (NULL);
 	}
 
@@ -97,7 +133,8 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data, int alloc)
 	if (n->map_type != MAP_TYPE_UNUSED) {
 		if (n->map_type != MAP_TYPE_MBR_PART ||
 		    type != MAP_TYPE_GPT_PART) {
-			warnx("error: bogus map type");
+			warnx("error: bogus map type, current=%s new=%s",
+			    map_name(n->map_type), map_name(type));
 			return (NULL);
 		}
 		n->map_type = MAP_TYPE_UNUSED;

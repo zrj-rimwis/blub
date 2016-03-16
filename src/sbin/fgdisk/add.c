@@ -168,8 +168,7 @@ add(gd_t gd)
 	if (map == NULL)
 		return;
 
-	printf("%sp%u (compat %ss%u) added\n", gd->device_name, index,
-	    gd->device_name, index-1);
+	gpt_status(gd, index, "added");
 }
 
 int

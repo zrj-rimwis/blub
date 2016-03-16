@@ -114,7 +114,7 @@ rem(gd_t gd)
 		gpt_write(gd, gd->lbt);
 		gpt_write(gd, gd->tpg);
 
-		printf("%sp%u removed\n", gd->device_name, m->map_index);
+		gpt_status(gd, m->map_index, "removed");
 	}
 }
 

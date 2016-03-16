@@ -62,7 +62,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-rv] command [options] device ...\n",
+	    "usage: %s [-Mqrv] command [options] device ...\n",
 	    getprogname());
 	exit(1);
 }
@@ -110,8 +110,14 @@ main(int argc, char *argv[])
 	int ch, i;
 
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, "rv")) != -1) {
+	while ((ch = getopt(argc, argv, "Mqrv")) != -1) {
 		switch(ch) {
+		case 'M':
+			gnombr = 1;
+			break;
+		case 'q':
+			gquiet = 1;
+			break;
 		case 'r':
 			greadonly = 1;
 			break;

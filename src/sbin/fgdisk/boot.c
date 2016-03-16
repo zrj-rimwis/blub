@@ -194,8 +194,7 @@ installboot(gd_t gd)
 		    bsize, &entry);
 		if (gptboot == NULL)
 			return;
-		printf("%sp%u (compat %ss%u) added\n", gd->device_name, entry,
-		    gd->device_name, entry-1);
+		gpt_status(gd, entry, "added");
 	}
 
 	/*
@@ -223,6 +222,7 @@ installboot(gd_t gd)
 		return;
 	}
 	nbytes = write(gd->fd, buf, bsize);
+	gd->flags |= GPT_MODIFIED;
 	if (nbytes < 0) {
 		warn("unable to write GPT boot loader");
 		return;
@@ -233,8 +233,7 @@ installboot(gd_t gd)
 	}
 	free(buf);
 
-	printf("PMBR and %sp%u (compat %ss%u) updated\n",
-	    gd->device_name, entry, gd->device_name, entry-1);
+	gpt_status(gd, entry, "and PMBR updated");
 }
 
 int

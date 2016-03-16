@@ -449,8 +449,7 @@ migrate(gd_t gd)
 	}
 	gpt_write(gd, map);
 
-	printf("%s: slices migrated to gpt partitions, update fstab.\n",
-	    gd->device_name);
+	gpt_status(gd, -1, "slices migrated to gpt partitions, update fstab");
 }
 
 int

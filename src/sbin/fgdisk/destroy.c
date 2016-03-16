@@ -85,7 +85,7 @@ destroy(gd_t gd)
 		}
 	}
 
-	printf("%s: destroyed gpt label.\n", gd->device_name);
+	gpt_status(gd, -1, "destroyed gpt label");
 }
 
 int

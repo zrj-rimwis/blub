@@ -229,7 +229,7 @@ create(gd_t gd)
 		gpt_write(gd, gd->tpg);
 	}
 
-	printf("%s: created gpt label.\n", gd->device_name);
+	gpt_status(gd, -1, "created gpt label");
 }
 
 int

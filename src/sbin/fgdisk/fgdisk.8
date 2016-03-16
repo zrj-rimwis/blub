@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 12, 2016
+.Dd March 16, 2016
 .Dt FGDISK 8
 .Os
 .Sh NAME
@@ -63,6 +63,10 @@ change the behaviour that is applicable to all commands.
 Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Bl -tag -width XXXXXX
+.It Fl M
+Ignore partitions from MBR (useful in broken hybrid layouts).
+.It Fl q
+Silence some warnings (partially implemented).
 .It Fl r
 Open the device for reading only.
 Currently this option is primarily useful for the

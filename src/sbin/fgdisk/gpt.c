@@ -48,7 +48,7 @@
 #include "gpt_private.h"
 
 /* Global params for gpt_open() */
-int	greadonly, gverbose;
+int	gnombr, gquiet, greadonly, gverbose;
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -354,10 +354,11 @@ gpt_write(gd_t gd, map_t map)
 
 	count = map->map_size * gd->secsz;
 	ofs = map->map_start * gd->secsz;
-	if (lseek(gd->fd, ofs, SEEK_SET) == ofs &&
-	    write(gd->fd, map->map_data, count) == (ssize_t)count)
-		return (0);
-	return (-1);
+	if (lseek(gd->fd, ofs, SEEK_SET) != ofs ||
+	    write(gd->fd, map->map_data, count) != (ssize_t)count)
+		return (-1);
+	gd->flags |= GPT_MODIFIED;
+	return (0);
 }
 
 static int
@@ -418,7 +419,8 @@ gpt_mbr(gd_t gd, off_t lba)
 
 	for (i = 0; i < 4; i++) {
 		if (mbr->mbr_part[i].part_typ == DOSPTYP_UNUSED ||
-		    mbr->mbr_part[i].part_typ == DOSPTYP_PMBR)
+		    mbr->mbr_part[i].part_typ == DOSPTYP_PMBR ||
+		    (gd->flags & GPT_NOMBR))
 			continue;
 		start = le16toh(mbr->mbr_part[i].part_start_hi);
 		start = (start << 16) + le16toh(mbr->mbr_part[i].part_start_lo);
@@ -572,7 +574,14 @@ gpt_open(const char *dev, int flags)
 	gd->mediasz = 0;
 	gd->secsz = 0;
 
-	mode = (greadonly || (gd->flags & GPT_READONLY)) ?
+	if (greadonly)
+		gd->flags |= GPT_READONLY;
+	if (gquiet)
+		gd->flags |= GPT_QUIET;
+	if (gnombr)
+		gd->flags |= GPT_NOMBR;
+
+	mode = (gd->flags & GPT_READONLY) ?
 	    O_RDONLY : O_RDWR|O_EXCL;
 
 	strlcpy(gd->device_name, dev, sizeof(gd->device_name));
@@ -605,6 +614,7 @@ gpt_open(const char *dev, int flags)
 		gd->secsz = partinfo.media_blksize;
 		gd->mediasz = partinfo.media_size;
 	} else {
+		gd->flags |= GPT_FILE;
 		gd->secsz = 512;	/* Fixed size for files. */
 		if (gd->sb.st_size % gd->secsz) {
 			errno = EINVAL;
@@ -655,8 +665,40 @@ close:
 void
 gpt_close(gd_t gd)
 {
-	/* XXX post processing? */
+	if ((gd->flags & GPT_MODIFIED))
+		printf("%s: was updated\n",gd->device_name);
 	close(gd->fd);
+}
+
+void
+gpt_status(gd_t gd, int index, const char * msg)
+{
+	if (gd->flags & GPT_QUIET)
+		return;
+	if (!(gd->flags & GPT_MODIFIED) && !(gd->flags & GPT_READONLY))
+		return;
+	printf("%s", gd->device_name);
+
+	if (index > 0) {
+		if ((gd->flags & GPT_FILE)) {
+			printf(" (p%u)", index);
+		} else {
+			printf("p%u", index);
+#if 1
+			printf(" (compat: %ss%u)", gd->device_name, index - 1);
+#endif
+		}
+	}
+
+	printf(" %s", msg);
+
+	/* Clear the modified status */
+	if (gd->flags & GPT_MODIFIED)
+		gd->flags ^= GPT_MODIFIED;
+
+	if (gd->flags & GPT_READONLY)
+		printf(" (dry-run)");
+	printf("\n");
 }
 
 struct gpt_hdr *
