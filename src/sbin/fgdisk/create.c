@@ -114,7 +114,7 @@ create(gd_t gd)
 			mbr->mbr_part[0].part_size_lo = htole16(last);
 			mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
 		}
-		map = map_add(gd, 0LL, 1LL, MAP_TYPE_PMBR, mbr);
+		map = map_add(gd, 0LL, 1LL, MAP_TYPE_PMBR, mbr, 1);
 		gpt_write(gd, map);
 	}
 
@@ -160,7 +160,7 @@ create(gd_t gd)
 		return;
 	}
 	if ((gd->gpt = map_add(gd, 1LL, 1LL,
-	    MAP_TYPE_PRI_GPT_HDR, p)) == NULL) {
+	    MAP_TYPE_PRI_GPT_HDR, p, 1)) == NULL) {
 		free(p);
 		warnx("%s: error: can't add the GPT", gd->device_name);
 		return;
@@ -172,7 +172,7 @@ create(gd_t gd)
 		return;
 	}
 	if ((gd->tbl = map_add(gd, 2LL, blocks,
-	    MAP_TYPE_PRI_GPT_TBL, p)) == NULL) {
+	    MAP_TYPE_PRI_GPT_TBL, p, 1)) == NULL) {
 		free(p);
 		warnx("%s: error: can't add the GPT table", gd->device_name);
 		return;
@@ -215,9 +215,9 @@ create(gd_t gd)
 	 */
 	if (!primary_only) {
 		gd->tpg = map_add(gd, last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, gd->secsz));
+		    calloc(1, gd->secsz), 1);
 		gd->lbt = map_add(gd, last - blocks, blocks,
-		    MAP_TYPE_SEC_GPT_TBL, gd->tbl->map_data);
+		    MAP_TYPE_SEC_GPT_TBL, gd->tbl->map_data, 0);
 		memcpy(gd->tpg->map_data, gd->gpt->map_data, gd->secsz);
 		hdr = gd->tpg->map_data;
 		hdr->hdr_lba_self = htole64(gd->tpg->map_start);

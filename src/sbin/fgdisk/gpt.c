@@ -403,7 +403,7 @@ gpt_mbr(gd_t gd, off_t lba)
 		else if (gd->verbose > 1)
 			warnx("%s: PMBR at sector %ju", gd->device_name,
 			    (uintmax_t)lba);
-		p = map_add(gd, lba, 1LL, MAP_TYPE_PMBR, mbr);
+		p = map_add(gd, lba, 1LL, MAP_TYPE_PMBR, mbr, 1);
 		goto out;
 	}
 	if (pmbr)
@@ -412,7 +412,7 @@ gpt_mbr(gd_t gd, off_t lba)
 	else if (gd->verbose > 1)
 		warnx("%s: MBR at sector %ju", gd->device_name, (uintmax_t)lba);
 
-	p = map_add(gd, lba, 1LL, MAP_TYPE_MBR, mbr);
+	p = map_add(gd, lba, 1LL, MAP_TYPE_MBR, mbr, 1);
 	if (p == NULL)
 		goto out;
 
@@ -436,8 +436,7 @@ gpt_mbr(gd_t gd, off_t lba)
 			    gd->device_name, mbr->mbr_part[i].part_typ,
 			    (uintmax_t)start, (uintmax_t)size);
 		if (mbr->mbr_part[i].part_typ != DOSPTYP_EXTLBA) {
-			// XXX: map add with non-allocated memory
-			m = map_add(gd, start, size, MAP_TYPE_MBR_PART, p);
+			m = map_add(gd, start, size, MAP_TYPE_MBR_PART, p, 0);
 			if (m == NULL)
 				return (-1);
 			m->map_index = i + 1;
@@ -513,12 +512,12 @@ gpt_gpt(gd_t gd, off_t lba, int found)
 		    (lba == 1) ? "Pri" : "Sec", (uintmax_t)lba);
 
 	m = map_add(gd, lba, 1, (lba == 1)
-	    ? MAP_TYPE_PRI_GPT_HDR : MAP_TYPE_SEC_GPT_HDR, hdr);
+	    ? MAP_TYPE_PRI_GPT_HDR : MAP_TYPE_SEC_GPT_HDR, hdr, 1);
 	if (m == NULL)
 		return (-1);
 
 	m = map_add(gd, le64toh(hdr->hdr_lba_table), blocks, (lba == 1)
-	    ? MAP_TYPE_PRI_GPT_TBL : MAP_TYPE_SEC_GPT_TBL, p);
+	    ? MAP_TYPE_PRI_GPT_TBL : MAP_TYPE_SEC_GPT_TBL, p, 1);
 	if (m == NULL)
 		return (-1);
 
@@ -541,9 +540,8 @@ gpt_gpt(gd_t gd, off_t lba, int found)
 			    (uintmax_t)size);
 			free(s);
 		}
-		// XXX: map add with not allocated memory.
 		m = map_add(gd, le64toh(ent->ent_lba_start), size,
-		    MAP_TYPE_GPT_PART, ent);
+		    MAP_TYPE_GPT_PART, ent, 0);
 		if (m == NULL)
 			return (-1);
 		m->map_index = i + 1;

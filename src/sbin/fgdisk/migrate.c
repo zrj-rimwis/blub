@@ -310,16 +310,16 @@ migrate(gd_t gd)
 
 	blocks--;		/* Number of blocks in the GPT table. */
 	gd->gpt = map_add(gd, 1LL, 1LL, MAP_TYPE_PRI_GPT_HDR,
-	    calloc(1, gd->secsz));
+	    calloc(1, gd->secsz), 1);
 	gd->tbl = map_add(gd, 2LL, blocks, MAP_TYPE_PRI_GPT_TBL,
-	    calloc(blocks, gd->secsz));
+	    calloc(blocks, gd->secsz), 2);
 	if (gd->gpt == NULL || gd->tbl == NULL)
 		return;
 
 	gd->lbt = map_add(gd, last - blocks, blocks, MAP_TYPE_SEC_GPT_TBL,
-	    gd->tbl->map_data);
+	    gd->tbl->map_data, 0);
 	gd->tpg = map_add(gd, last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-	    calloc(1, gd->secsz));
+	    calloc(1, gd->secsz), 1);
 
 	hdr = gd->gpt->map_data;
 	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));

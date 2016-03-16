@@ -86,7 +86,7 @@ recover(gd_t gd)
 	if (gd->tbl != NULL && gd->lbt == NULL) {
 		gd->lbt = map_add(gd, last - gd->tbl->map_size,
 		    gd->tbl->map_size, MAP_TYPE_SEC_GPT_TBL,
-		    gd->tbl->map_data);
+		    gd->tbl->map_data, 1);
 		if (gd->lbt == NULL) {
 			warnx("%s: adding secondary GPT table failed",
 			    gd->device_name);
@@ -97,7 +97,7 @@ recover(gd_t gd)
 		    gd->device_name);
 	} else if (gd->tbl == NULL && gd->lbt != NULL) {
 		gd->tbl = map_add(gd, 2LL, gd->lbt->map_size,
-		    MAP_TYPE_PRI_GPT_TBL, gd->lbt->map_data);
+		    MAP_TYPE_PRI_GPT_TBL, gd->lbt->map_data, 0);
 		if (gd->tbl == NULL) {
 			warnx("%s: adding primary GPT table failed",
 			    gd->device_name);
@@ -110,7 +110,7 @@ recover(gd_t gd)
 
 	if (gd->gpt != NULL && gd->tpg == NULL) {
 		gd->tpg = map_add(gd, last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, gd->secsz));
+		    calloc(1, gd->secsz), 1);
 		if (gd->tpg == NULL) {
 			warnx("%s: adding secondary GPT header failed",
 			    gd->device_name);
@@ -128,7 +128,7 @@ recover(gd_t gd)
 		    gd->device_name);
 	} else if (gd->gpt == NULL && gd->tpg != NULL) {
 		gd->gpt = map_add(gd, 1LL, 1LL, MAP_TYPE_PRI_GPT_HDR,
-		    calloc(1, gd->secsz));
+		    calloc(1, gd->secsz), 1);
 		if (gd->gpt == NULL) {
 			warnx("%s: adding primary GPT header failed",
 			    gd->device_name);
@@ -219,7 +219,7 @@ rewrite_pmbr(gd_t gd)
 			mbr->mbr_part[0].part_size_lo = htole16(last);
 			mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
 		}
-		map = map_add(gd, 0LL, 1LL, MAP_TYPE_PMBR, mbr);
+		map = map_add(gd, 0LL, 1LL, MAP_TYPE_PMBR, mbr, 1);
 		gpt_write(gd, map);
 		printf("%s: written a fresh PMBR\n", gd->device_name);
 	}

@@ -35,7 +35,7 @@
 #include "gpt_private.h"
 
 static map_t
-mkmap(off_t start, off_t size, int type)
+map_create(off_t start, off_t size, int type)
 {
 	map_t m;
 
@@ -48,11 +48,22 @@ mkmap(off_t start, off_t size, int type)
 	m->map_type = type;
 	m->map_index = 0;
 	m->map_data = NULL;
+	m->map_alloc = 0;
 	return (m);
 }
 
+static void
+map_destroy(map_t m)
+{
+	if (m == NULL)
+		return;
+	if (m->map_alloc)
+		free(m->map_data);
+	free(m);
+}
+
 map_t
-map_add(gd_t gd, off_t start, off_t size, int type, void *data)
+map_add(gd_t gd, off_t start, off_t size, int type, void *data, int alloc)
 {
 	map_t m, n, p;
 
@@ -79,6 +90,7 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 		}
 		n->map_type = type;
 		n->map_data = data;
+		n->map_alloc = alloc;
 		return (n);
 	}
 
@@ -91,11 +103,12 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 		n->map_type = MAP_TYPE_UNUSED;
 	}
 
-	m = mkmap(start, size, type);
+	m = map_create(start, size, type);
 	if (m == NULL)
 		goto oomem;
 
 	m->map_data = data;
+	m->map_alloc = alloc;
 
 	if (start == n->map_start) {
 		m->map_prev = n->map_prev;
@@ -116,7 +129,7 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 		p->map_next = m;
 		p->map_size -= size;
 	} else {
-		p = mkmap(n->map_start, start - n->map_start, n->map_type);
+		p = map_create(n->map_start, start - n->map_start, n->map_type);
 		if (p == NULL)
 			goto oomem;
 		n->map_start += p->map_size + m->map_size;
@@ -134,6 +147,7 @@ map_add(gd_t gd, off_t start, off_t size, int type, void *data)
 
 	return (m);
 oomem:
+	map_destroy(m);
 	warnx("error: can't create map");
 	return (NULL);
 }
@@ -177,7 +191,7 @@ map_alloc(gd_t gd, off_t start, off_t size, off_t alignment)
 					size = m->map_size - delta;
 			}
 			return map_add(gd, m->map_start + delta, size,
-				    MAP_TYPE_GPT_PART, NULL);
+			    MAP_TYPE_GPT_PART, NULL, 0);
 		}
 	}
 
@@ -213,9 +227,7 @@ map_resize(map_t m, off_t size, off_t alignment)
 			m->map_next = n->map_next;
 			if (n->map_next != NULL)
 				n->map_next->map_prev = m;
-			if (n->map_data != NULL)
-				free(n->map_data);
-			free(n);
+			map_destroy(n);
 			return (size);
 		} else { /* alignment > 0 */
 			prevsize = m->map_size;
@@ -233,9 +245,7 @@ map_resize(map_t m, off_t size, off_t alignment)
 				m->map_next = n->map_next;
 				if (n->map_next != NULL)
 					n->map_next->map_prev = m;
-				if (n->map_data != NULL)
-					free(n->map_data);
-				free(n);
+				map_destroy(n);
 			}
 			return (size);
 		}
@@ -249,7 +259,7 @@ map_resize(map_t m, off_t size, off_t alignment)
 		prevsize = m->map_size;
 		m->map_size = alignsize;
 		if (n == NULL || n->map_type != MAP_TYPE_UNUSED) {
-			o = mkmap(m->map_start + alignsize,
+			o = map_create(m->map_start + alignsize,
 				  prevsize - alignsize, MAP_TYPE_UNUSED);
 			if (o == NULL) {
 				warnx("can't create map");
@@ -286,9 +296,7 @@ map_resize(map_t m, off_t size, off_t alignment)
 			m->map_next = n->map_next;
 			if (n->map_next != NULL)
 				n->map_next->map_prev = m;
-			if (n->map_data != NULL)
-				free(n->map_data);
-			free(n);
+			map_destroy(n);
 		}
 		m->map_size = alignsize;
 		return (alignsize);
@@ -345,7 +353,7 @@ map_init(gd_t gd, off_t size)
 {
 	char buf[32];
 
-	gd->mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
+	gd->mediamap = map_create(0LL, size, MAP_TYPE_UNUSED);
 	if (gd->mediamap == NULL) {
 		warnx("%s: can't create map", gd->device_name);
 		return (-1);
