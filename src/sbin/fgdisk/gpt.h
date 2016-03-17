@@ -84,6 +84,7 @@ int	cmd_recover(int, char *[]);
 int	cmd_remove(int, char *[]);
 int	cmd_resize(int, char *[]);
 int	cmd_show(int, char *[]);
+int	cmd_verify(int, char *[]);
 
 #define GPT_READONLY	0x01
 #define GPT_MODIFIED	0x02

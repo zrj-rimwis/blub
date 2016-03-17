@@ -54,7 +54,7 @@ static struct {
 	{ NULL, "rename" },
 	{ cmd_resize, "resize" },
 	{ cmd_show, "show" },
-	{ NULL, "verify" },
+	{ cmd_verify, "verify" },
 	{ NULL, NULL }
 };
 
@@ -83,6 +83,7 @@ pcmd_help(int argc __unused, char *argv[] __unused)
 	    "    remove      - remove gpt partition\n"
 	    "    resize      - resize gpt partition\n"
 	    "    show        - print info about gpt disk/partitions\n"
+	    "    verify      - verify gpt layout (read-only)\n"
 	    );
 	return (0);
 }

@@ -444,6 +444,20 @@ The order of precedence for the options are:
 .Fl l ,
 .Fl g ,
 .Fl u .
+.\" ==== verify ====
+.It Nm Ic verify Oo Fl PS Oc Ar device ...
+The
+.Ic verify
+command performs simple verification between primary and backup GPT tables.
+It is mainly used to check what kind of damage was done to headers or tables.
+.Pp
+If the
+.Fl P
+option is specified, primary header dump will be printed.
+.Pp
+The
+.Fl S
+option does exactly the same but for backup header.
 .El
 .Sh FILES
 .Bl -tag -width ".Pa /etc/defaults/uuids"
