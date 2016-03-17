@@ -51,7 +51,7 @@ static struct {
 	{ cmd_migrate, "migrate" },
 	{ cmd_recover, "recover" },
 	{ cmd_remove, "remove" },
-	{ NULL, "rename" },
+	{ cmd_rename, "rename" },
 	{ cmd_resize, "resize" },
 	{ cmd_show, "show" },
 	{ cmd_verify, "verify" },
@@ -81,6 +81,7 @@ pcmd_help(int argc __unused, char *argv[] __unused)
 	    "    migrate     - migrate slices to gpt partitions\n"
 	    "    recover     - gpt disk recovery\n"
 	    "    remove      - remove gpt partition\n"
+	    "    rename      - rename gpt partition type\n"
 	    "    resize      - resize gpt partition\n"
 	    "    show        - print info about gpt disk/partitions\n"
 	    "    verify      - verify gpt layout (read-only)\n"

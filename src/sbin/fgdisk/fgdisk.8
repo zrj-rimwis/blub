@@ -394,6 +394,27 @@ command.
 See above for a description of these options.
 Partitions are removed by clearing the partition type.
 No other information is changed.
+.\" ==== rename ====
+.It Xo
+.Nm
+.Ic rename
+.Fl T Ar new_type
+.Op Fl b Ar sector
+.Op Fl i Ar index
+.Op Fl s Ar sectors
+.Op Fl t Ar type
+.Ar device ...
+.Xc
+The
+.Ic rename
+command allows the user to rename the type of any partitions that match the
+selection.
+It uses the same selection options as the
+.Ic label
+command.
+See above for a description of these options.
+Partitions are renamed by changing the partition type.
+No other information is changed.
 .\" ==== resize ====
 .It Xo
 .Nm
