@@ -78,6 +78,7 @@ int	cmd_add(int, char *[]);
 int	cmd_installboot(int, char *[]);
 int	cmd_create(int, char *[]);
 int	cmd_destroy(int, char *[]);
+int	cmd_flag(int, char *[]);
 int	cmd_label(int, char *[]);
 int	cmd_migrate(int, char *[]);
 int	cmd_recover(int, char *[]);

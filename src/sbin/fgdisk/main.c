@@ -45,6 +45,7 @@ static struct {
 	{ cmd_add, "add" },
 	{ cmd_create, "create" },
 	{ cmd_destroy, "destroy" },
+	{ cmd_flag, "flag" },
 	{ pcmd_help, "help" },
 	{ cmd_label, "label" },
 	{ cmd_installboot, "installboot" },
@@ -75,6 +76,7 @@ pcmd_help(int argc __unused, char *argv[] __unused)
 	    "    add         - add new gpt partition\n"
 	    "    create      - create new gpt disk layout\n"
 	    "    destroy     - destroy gpt disk layout\n"
+	    "    flag        - perform actions on GPT partition flags\n"
 	    "    help        - print this help\n"
 	    "    label       - change labels of gpt partions\n"
 	    "    installboot - install gptboot with pmbr for bios-gpt boot\n"

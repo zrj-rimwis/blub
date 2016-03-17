@@ -274,11 +274,11 @@ show_one(gd_t gd)
 		printf("  None\n");
 	else {
 		if (ent->ent_attr & GPT_ENT_ATTR_BOOTME)
-			printf("  indicates a bootable partition\n");
+			printf("  bootme - indicates a bootable partition\n");
 		if (ent->ent_attr & GPT_ENT_ATTR_BOOTONCE)
-			printf("  attempt to boot this partition only once\n");
+			printf("  bootonce - attempt to boot this partition only once\n");
 		if (ent->ent_attr & GPT_ENT_ATTR_BOOTFAILED)
-			printf("  partition that was marked bootonce but failed to boot\n");
+			printf("  bootfailed - was marked bootonce but failed to boot\n");
 	}
 }
 

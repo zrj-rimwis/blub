@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 16, 2016
+.Dd March 17, 2016
 .Dt FGDISK 8
 .Os
 .Sh NAME
@@ -229,6 +229,45 @@ The
 option instructs
 .Nm
 to destroy the table in a way that it can be recovered.
+.\" ==== flag ====
+.It Xo
+.Nm
+.Ic flag
+.Fl i Ar index
+.Op Fl s Ar flag
+.Op Fl t Ar flag
+.Op Fl u Ar flag
+.Ar device ...
+.Xc
+The
+.Ic flag
+command allows the user to change flags (or gpt-attributes) on an existing GPT
+partition.
+.Pp
+The
+.Fl s
+option sets user provided flag.
+.Pp
+The
+.Fl t
+option toggles user provided flag.
+.Pp
+The
+.Fl u
+option unsets user provided flag.
+.Pp
+The order of precedence for the actions performed is:
+.Fl s ,
+.Fl t ,
+.Fl u .
+The possible attributes are
+.Do bootme Dc ,
+.Do bootonce Dc , and
+.Do bootfailed Dc .
+The bootme flag is used to indicate that partition should be booted.
+The bootonce flag is used to indicate that partition should be booted once.
+The bootfailed flag is used to indicate that partition was set to bootonce,
+but failed to boot.
 .\" ==== help ====
 .It Nm Ic help
 The
