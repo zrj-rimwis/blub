@@ -317,7 +317,7 @@ cmd_show(int argc, char *argv[])
 		usage_show();
 
 	while (optind < argc) {
-		gd = gpt_open(argv[optind++], flags);
+		gd = gpt_open(argv[optind++], flags |= GPT_READONLY);
 		if (gd == NULL) {
 			continue;
 		}

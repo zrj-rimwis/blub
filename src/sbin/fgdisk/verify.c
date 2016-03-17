@@ -336,7 +336,8 @@ cmd_verify(int argc, char *argv[])
 		check_sec = 1;
 	}
 
-	/* Open w/o mbr part parsing */
+	/* Open as read only and w/o mbr part parsing */
+	flags |= GPT_READONLY;
 	flags |= GPT_NOMBR;
 
 	while (optind < argc) {
