@@ -277,11 +277,11 @@ verify(gd_t gd)
 			hp = gd->gpt->map_data;
 		if (verify_print((gd->tbl != 0), "Have Primary table") == 0)
 			ep = (void*)(char*)gd->tbl->map_data;
-		/* XXX somehow recover from increased media size */
 		if (gd->gpt != NULL &&
 		    (((struct gpt_hdr *)(gd->gpt->map_data))->hdr_lba_alt !=
 		    (uint64_t)(gd->mediasz/gd->secsz - 1LL))) {
-			warnx("%s: media size has changed", gd->device_name);
+			warnx("%s: media size has changed, run recover -f",
+			gd->device_name);
 			return;
 		}
 	}

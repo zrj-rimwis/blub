@@ -83,6 +83,27 @@ recover(gd_t gd)
 
 	last = gd->mediasz / gd->secsz - 1LL;
 
+	/* Check if media size was changed */
+	if (gd->gpt != NULL &&
+	    (((struct gpt_hdr *)(gd->gpt->map_data))->hdr_lba_alt !=
+	    (uint64_t)last)) {
+		hdr = gd->gpt->map_data;
+		if (!force) {
+			warnx("%s: media size has changed: 0x%lx->0x%lx"
+			    ", rerun with recover -f", gd->device_name,
+			    (uintmax_t)le64toh((uint64_t)hdr->hdr_lba_alt),
+			    (uintmax_t)last);
+			return;
+		} else {
+			hdr->hdr_lba_alt = htole64(last);
+			hdr->hdr_crc_self = 0;
+			hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+			gpt_write(gd, gd->gpt);
+			gpt_status(gd, -1, "media size updated in primary GPT header");
+			return;
+		}
+	}
+
 	if (gd->tbl != NULL && gd->lbt == NULL) {
 		gd->lbt = map_add(gd, last - gd->tbl->map_size,
 		    gd->tbl->map_size, MAP_TYPE_SEC_GPT_TBL,
