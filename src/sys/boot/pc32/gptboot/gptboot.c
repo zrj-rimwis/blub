@@ -38,12 +38,8 @@
 #include "util.h"
 #include "cons.h"
 #include "gpt.h"
+#include "paths.h"
 #include "../bootasm.h"
-
-#define PATH_CONFIG	"/boot.config"
-#define PATH_BOOT3	"/boot/loader"		/* /boot in root */
-#define PATH_BOOT3_ALT	"/loader"		/* /boot is dedicated */
-#define PATH_KERNEL	"/boot/kernel/kernel"
 
 #define NOPT		14
 #define NDEV		3
