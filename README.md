@@ -2,6 +2,8 @@
 BLUB (short for BSD Licensed Unreal Bootloader)
 
 
+v1.3 - gptboot almost working
+
 v1.2 - gpt support(still problems with caching)
 
 v1.1.1  few reverts and whitespace cleanup
