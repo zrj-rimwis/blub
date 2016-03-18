@@ -1,0 +1,74 @@
+
+# download custom dfly iso or usb image preloaded with blub
+# boot it and login as root
+# (we are not going to use installer cause it helps to know your system)
+# find out how main hardrive is called, look into /dev/{adX*,daX*}
+# in qemu it shows up as ad0 , ad1 etc
+# while my lenovo haswell lappy it is /dev/da0 , /dev/da1 etc
+
+fgdisk create -f ad0          # -f if contains MBR
+fgdisk show ad0
+fgdisk installboot ad0        # should create /dev/ad0s0 containing gptboot
+
+# create ufs1 partition for /boot, 1GB should be fine
+# create hammer partition for / covering rest of the disk
+# remember that fgdisk takes sizes as sectors (too lazy implement meatbag input)
+
+fgdisk add -t ufs -b 2048 -s 2097152 -l "dedicated ufs /boot" ad0
+fgdisk add -t hammer -b 2099200 -l "hammer root" ad0
+
+# note: you can use full uuids too for -t flag
+# boot    == 83bd6b9d-7f41-11dc-be0b-001560b84f0f  (FreeBSD boot aka gptboot)
+# ufs     == 9d94ce7c-1ca5-11dc-8817-01301bb8a9f5  (DragonFly UFS1)
+# hammer  == 61dc63ac-6e38-11dc-8513-01301bb8a9f5  (DragonFly HAMMER)
+# fufs    == 516e7cb6-6ecf-11d6-8ff8-00022d09712b  (FreeBSD UFS/UFS2)
+
+# you should get something like this:
+fgdisk show -l ad0
+     start      size  index  contents
+         0         1         PMBR
+         1         1         Pri GPT header
+         2        32         Pri GPT table
+        34       128      1  GPT part - "GPTBOOT"
+       162      1886         Unused
+      2048   2097152      2  GPT part - "dedicated ufs /boot"
+   2099200  29358047      3  GPT part - "hammer root"
+  31457247        32         Sec GPT table
+  31457279         1         Sec GPT header
+
+# format new file-systems
+newfs -L BOOT /dev/ad0s1
+newfs_hammer -L ROOT /dev/ad0s2
+
+# now prepare /mnt tree
+mount -t hammer /dev/ad0s2 /mnt
+mkdir /mnt/boot
+mount -t ufs /dev/ad0s1 /mnt/boot
+
+# now cpdup the install image files
+# (remember that cpdup doesn't copy over mounts)
+cpdup -v /boot /mnt/boot
+cpdup -v / /mnt
+cpdup -v /var /mnt/var
+
+# cleanup the install image crud
+rm -rf /mnt/{autorun*,*.ico,index.html,etc,README*,boot.catalog}
+
+# perform steps normally done by installer
+mv /mnt/etc.hdd /mnt/etc
+
+echo 'vfs.root.mountfrom="hammer:ad0s2"' > /mnt/boot/loader.conf
+echo "/dev/ad0s2 /     hammer rw,noatime 0 1" > /mnt/etc/fstab
+echo "/dev/ad0s1 /boot ufs    rw,noatime 0 2" >> /mnt/etc/fstab
+echo "tmpfs      /tmp  tmpfs  rw,noatime 0 0" >> /mnt/etc/fstab
+echo "proc       /proc procfs rw         0 0" >> /mnt/etc/fstab
+sync
+
+# perform any other customizations you normally do
+
+umount /mnt/boot
+umount /mnt
+sync
+reboot
+
+# boot da system, hopefully it will boot

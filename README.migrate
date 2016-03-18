@@ -1,0 +1,43 @@
+
+### migrate example (MBR -> GPT) (applies to both HAMMER and UFS)
+
+# use already installed system
+# or install official DragonFly BSD using installer as usual
+# after installation is done exit installer and drop to login prompt
+
+# login as root
+# find out how main hardrive is called, look into /dev/{adX*,daX*}
+# in qemu it shows up as ad0 , ad1 etc
+# while my lenovo haswell lappy it is /dev/da0 , /dev/da1 etc
+# next of example assumes DragonFly was installed to ad0 with standard layout
+# (Use HAMMER or Use UFS will only have a minor difference in mount -t argument)
+
+disklabel64 -W ad0s1      # not sure if needed but .. (disables write-protect?)
+
+fgdisk migrate ad0
+
+# yup that is all that was needed (assuming there was space for secondary gpt)
+# (disk should be migrated from disklabels to gpt partitions)
+fgdisk show ad0           # check if everything was migrated OK
+
+fgdisk installboot ad0    # install gptboot loader into new "boot" partition
+
+# now to adjust loader.conf and fstab entries (assuming standard layout)
+
+mount -t ufs ad0s0 /mnt   # ech if only no compat "slice"...
+vi /mnt/loader.conf # replace QM00001.s1d => QM00001.s2
+umount /mnt
+
+mount -t hammer ad0s2 /mnt   # in case of "Use UFS" change -t hammer -> -t ufs
+vi /mnt/etc/fstab   # replace .s1a => .s0 ; .s1b => .s1 ; .s1d => .s2
+vi /mnt/etc/rc.conf # replace .s1b => .s1
+sync
+umount /mnt
+
+# optionally set "bootme" attribute to /dev/ad0s0 (the ufs1 containing /boot)
+# (still remember that gpt partitions in dfly starts from 0 not 1!)
+fgdisk flag -s bootme -i 1 ad0   # should print: (compat: ad0s0) flags changed
+fgdisk show -i 1 ad0             # check if bootme flag is set
+
+sync
+reboot              # hopefully it will boot as if nothing has happened ;)

@@ -1,0 +1,62 @@
+
+# download custom dfly iso or usb image preloaded with blub
+# boot it and login as root
+# (we are not going to use installer cause it helps to know your system)
+# find out how main hardrive is called, look into /dev/{adX*,daX*}
+# in qemu it shows up as ad0 , ad1 etc
+# while my lenovo haswell lappy it is /dev/da0 , /dev/da1 etc
+
+fgdisk create -f ad0          # -f if contains MBR
+fgdisk show ad0
+fgdisk installboot ad0        # should create /dev/ad0s0 containing gptboot
+
+# create ufs1 partition for single / covering whole disk
+# spliting /boot /usr still possible, just more entries in fstab
+# remember that fgdisk takes sizes as sectors (too lazy implement meatbag input)
+
+fgdisk add -b 4096 -t ufs ad0 # eat me! use your brains and 1M-align manually
+fgdisk show ad0               # should contain just two partitions, 1 and 2
+newfs /dev/ad0s1              # format ufs, s1 == index 2 in gpt partitions!
+
+# install steps (still remember that gpt partitions in dfly starts from 0 not 1!)
+mount -t ufs /dev/ad0s1 /mnt
+
+# remember that cpdup doesn't coppy over different mount points
+time cpdup -v / /mnt
+time cpdup -v /var /mnt/var
+time cpdup -v /usr /mnt/usr   # should be not needed if /usr wasn't split from /
+
+# cleanup the install image crud
+rm -rf /mnt/{autorun*,*.ico,index.html,etc,README*,boot.catalog}
+
+# perform steps normally done by installer
+mv /mnt/etc.hdd /mnt/etc
+echo "" > /mnt/boot/loader.conf           # should be fine empty for non split /
+echo "/dev/ad0s1 / ufs rw,noatime 0 1" > /mnt/etc/fstab
+echo "tmpfs /tmp tmpfs rw,noatime 0 0" >> /mnt/etc/fstab
+echo "proc /proc procfs rw 0 0"        >> /mnt/etc/fstab
+sync
+
+# perform any other customizations you normally do
+
+umount /mnt
+reboot
+
+# boot da system, hopefully it will boot
+
+
+
+# for GRUB just sacrify any gpt part or create a new one
+# use gdisk and change its type to a503 (FreeBSD data or fufs type in fgdisk)
+# and continue from from newfs step as before
+# then in grub config add entry to boot DragonFly ufs partition
+# (this is what I do to get dual boot with Arch Linux)
+# vim /boot/grub/grub.cfg      # after ### BEGIN /etc/gub.d/40_custom ### add:
+menuentry "DragonFly BSD through grub2 on gpt" {
+  set root=(hd0,gpt3)
+  kfreebsd /boot/loader.local
+}
+
+# assuming gpt3 is index==3 or /dev/da0s2 in DragonFly where ufs / is located
+# in split setup (say /boot - ufs, / - hammer) use kfreebsd /loader.local
+# and add vfs.root.mountfrom="hammer:da0sXX" into loader.conf
