@@ -274,6 +274,33 @@ The
 .Ic help
 command displays a compact list of available commands
 with their short descriptions.
+.\" ==== installefi ====
+.It Xo
+.Nm
+.Ic installefi
+.Op Fl b Ar efi.fat
+.Op Fl s Ar sectors
+.Ar device ...
+.Xc
+The
+.Ic installefi
+command allows the user to make a GPT labeled disk bootable via the efi.
+By default,
+the
+.Pa /boot/boot1.efifat
+boot loader is installed into the first efi partition.
+If no efi partition exists and there is available space,
+a efi partition will be created.
+.Pp
+The
+.Fl b Ar efi.fat
+option allows the user to specify an alternate path for the efi.fat image.
+.Pp
+The
+.Fl s Ar sectors
+option allows the user to specify the size of the efi partition in
+.Ar sectors
+if one does not already exist, default size is 800Kb.
 .\" ==== label ====
 .It Xo
 .Nm

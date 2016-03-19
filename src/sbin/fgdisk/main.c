@@ -49,6 +49,7 @@ static struct {
 	{ pcmd_help, "help" },
 	{ cmd_label, "label" },
 	{ cmd_installboot, "installboot" },
+	{ cmd_installefi, "installefi" },
 	{ cmd_migrate, "migrate" },
 	{ cmd_recover, "recover" },
 	{ cmd_remove, "remove" },
@@ -80,6 +81,7 @@ pcmd_help(int argc __unused, char *argv[] __unused)
 	    "    help        - print this help\n"
 	    "    label       - change labels of gpt partions\n"
 	    "    installboot - install gptboot with pmbr for bios-gpt boot\n"
+	    "    installefi  - install efi.fat image for efi-gpt boot\n"
 	    "    migrate     - migrate slices to gpt partitions\n"
 	    "    recover     - gpt disk recovery\n"
 	    "    remove      - remove gpt partition\n"

@@ -75,10 +75,11 @@ void	utf16_to_utf8(const uint16_t *, uint8_t *, size_t);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
 int	cmd_add(int, char *[]);
-int	cmd_installboot(int, char *[]);
 int	cmd_create(int, char *[]);
 int	cmd_destroy(int, char *[]);
 int	cmd_flag(int, char *[]);
+int	cmd_installboot(int, char *[]);
+int	cmd_installefi(int, char *[]);
 int	cmd_label(int, char *[]);
 int	cmd_migrate(int, char *[]);
 int	cmd_recover(int, char *[]);
