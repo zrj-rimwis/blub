@@ -33,62 +33,62 @@ __FBSDID("$FreeBSD: head/sys/boot/efi/libefi/errno.c 164010 2006-11-05 22:03:04Z
 int
 efi_status_to_errno(EFI_STATUS status)
 {
-	int errno;
+	int ret;
 
 	switch (status) {
 	case EFI_ACCESS_DENIED:
-		errno = EPERM;
+		ret = EPERM;
 		break;
 
 	case EFI_BUFFER_TOO_SMALL:
-		errno = EOVERFLOW;
+		ret = EOVERFLOW;
 		break;
 
 	case EFI_DEVICE_ERROR:
 	case EFI_VOLUME_CORRUPTED:
-		errno = EIO;
+		ret = EIO;
 		break;
 
 	case EFI_INVALID_PARAMETER:
-		errno = EINVAL;
+		ret = EINVAL;
 		break;
 
 	case EFI_MEDIA_CHANGED:
-		errno = ESTALE;
+		ret = ESTALE;
 		break;
 
 	case EFI_NO_MEDIA:
-		errno = ENXIO;
+		ret = ENXIO;
 		break;
 
 	case EFI_NOT_FOUND:
-		errno = ENOENT;
+		ret = ENOENT;
 		break;
 
 	case EFI_OUT_OF_RESOURCES:
-		errno = ENOMEM;
+		ret = ENOMEM;
 		break;
 
 	case EFI_UNSUPPORTED:
-		errno = ENODEV;
+		ret = ENODEV;
 		break;
 
 	case EFI_VOLUME_FULL:
-		errno = ENOSPC;
+		ret = ENOSPC;
 		break;
 
 	case EFI_WRITE_PROTECTED:
-		errno = EACCES;
+		ret = EACCES;
 		break;
 
 	case 0:
-		errno = 0;
+		ret = 0;
 		break;
 
 	default:
-		errno = EDOOFUS;
+		ret = EDOOFUS;
 		break;
 	}
 
-	return (errno);
+	return (ret);
 }
