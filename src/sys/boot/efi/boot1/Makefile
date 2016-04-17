@@ -25,7 +25,7 @@ CFLAGS+=	-DEFI_DEBUG
 .PATH:		${.CURDIR}/../../common
 CFLAGS+=	-I${.CURDIR}/../../common
 
-FILES=	boot1.efi
+FILES=	boot1.efi boot1.efifat
 FILESMODE_boot1.efi=	${BINMODE}
 
 LDSCRIPT=	${.CURDIR}/../loader/arch/${MACHINE}/ldscript.${MACHINE}
@@ -74,24 +74,22 @@ boot1.o: ${.CURDIR}/../../common/ufsread.c
 # The following inserts our objects into a template FAT file system
 # created by generate-fat.sh
 
-# XXX generate-fat.sh needs porting
-#.include "${.CURDIR}/Makefile.fat"
-#BOOT1_MAXSIZE?=	131072
+.include "${.CURDIR}/Makefile.fat"
+BOOT1_MAXSIZE?=	131072
 
-#boot1.efifat: boot1.efi
-#	@set -- `ls -l boot1.efi`; \
-#	x=$$(($$5-${BOOT1_MAXSIZE})); \
-#	if [ $$x -ge 0 ]; then \
-#	    echo "boot1 $$x bytes too large; regenerate FAT templates?" >&2 ;\
-#	    exit 1; \
-#	fi
-#	echo ${.OBJDIR}
-#	uudecode ${.CURDIR}/fat-${MACHINE}.tmpl.bz2.uu
-#	mv fat-${MACHINE}.tmpl.bz2 ${.TARGET}.bz2
-#	bzip2 -f -d ${.TARGET}.bz2
-#	dd if=boot1.efi of=${.TARGET} seek=${BOOT1_OFFSET} conv=notrunc \
-#	    status=none
+boot1.efifat: boot1.efi
+	@set -- `ls -l boot1.efi`; \
+	x=$$(($$5-${BOOT1_MAXSIZE})); \
+	if [ $$x -ge 0 ]; then \
+	    echo "boot1 $$x bytes too large; regenerate FAT templates?" >&2 ;\
+	    exit 1; \
+	fi
+	echo ${.OBJDIR}
+	uudecode ${.CURDIR}/fat-${MACHINE}.tmpl.bz2.uu
+	mv fat-${MACHINE}.tmpl.bz2 ${.TARGET}.bz2
+	bzip2 -f -d ${.TARGET}.bz2
+	dd if=boot1.efi of=${.TARGET} seek=${BOOT1_OFFSET} conv=notrunc
 
-CLEANFILES= boot1.efi
+CLEANFILES= boot1.efi boot1.efifat
 
 .include <bsd.prog.mk>
