@@ -339,11 +339,11 @@ main(int argc, CHAR16 *argv[])
 
 	switch (dev->dv_type) {
 	default: {
-		struct efi_devdesc currdev;
+		struct devdesc currdev;
 
 		currdev.d_dev = dev;
-		currdev.d_kind.efidisk.unit = unit;
-		currdev.d_kind.efidisk.data = NULL;
+		currdev.d_unit = unit;
+		currdev.d_opendata = NULL;
 		currdev.d_type = currdev.d_dev->dv_type;
 		env_setenv("currdev", EV_VOLATILE, efi_fmtdev(&currdev),
 			   efi_setcurrdev, env_nounset);
