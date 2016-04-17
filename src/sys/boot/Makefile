@@ -16,4 +16,9 @@ SUBDIR+=		pc32
 SUBDIR+=		${MACHINE_PLATFORM}
 .endif
 
+# UEFI support
+.if !defined(LOADER_NO_EFI_SUPPORT)
+SUBDIR+=		efi
+.endif
+
 .include <bsd.subdir.mk>
