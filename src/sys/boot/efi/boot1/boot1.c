@@ -61,12 +61,6 @@ static EFI_GUID LoadedImageGUID = LOADED_IMAGE_PROTOCOL;
 static EFI_GUID ConsoleControlGUID = EFI_CONSOLE_CONTROL_PROTOCOL_GUID;
 
 /*
- * XXX DragonFly's libstand doesn't provide a way to override the malloc
- *     implementation yet.
- */
-#if 0
-
-/*
  * Provide Malloc / Free backed by EFIs AllocatePool / FreePool which ensures
  * memory is correctly aligned avoiding EFI_INVALID_PARAMETER returns from
  * EFI methods.
@@ -87,8 +81,6 @@ Free(void *buf, const char *file __unused, int line __unused)
 {
 	(void)bs->FreePool(buf);
 }
-
-#endif
 
 /*
  * nodes_match returns TRUE if the imgpath isn't NULL and the nodes match,
