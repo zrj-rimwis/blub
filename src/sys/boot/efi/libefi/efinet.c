@@ -138,7 +138,7 @@ efinet_put(struct iodesc *desc, void *pkt, size_t len)
 	} while (status == EFI_SUCCESS && buf == 0);
 
 	/* XXX How do we deal with status != EFI_SUCCESS now? */
-	return ((status == EFI_SUCCESS) ? len : -1);
+	return ((status == EFI_SUCCESS) ? (int)len : -1);
 }
 
 static int
@@ -260,7 +260,7 @@ struct devsw efinet_dev = {
 };
 
 static int
-efinet_dev_init()
+efinet_dev_init(void)
 {
 	struct netif_dif *dif;
 	struct netif_stats *stats;

@@ -47,6 +47,8 @@ __FBSDID("$FreeBSD: head/sys/boot/efi/libefi/time.c 295869 2016-02-21 21:20:23Z 
 #include <time.h>
 #include <sys/time.h>
 
+extern time_t getsecs(void);
+
 /*
 // Accurate only for the past couple of centuries;
 // that will probably do.
@@ -218,7 +220,7 @@ time(time_t *tloc)
 }
 
 time_t
-getsecs()
+getsecs(void)
 {
-    return time(0);
+	return time(0);
 }
