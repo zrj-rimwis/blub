@@ -128,7 +128,7 @@ static void
 efi_cons_rawputchar(int c)
 {
 	int i;
-	UINTN x, y;
+	INTN x, y;
 	conout->QueryMode(conout, conout->Mode->Mode, &x, &y);
 
 	if (c == '\t')
@@ -204,7 +204,7 @@ bail_out(int c)
 static void
 CD(void) {
 	int i;
-	UINTN x, y;
+	INTN x, y;
 
 	get_pos(&curx, &cury);
 	if (curx == 0 && cury == 0) {
@@ -252,7 +252,7 @@ static void
 CL(int direction)
 {
 	int i, len;
-	UINTN x, y;
+	INTN x, y;
 	CHAR16 *line;
 
 	conout->QueryMode(conout, conout->Mode->Mode, &x, &y);
@@ -422,7 +422,7 @@ efi_cons_putchar(int c)
 }
 
 int
-efi_cons_getchar()
+efi_cons_getchar(void)
 {
 	EFI_INPUT_KEY key;
 	EFI_STATUS status;
@@ -444,7 +444,7 @@ efi_cons_getchar()
 }
 
 int
-efi_cons_poll()
+efi_cons_poll(void)
 {
 	/* This can clear the signaled state. */
 	return (BS->CheckEvent(conin->WaitForKey) == EFI_SUCCESS);
@@ -479,7 +479,7 @@ efi_cons_efiputchar(int c)
 	default:
 		buf[0] = c;
 	}
-        buf[1] = 0;     /* terminate string */
+	buf[1] = 0;     /* terminate string */
 
 	conout->OutputString(conout, buf);
 }

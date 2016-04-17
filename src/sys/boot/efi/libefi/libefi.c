@@ -39,6 +39,8 @@ EFI_RUNTIME_SERVICES	*RS;
 
 static EFI_PHYSICAL_ADDRESS heap;
 static UINTN heapsize;
+/* XXX recheck .S if really void */
+void efi_main(EFI_HANDLE Ximage, EFI_SYSTEM_TABLE* Xsystab);
 
 static CHAR16 *
 arg_skipsep(CHAR16 *argp)
@@ -62,7 +64,7 @@ void *
 efi_get_table(EFI_GUID *tbl)
 {
 	EFI_GUID *id;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < ST->NumberOfTableEntries; i++) {
 		id = &ST->ConfigurationTable[i].VendorGuid;
@@ -89,7 +91,8 @@ efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table)
 	EFI_LOADED_IMAGE *img;
 	CHAR16 *argp, *args, **argv;
 	EFI_STATUS status;
-	int argc, addprog;
+	unsigned int argc;
+	int addprog;
 
 	IH = image_handle;
 	ST = system_table;
@@ -160,7 +163,7 @@ efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table)
 		    (DevicePathType(img->FilePath) != MEDIA_DEVICE_PATH ||
 		     DevicePathSubType(img->FilePath) != MEDIA_FILEPATH_DP ||
 		     DevicePathNodeLength(img->FilePath) <=
-			sizeof(FILEPATH_DEVICE_PATH)) ? 1 : 0;
+			(ssize_t)sizeof(FILEPATH_DEVICE_PATH)) ? 1 : 0;
 		if (!addprog) {
 			/* XXX todo. */
 		}
