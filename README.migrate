@@ -30,8 +30,9 @@ vi /mnt/loader.conf # replace QM00001.s1d => QM00001.s2
 umount /mnt
 
 mount -t hammer ad0s2 /mnt   # in case of "Use UFS" change -t hammer -> -t ufs
-vi /mnt/etc/fstab   # replace .s1a => .s0 ; .s1b => .s1 ; .s1d => .s2
-vi /mnt/etc/rc.conf # replace .s1b => .s1
+vi /mnt/etc/fstab   # replace .s1a => .s0 ; .s1d => .s2
+# XXX .s1b => .s1 # read NOTE 1
+# XXX vi /mnt/etc/rc.conf # replace .s1b => .s1
 sync
 umount /mnt
 
@@ -42,3 +43,10 @@ fgdisk show -i 1 ad0             # check if bootme flag is set
 
 sync
 reboot              # hopefully it will boot as if nothing has happened ;)
+
+
+# NOTE 1
+# Turns out having swap or dumpdev in non disklabel slice is very unreliable
+# As a quick workaround one can just create a dummy disklabel in gpt swap partition:
+# disklabel64 -B -r -w /dev/daX.s1 auto && disklabel64 -e /dev/daX.s1
+# with a type of "b: * * swap" that would give .s1b sub partition for swap/dumpdev
