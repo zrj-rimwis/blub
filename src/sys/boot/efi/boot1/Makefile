@@ -14,7 +14,7 @@ CFLAGS+=	-I${.CURDIR}/../include
 CFLAGS+=	-I${.CURDIR}/../include/${MACHINE}
 CFLAGS+=	-I${.CURDIR}/../../../contrib/dev/acpica/source/include
 CFLAGS+=	-I${.CURDIR}/../../..
-CFLAGS+=	-DEFI_UFS_BOOT
+CFLAGS+=	-DEFI_UFS_BOOT -DUFS -DUFS1_ONLY
 .ifdef(EFI_DEBUG)
 CFLAGS+=	-DEFI_DEBUG
 .endif

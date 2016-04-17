@@ -40,6 +40,8 @@
 
 #include "boot_module.h"
 
+#include "boot2.h"
+
 static dev_info_t *devinfo;
 static dev_info_t *devices;
 
@@ -68,25 +70,22 @@ dskread(void *buf, u_int64_t lba, int nblk)
 
 /* For ufsread.c */
 uint64_t fs_off;
-int ls;
-
-static struct ufs_dmadat __dmadat;
-static struct ufs_dmadat *boot2_dmadat;
+int	no_io_error;
+int	ls;
+struct boot2_dmadat *boot2_dmadat;
 
 #include "ufsread.c"
 
-#define fsread boot2_ufs_read
-#define fsread_size boot2_ufs_read_size
-#define lookup boot2_ufs_lookup
+#define fsapi	(&boot2_ufs_api)
 
 static int
 init_dev(dev_info_t* dev)
 {
 
 	devinfo = dev;
-	boot2_dmadat = &__dmadat;
+	boot2_dmadat = boot2_dmadat;
 
-	return fsread(0, NULL, 0);
+	return fsapi->fsread(0, NULL, 0);
 }
 
 static EFI_STATUS
@@ -104,7 +103,7 @@ probe(dev_info_t* dev)
 static EFI_STATUS
 load(const char *filepath, dev_info_t *dev, void **bufp, size_t *bufsize)
 {
-	ufs_ino_t ino;
+	boot2_ino_t ino;
 	EFI_STATUS status;
 	size_t size;
 	ssize_t read;
@@ -117,13 +116,13 @@ load(const char *filepath, dev_info_t *dev, void **bufp, size_t *bufsize)
 		return (EFI_UNSUPPORTED);
 	}
 
-	if ((ino = lookup(filepath)) == 0) {
+	if ((ino = fsapi->fslookup(filepath)) == 0) {
 		DPRINTF("Failed to lookup '%s' (file not found?)\n", filepath);
 		return (EFI_NOT_FOUND);
 	}
 
-	if (fsread_size(ino, NULL, 0, &size) < 0 || size <= 0) {
-		printf("Failed to read size of '%s' ino: %d\n", filepath, ino);
+	if (boot2_ufs_read_size(ino, NULL, 0, &size) < 0 || size <= 0) {
+		printf("Failed to read size of '%s' ino: %d\n", filepath, (int)ino);
 		return (EFI_INVALID_PARAMETER);
 	}
 
@@ -134,7 +133,7 @@ load(const char *filepath, dev_info_t *dev, void **bufp, size_t *bufsize)
 		return (status);
 	}
 
-	read = fsread(ino, buf, size);
+	read = fsapi->fsread(ino, buf, size);
 	if ((size_t)read != size) {
 		printf("Failed to read '%s' (%zd != %zu)\n", filepath, read,
 		    size);
