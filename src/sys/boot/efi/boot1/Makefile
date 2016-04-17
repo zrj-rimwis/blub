@@ -31,17 +31,13 @@ FILESMODE_boot1.efi=	${BINMODE}
 LDSCRIPT=	${.CURDIR}/../loader/arch/${MACHINE}/ldscript.${MACHINE}
 LDFLAGS+=	-Wl,-T${LDSCRIPT} -Wl,-Bsymbolic -shared
 
-.if ${MACHINE_ARCH} == "aarch64"
-CFLAGS+=	-msoft-float -mgeneral-regs-only
-.endif
 .if ${MACHINE_ARCH} == "x86_64"
 CFLAGS+=	-fPIC
 LDFLAGS+=	-Wl,-znocombreloc
 .endif
 
 #
-# Add libstand for the runtime functions used by the compiler - for example
-# __aeabi_* (arm) or __divdi3 (i386).
+# Add libstand for the runtime functions used by the compiler.
 # as well as required string and memory functions for all platforms.
 #
 DPADD+=		${LIBSTAND}
