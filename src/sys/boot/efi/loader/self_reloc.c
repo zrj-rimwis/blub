@@ -31,22 +31,14 @@ __FBSDID("$FreeBSD: head/sys/boot/common/self_reloc.c 293724 2016-01-12 02:17:39
 #include <elf.h>
 #include <bootstrap.h>
 
-#if defined(__aarch64__)
-#define	ElfW_Rel	Elf64_Rela
-#define	ElfW_Dyn	Elf64_Dyn
-#define	ELFW_R_TYPE	ELF64_R_TYPE
-#define	ELF_RELA
-#elif defined(__x86_64__)
+#if defined(__x86_64__)
 #define	ElfW_Rel	Elf64_Rel
 #define	ElfW_Dyn	Elf64_Dyn
 #define	ELFW_R_TYPE	ELF64_R_TYPE
 #else
 #error architecture not supported
 #endif
-#if defined(__aarch64__)
-#define	RELOC_TYPE_NONE		R_AARCH64_NONE
-#define	RELOC_TYPE_RELATIVE	R_AARCH64_RELATIVE
-#elif defined(__x86_64__)
+#if defined(__x86_64__)
 #define	RELOC_TYPE_NONE		R_X86_64_NONE
 #define	RELOC_TYPE_RELATIVE	R_X86_64_RELATIVE
 #endif

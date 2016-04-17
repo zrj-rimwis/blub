@@ -84,7 +84,7 @@ efipart_init(void)
 	if (EFI_ERROR(status))
 		return (efi_status_to_errno(status));
 
-	/* Filter handles to only include FreeBSD partitions. */
+	/* Filter handles to only include DragonFly partitions. */
 	nin = sz / sizeof(EFI_HANDLE);
 	hout = hin + nin;
 	aliases = hout + nin;
