@@ -136,11 +136,11 @@ has_keyboard(void)
 			if (DevicePathType(path) == ACPI_DEVICE_PATH &&
 			    (DevicePathSubType(path) == ACPI_DP ||
 				DevicePathSubType(path) == ACPI_EXTENDED_DP)) {
-				ACPI_HID_DEVICE_PATH  *acpi;
+				ACPI_HID_DEVICE_PATH  *pacpi;
 
-				acpi = (ACPI_HID_DEVICE_PATH *)(void *)path;
-				if ((EISA_ID_TO_NUM(acpi->HID) & 0xff00) == 0x300 &&
-				    (acpi->HID & 0xffff) == PNP_EISA_ID_CONST) {
+				pacpi = (ACPI_HID_DEVICE_PATH *)(void *)path;
+				if ((EISA_ID_TO_NUM(pacpi->HID) & 0xff00) == 0x300 &&
+				    (pacpi->HID & 0xffff) == PNP_EISA_ID_CONST) {
 					retval = 1;
 					goto out;
 				}
