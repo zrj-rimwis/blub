@@ -212,6 +212,8 @@ time_t
 time(time_t *tloc)
 {
 	struct timeval tv;
+
+	tv.tv_sec = 0;
 	EFI_GetTimeOfDay(&tv, 0);
 
 	if (tloc)

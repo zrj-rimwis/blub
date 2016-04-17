@@ -2,7 +2,7 @@
 
 LIB=	efi
 INTERNALLIB=
-WARNS?=	4
+WARNS?=	5
 
 SRCS=	delay.c efi_console.c efinet.c efipart.c errno.c handles.c \
 	libefi.c time.c
