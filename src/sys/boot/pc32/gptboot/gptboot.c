@@ -95,7 +95,6 @@ static struct bootinfo bootinfo;
 uint32_t fs_off;
 int	no_io_error;
 int	ls;
-static u_int8_t dsk_meta;
 struct boot2_dmadat *boot2_dmadat;
 
 void exit(int);
@@ -175,7 +174,6 @@ gptinit(void)
 		}
 		printf("%s: retrying with FreeBSD UFS partition\n", BOOTPROG);
 	}
-	dsk_meta = 0;
 	return (0);
 }
 
@@ -283,7 +281,6 @@ printf("zrj drive=%u, type=%u, unit=%u\n", dsk.drive,dsk.type,dsk.unit);
 				break;
 			}
 		}
-		dsk_meta = 0;
 	}
 
 	/* Present the user with the boot2 prompt. */
