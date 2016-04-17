@@ -148,7 +148,7 @@ efipart_init(void)
 }
 
 static void
-efipart_print(int verbose)
+efipart_print(int verbose __unused)
 {
 	char line[80];
 	EFI_BLOCK_IO *blkio;

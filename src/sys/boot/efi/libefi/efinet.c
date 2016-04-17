@@ -108,7 +108,7 @@ efinet_match(struct netif *nif, void *machdep_hint)
 }
 
 static int
-efinet_probe(struct netif *nif, void *machdep_hint)
+efinet_probe(struct netif *nif __unused, void *machdep_hint __unused)
 {
 	return (0);
 }
@@ -177,7 +177,7 @@ efinet_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 }
 
 static void
-efinet_init(struct iodesc *desc, void *machdep_hint)
+efinet_init(struct iodesc *desc, void *machdep_hint __unused)
 {
 	struct netif *nif = desc->io_netif;
 	EFI_SIMPLE_NETWORK *net;
@@ -323,7 +323,7 @@ efinet_dev_init(void)
 }
 
 static void
-efinet_dev_print(int verbose)
+efinet_dev_print(int verbose __unused)
 {
 	char line[80];
 	EFI_HANDLE h;
