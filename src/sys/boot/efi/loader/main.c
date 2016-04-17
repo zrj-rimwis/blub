@@ -371,7 +371,7 @@ main(int argc, CHAR16 *argv[])
 COMMAND_SET(reboot, "reboot", "reboot the system", command_reboot);
 
 static int
-command_reboot(int argc, char *argv[])
+command_reboot(int argc __unused, char *argv[] __unused)
 {
 	int i;
 
@@ -389,7 +389,7 @@ command_reboot(int argc, char *argv[])
 COMMAND_SET(quit, "quit", "exit the loader", command_quit);
 
 static int
-command_quit(int argc, char *argv[])
+command_quit(int argc __unused, char *argv[] __unused)
 {
 	exit(0);
 	return (CMD_OK);
@@ -398,7 +398,7 @@ command_quit(int argc, char *argv[])
 COMMAND_SET(memmap, "memmap", "print memory map", command_memmap);
 
 static int
-command_memmap(int argc, char *argv[])
+command_memmap(int argc __unused, char *argv[] __unused)
 {
 	UINTN sz;
 	EFI_MEMORY_DESCRIPTOR *map, *p;
@@ -483,7 +483,7 @@ guid_to_string(EFI_GUID *guid)
 }
 
 static int
-command_configuration(int argc, char *argv[])
+command_configuration(int argc __unused, char *argv[] __unused)
 {
 	UINTN i;
 
@@ -578,7 +578,7 @@ command_mode(int argc, char *argv[])
 COMMAND_SET(nvram, "nvram", "get or set NVRAM variables", command_nvram);
 
 static int
-command_nvram(int argc, char *argv[])
+command_nvram(int argc __unused, char *argv[] __unused)
 {
 	CHAR16 var[128];
 	CHAR16 *data;

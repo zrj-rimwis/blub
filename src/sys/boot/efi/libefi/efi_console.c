@@ -109,7 +109,7 @@ efi_cons_probe(struct console *cp)
 }
 
 static int
-efi_cons_init(int arg)
+efi_cons_init(int arg __unused)
 {
 	conout->SetAttribute(conout, EFI_TEXT_ATTR(DEFAULT_FGCOLOR,
 	    DEFAULT_BGCOLOR));
