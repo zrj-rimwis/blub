@@ -6,6 +6,7 @@ MK_SSP=		no
 
 PROG=		loader.sym
 INTERNALPROG=
+NOMAN=
 WARNS?=		3
 
 # architecture-specific loader code
@@ -38,13 +39,12 @@ CFLAGS+=	-DNO_PCI -DEFI
 
 # make buildenv doesn't set DESTDIR, this means LIBSTAND
 # will be wrong when crossbuilding.
-.if exists(${.OBJDIR}/../../../../lib/libstand/libstand.a)
 LIBSTAND=	${.OBJDIR}/../../../../lib/libstand/libstand.a
-.endif
 
-.if exists(${.OBJDIR}/../../dloader/libdloader.a)
 LIBDLOADER=	${.OBJDIR}/../../dloader/libdloader.a
-.endif
+
+# Ensure to use correct stand.h header
+CFLAGS+=	-I${.CURDIR}/../../../../lib/libstand
 
 .if defined(EFI_STAGING_SIZE)
 CFLAGS+=	-DEFI_STAGING_SIZE=${EFI_STAGING_SIZE}
