@@ -64,6 +64,10 @@ struct ufs_dmadat {
 
 #define fsdmadat	((struct ufs_dmadat *)boot2_dmadat)
 
+#ifndef BOOT2
+static uint8_t dsk_meta;
+#endif
+
 static boot2_ino_t boot2_ufs_lookup(const char *);
 static ssize_t boot2_ufs_read(boot2_ino_t, void *, size_t);
 static int boot2_ufs_init(void);
@@ -186,7 +190,8 @@ boot2_ufs_init(void)
 }
 
 static ssize_t
-boot2_ufs_read(boot2_ino_t boot2_inode, void *buf, size_t nbyte)
+boot2_ufs_read_size(boot2_ino_t boot2_inode, void *buf, size_t nbyte,
+    size_t *fsizep)
 {
 #ifndef UFS2_ONLY
 	static struct ufs1_dinode dp1;
@@ -208,8 +213,26 @@ boot2_ufs_read(boot2_ino_t boot2_inode, void *buf, size_t nbyte)
 	indbuf = fsdmadat->indbuf;
 	fs = (struct fs *)fsdmadat->sbbuf;
 
+#ifndef BOOT2
+	/*
+	 * Force probe if inode is zero to ensure we have a valid fs, otherwise
+	 * when probing multiple partitions, reads from subsequent partitions
+	 * will incorrectly succeed.
+	 */
+	if (!dsk_meta || boot2_inode == 0) {
+		inomap = 0;
+		dsk_meta = 0;
+		if (boot2_ufs_init() == 0)
+			dsk_meta++;
+	}
+#endif
+
 	if (!ufs_inode)
 		return 0;
+#ifndef BOOT2
+	else if (!dsk_meta)
+		return -1;
+#endif
 	if (inomap != ufs_inode) {
 		n = IPERVBLK(fs);
 		if (dskread(blkbuf, INO_TO_VBA(fs, n, ufs_inode), DBPERVBLK))
@@ -266,7 +289,7 @@ boot2_ufs_read(boot2_ino_t boot2_inode, void *buf, size_t nbyte)
 		}
 		vbaddr = fsbtodb(fs, addr) + (off >> VBLKSHIFT) * DBPERVBLK;
 		vboff = off & VBLKMASK;
-		n = sblksize(fs, size, lbn) - (off & ~VBLKMASK);
+		n = sblksize(fs, (ssize_t)size, lbn) - (off & ~VBLKMASK);
 		if (n > VBLKSIZE)
 			n = VBLKSIZE;
 		if (blkmap != vbaddr) {
@@ -282,5 +305,15 @@ boot2_ufs_read(boot2_ino_t boot2_inode, void *buf, size_t nbyte)
 		fs_off += n;
 		nb -= n;
 	}
+
+	if (fsizep != NULL)
+		*fsizep = size;
+
 	return nbyte;
+}
+
+static ssize_t
+boot2_ufs_read(boot2_ino_t boot2_inode, void *buf, size_t nbyte)
+{
+	return boot2_ufs_read_size(boot2_inode, buf, nbyte, NULL);
 }
