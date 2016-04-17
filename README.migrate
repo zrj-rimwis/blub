@@ -21,6 +21,7 @@ fgdisk migrate ad0
 fgdisk show ad0           # check if everything was migrated OK
 
 fgdisk installboot ad0    # install gptboot loader into new "boot" partition
+### optionally: fgdisk installefi ad0 # if you want to boot from uefi
 
 # now to adjust loader.conf and fstab entries (assuming standard layout)
 

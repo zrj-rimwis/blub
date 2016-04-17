@@ -9,6 +9,7 @@
 fgdisk create -f ad0          # -f if contains MBR
 fgdisk show ad0
 fgdisk installboot ad0        # should create /dev/ad0s0 containing gptboot
+### optionally: fgdisk installefi ad0 # if you want to boot from uefi
 
 # create ufs1 partition for single / covering whole disk
 # spliting /boot /usr still possible, just more entries in fstab
