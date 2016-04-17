@@ -33,7 +33,7 @@ __FBSDID("$FreeBSD: head/sys/boot/efi/loader/main.c 295408 2016-02-08 19:34:17Z 
 #include <sys_boot.h>
 #include <stand.h>
 #include <string.h>
-#include <setjmp.h>
+/* #include <setjmp.h> */
 
 #include <efi.h>
 #include <efilib.h>
@@ -47,6 +47,7 @@ extern char bootprog_name[];
 extern char bootprog_rev[];
 extern char bootprog_date[];
 extern char bootprog_maker[];
+extern void HO(void);
 
 struct arch_switch archsw;	/* MI/MD interface boundary */
 
@@ -534,7 +535,6 @@ command_mode(int argc, char *argv[])
 	char rowenv[8];
 	EFI_STATUS status;
 	SIMPLE_TEXT_OUTPUT_INTERFACE *conout;
-	extern void HO(void);
 
 	conout = ST->ConOut;
 

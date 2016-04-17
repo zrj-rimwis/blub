@@ -7,7 +7,7 @@ MK_SSP=		no
 PROG=		loader.sym
 INTERNALPROG=
 NOMAN=
-WARNS?=		5
+WARNS?=		6
 
 # architecture-specific loader code
 SRCS=	autoload.c \
