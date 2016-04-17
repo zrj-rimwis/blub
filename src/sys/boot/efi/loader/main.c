@@ -30,7 +30,7 @@ __FBSDID("$FreeBSD: head/sys/boot/efi/loader/main.c 295408 2016-02-08 19:34:17Z 
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include <sys/boot.h>
+#include <sys_boot.h>
 #include <stand.h>
 #include <string.h>
 #include <setjmp.h>
