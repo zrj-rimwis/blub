@@ -29,6 +29,9 @@
 #ifndef _BOOT_DEV_NET_H_
 #define _BOOT_DEV_NET_H_
 
+/* XXX: already in stand.h */
+#if 0
 extern struct devsw netdev;
+#endif
 
 #endif

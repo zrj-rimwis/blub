@@ -30,6 +30,8 @@ __FBSDID("$FreeBSD: head/sys/boot/efi/libefi/delay.c 113038 2003-04-03 21:36:33Z
 #include <efi.h>
 #include <efilib.h>
 
+#include "bootstrap.h"
+
 void
 delay(int usecs)
 {

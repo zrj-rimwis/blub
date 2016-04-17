@@ -47,9 +47,9 @@ static int esc;
 void get_pos(int *x, int *y);
 void curs_move(int *_x, int *_y, int x, int y);
 static void CL(int);
-void HO(void);
 void end_term(void);
 #endif
+void HO(void);
 
 static void efi_cons_probe(struct console *);
 static int efi_cons_init(int);

@@ -53,8 +53,6 @@ __FBSDID("$FreeBSD: head/sys/boot/efi/loader/bootinfo.c 293724 2016-01-12 02:17:
 
 int bi_load(char *args, vm_offset_t *modulep, vm_offset_t *kernendp);
 
-extern EFI_SYSTEM_TABLE	*ST;
-
 static const char howto_switches[] = "aCdrgmphsv";
 static int howto_masks[] = {
 	RB_ASKNAME, RB_CDROM, RB_KDB, RB_DFLTROOT, RB_GDB,

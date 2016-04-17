@@ -49,4 +49,3 @@ int efi_status_to_errno(EFI_STATUS);
 
 EFI_STATUS main(int argc, CHAR16 *argv[]);
 void exit(EFI_STATUS status);
-void delay(int usecs);
