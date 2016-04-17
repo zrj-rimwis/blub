@@ -240,7 +240,7 @@ command_loadall(int ac __unused, char **av __unused)
 	res = perform((argv[2] == NULL)?2:3, argv);
 	free(argv[0]);
 	free(argv[1]);
-	if (argv[2])
+	if (argv[2] && (*(argv[2]) != '\0'))
 		free(argv[2]);
 
 	if (res != CMD_OK) {
