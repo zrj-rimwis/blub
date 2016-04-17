@@ -111,7 +111,7 @@ __elfN(reloc)(struct elf_file *ef, symaddr_fn *symaddr, const void *reldata,
 	}
 
 	return (0);
-#elif defined(__i386__) && __ELF_WORD_SIZE == 32
+#elif (defined(__i386__) || defined(__x86_64__)) && __ELF_WORD_SIZE == 32
 	Elf_Addr addend, addr, *where, val;
 	Elf_Size rtype, symidx;
 	const Elf_Rel *rel;
