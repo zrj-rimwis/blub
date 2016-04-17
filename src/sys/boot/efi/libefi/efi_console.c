@@ -111,9 +111,9 @@ efi_cons_probe(struct console *cp)
 static int
 efi_cons_init(int arg __unused)
 {
+#ifdef TERM_EMU
 	conout->SetAttribute(conout, EFI_TEXT_ATTR(DEFAULT_FGCOLOR,
 	    DEFAULT_BGCOLOR));
-#ifdef TERM_EMU
 	end_term();
 	get_pos(&curx, &cury);
 	curs_move(&curx, &cury, curx, cury);
@@ -179,6 +179,7 @@ efi_cons_rawputchar(int c)
 }
 
 /* Gracefully exit ESC-sequence processing in case of misunderstanding. */
+#ifdef TERM_EMU
 static void
 bail_out(int c)
 {
@@ -199,8 +200,10 @@ bail_out(int c)
 	efi_cons_rawputchar(c);
 	end_term();
 }
+#endif
 
 /* Clear display from current position to end of screen. */
+#ifdef TERM_EMU
 static void
 CD(void) {
 	int i;
@@ -222,11 +225,13 @@ CD(void) {
 	curs_move(NULL, NULL, curx, cury);
 	end_term();
 }
+#endif
 
 /*
  * Absolute cursor move to args[0] rows and args[1] columns
  * (the coordinates are 1-based).
  */
+#ifdef TERM_EMU
 static void
 CM(void)
 {
@@ -237,17 +242,21 @@ CM(void)
 	curs_move(&curx, &cury, args[1], args[0]);
 	end_term();
 }
+#endif
 
 /* Home cursor (left top corner), also called from mode command. */
 void
 HO(void)
 {
+#ifdef TERM_EMU
 	argc = 1;
 	args[0] = args[1] = 1;
 	CM();
+#endif
 }
 
 /* Clear line from current position to end of line */
+#ifdef TERM_EMU
 static void
 CL(int direction)
 {
@@ -289,7 +298,9 @@ CL(int direction)
 	free(line);
 	end_term();
 }
+#endif
 
+#ifdef TERM_EMU
 static void
 get_arg(int c)
 {
@@ -298,8 +309,10 @@ get_arg(int c)
 	args[argc] *= 10;
 	args[argc] += c - '0';
 }
+#endif
 
 /* Emulate basic capabilities of cons25 terminal */
+#ifdef TERM_EMU
 static void
 efi_term_emu(int c)
 {
@@ -410,6 +423,7 @@ efi_term_emu(int c)
 		break;
 	}
 }
+#endif
 
 void
 efi_cons_putchar(int c)
