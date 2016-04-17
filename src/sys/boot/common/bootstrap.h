@@ -33,6 +33,9 @@
 #include <sys/queue.h>
 #include <sys/linker_set.h>
 
+/* XXX for rel_stat */
+struct stat;
+
 /*
  * Generic device specifier; architecture-dependant
  * versions may be larger, but should be allowed to
