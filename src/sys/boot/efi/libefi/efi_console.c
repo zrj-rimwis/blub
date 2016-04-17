@@ -251,7 +251,7 @@ HO(void)
 static void
 CL(int direction)
 {
-	int i, len;
+	int i, len = 0;
 	INTN x, y;
 	CHAR16 *line;
 
