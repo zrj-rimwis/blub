@@ -93,6 +93,7 @@ efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table)
 	EFI_STATUS status;
 	unsigned int argc;
 	int addprog;
+	static CHAR16 loader_name[] = L"loader.efi";
 
 	IH = image_handle;
 	ST = system_table;
@@ -182,7 +183,7 @@ efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table)
 	argv = malloc((argc + 1) * sizeof(CHAR16*));
 	argc = 0;
 	if (addprog)
-		argv[argc++] = (CHAR16 *)L"loader.efi";
+		argv[argc++] = loader_name;
 	argp = args;
 	while (argp != NULL && *argp != 0) {
 		argp = arg_skipsep(argp);

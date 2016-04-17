@@ -374,13 +374,14 @@ static int
 command_reboot(int argc __unused, char *argv[] __unused)
 {
 	int i;
+	static CHAR16 reboot_msg[] = L"Reboot from the loader";
 
 	for (i = 0; devsw[i] != NULL; ++i)
 		if (devsw[i]->dv_cleanup != NULL)
 			(devsw[i]->dv_cleanup)();
 
 	RS->ResetSystem(EfiResetCold, EFI_SUCCESS, 23,
-	    (CHAR16 *)"Reboot from the loader");
+	    (CHAR16 *)reboot_msg);
 
 	/* NOTREACHED */
 	return (CMD_ERROR);
@@ -406,7 +407,7 @@ command_memmap(int argc __unused, char *argv[] __unused)
 	UINT32 dver;
 	EFI_STATUS status;
 	int i, ndesc;
-	static char *types[] = {
+	static const char *types[] = {
 	    "Reserved",
 	    "LoaderCode",
 	    "LoaderData",

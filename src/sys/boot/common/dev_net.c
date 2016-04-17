@@ -230,6 +230,8 @@ net_getparams(int sock)
 {
 	char buf[MAXHOSTNAMELEN];
 	char temp[FNAME_SIZE];
+	char pgateway[]= "gateway";
+	char proot[]="root";
 	struct iodesc *d;
 	int i;
 	n_long smask;
@@ -277,7 +279,7 @@ net_getparams(int sock)
 	 */
 	smask = 0;
 	gateip.s_addr = 0;
-	if (bp_getfile(sock, "gateway", &gateip, buf) == 0) {
+	if (bp_getfile(sock, pgateway, &gateip, buf) == 0) {
 		/* Got it!  Parse the netmask. */
 		smask = ip_convertaddr(buf);
 	}
@@ -294,7 +296,7 @@ net_getparams(int sock)
 #endif
 
 	/* Get the root server and pathname. */
-	if (bp_getfile(sock, "root", &rootip, rootpath)) {
+	if (bp_getfile(sock, proot, &rootip, rootpath)) {
 		printf("net_open: bootparam/getfile RPC failed\n");
 		return (EIO);
 	}
