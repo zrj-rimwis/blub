@@ -40,8 +40,12 @@ LDFLAGS+=	-Wl,-znocombreloc
 # Add libstand for the runtime functions used by the compiler.
 # as well as required string and memory functions for all platforms.
 #
+LIBSTAND=	${.OBJDIR}/../../../../lib/libstand/libstand.a
 DPADD+=		${LIBSTAND}
-LDADD+=		-lstand
+LDADD+=		${LIBSTAND}
+
+# Ensure to use correct stand.h header
+CFLAGS+=	-I${.CURDIR}/../../../../lib/libstand
 
 DPADD+=		${LDSCRIPT}
 
