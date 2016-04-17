@@ -34,7 +34,7 @@ __FBSDID("$FreeBSD: head/sys/boot/efi/loader/bootinfo.c 293724 2016-01-12 02:17:
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/linker.h>
-#include <sys/boot.h>
+#include <sys_boot.h>
 #include <machine/cpufunc.h>
 #include <machine/elf.h>
 #include <machine/metadata.h>
