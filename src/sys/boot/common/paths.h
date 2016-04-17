@@ -30,9 +30,11 @@
 #define	_PATHS_H_
 
 #define PATH_CONFIG	"/boot.config"
+#define PATH_BOOTCONFIG	"/boot/config"
 #define PATH_BOOT3	"/loader"		/* /boot is dedicated */
 #define PATH_BOOT3_ALT	"/boot/loader"		/* /boot in root */
-#define PATH_LOADER_EFI	"/boot/loader.efi"
+#define PATH_LOADER_EFI		"/loader.efi"
+#define PATH_LOADER_EFI_ALT	"/boot/loader.efi"
 #define PATH_KERNEL	"/boot/kernel/kernel"
 
 #endif /* _PATHS_H_ */

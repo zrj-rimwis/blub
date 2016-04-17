@@ -33,11 +33,6 @@
 #include "boot_module.h"
 #include "paths.h"
 
-#define PATH_CONFIG	"/boot/config"
-#define PATH_DOTCONFIG	"/boot.config"
-#define PATH_LOADER	"/loader.efi"		/* /boot is dedicated */
-#define PATH_LOADER_ALT	"/boot/loader.efi"	/* /boot in root */
-
 static const boot_module_t *boot_modules[] =
 {
 #ifdef EFI_UFS_BOOT
@@ -340,9 +335,9 @@ load_loader(const boot_module_t **modp, dev_info_t **devinfop, void **bufp,
 			if (dev->preferred != preferred)
 				continue;
 
-			status = mod->load(PATH_LOADER, dev, bufp, bufsize);
+			status = mod->load(PATH_LOADER_EFI, dev, bufp, bufsize);
 			if (status == EFI_NOT_FOUND) {
-				status = mod->load(PATH_LOADER_ALT, dev, bufp,
+				status = mod->load(PATH_LOADER_EFI_ALT, dev, bufp,
 				    bufsize);
 			}
 			if (status == EFI_SUCCESS) {
@@ -378,7 +373,7 @@ try_boot(void)
 		    FALSE);
 		if (status != EFI_SUCCESS) {
 			printf("Failed to load '%s' or '%s'\n",
-			    PATH_LOADER, PATH_LOADER_ALT);
+			    PATH_LOADER_EFI, PATH_LOADER_EFI_ALT);
 			return (status);
 		}
 	}
@@ -395,7 +390,7 @@ try_boot(void)
 	 */
 	cmd = NULL;
 	cmdsize = 0;
-	status = mod->load(PATH_DOTCONFIG, dev, &buf, &bufsize);
+	status = mod->load(PATH_BOOTCONFIG, dev, &buf, &bufsize);
 	if (status == EFI_NOT_FOUND)
 		status = mod->load(PATH_CONFIG, dev, &buf, &bufsize);
 	if (status == EFI_SUCCESS) {
@@ -610,7 +605,7 @@ efi_main(EFI_HANDLE Ximage, EFI_SYSTEM_TABLE *Xsystab)
 	conout->ClearScreen(conout);
 
 	printf("\n>> DragonFly EFI boot block\n");
-	printf("   Loader path: %s:%s\n\n", PATH_LOADER, PATH_LOADER_ALT);
+	printf("   Loader path: %s:%s\n\n", PATH_LOADER_EFI, PATH_LOADER_EFI_ALT);
 	printf("   Initializing modules:");
 	for (i = 0; i < NUM_BOOT_MODULES; i++) {
 		if (boot_modules[i] == NULL)
