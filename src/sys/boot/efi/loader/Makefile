@@ -41,6 +41,10 @@ CFLAGS+=	-DNO_PCI -DEFI
 # make buildenv doesn't set DESTDIR, this means LIBSTAND
 # will be wrong when crossbuilding.
 LIBSTAND=	${.OBJDIR}/../../../../lib/libstand/libstand.a
+# Override to use libstand64 in case of blub
+.  if defined(BUILDING_BLUB)
+LIBSTAND=	${.OBJDIR}/../../libstand64/libstand64.a
+.  endif
 
 LIBDLOADER=	${.OBJDIR}/../../dloader/libdloader.a
 

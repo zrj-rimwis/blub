@@ -18,6 +18,9 @@ SUBDIR+=		${MACHINE_PLATFORM}
 
 # UEFI support
 .if !defined(LOADER_NO_EFI_SUPPORT)
+.  if defined(BUILDING_BLUB)
+SUBDIR+=		libstand64
+.  endif
 SUBDIR+=		efi
 .endif
 

@@ -41,6 +41,10 @@ LDFLAGS+=	-Wl,-znocombreloc
 # as well as required string and memory functions for all platforms.
 #
 LIBSTAND=	${.OBJDIR}/../../../../lib/libstand/libstand.a
+# Override to use libstand64 in case of blub
+.  if defined(BUILDING_BLUB)
+LIBSTAND=	${.OBJDIR}/../../libstand64/libstand64.a
+.  endif
 DPADD+=		${LIBSTAND}
 LDADD+=		${LIBSTAND}
 
