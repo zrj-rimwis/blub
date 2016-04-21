@@ -38,6 +38,7 @@
 #include "map.h"
 #include "gpt.h"
 #include "gpt_private.h"
+#include "meatbag.h"
 
 static uuid_t add_type;
 static off_t add_align, add_block, add_size;
@@ -185,7 +186,8 @@ cmd_add(int argc, char *argv[])
 		case 'a':
 			if (add_align > 0)
 				usage_add();
-			add_align = strtoll(optarg, &p, 10);
+			if (meat_in(optarg, &add_align) < 0)
+				usage_add();
 			if (add_align < 1)
 				usage_add();
 			break;

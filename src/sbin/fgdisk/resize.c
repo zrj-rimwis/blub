@@ -37,6 +37,7 @@
 #include "map.h"
 #include "gpt.h"
 #include "gpt_private.h"
+#include "meatbag.h"
 
 static off_t res_align, size;
 static unsigned int entry;
@@ -141,7 +142,8 @@ cmd_resize(int argc, char *argv[])
 		case 'a':
 			if (res_align > 0)
 				usage_resize();
-			res_align = strtoll(optarg, &p, 10);
+			if (meat_in(optarg, &res_align) < 0)
+				usage_resize();
 			if (res_align < 1)
 				usage_resize();
 			break;

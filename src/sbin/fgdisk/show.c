@@ -38,7 +38,9 @@
 #include "map.h"
 #include "gpt.h"
 #include "gpt_private.h"
+#include "meatbag.h"
 
+static int show_human = 0;
 static int show_label = 0;
 static int show_uuid = 0;
 static int show_guid = 0;
@@ -49,7 +51,7 @@ usage_show(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-glu] [-i index] device ...\n", getprogname());
+	    "usage: %s [-ghlu] [-i index] device ...\n", getprogname());
 	exit(1);
 }
 
@@ -154,8 +156,13 @@ show(gd_t gd)
 
 	m = map_first(gd);
 	while (m != NULL) {
-		printf("  %*llu", gd->lbawidth, (long long)m->map_start);
-		printf("  %*llu", gd->lbawidth, (long long)m->map_size);
+		if (show_human) {
+			meat_print_num(gd->lbawidth, (m->map_start * gd->secsz));
+			meat_print_num(gd->lbawidth, (m->map_size * gd->secsz));
+		} else {
+			printf("  %*llu", gd->lbawidth, (long long)m->map_start);
+			printf("  %*llu", gd->lbawidth, (long long)m->map_size);
+		}
 		putchar(' ');
 		putchar(' ');
 		if (m->map_index > 0)
@@ -250,8 +257,14 @@ show_one(gd_t gd)
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
-	printf("Start: %ju\n", (uintmax_t)m->map_start);
-	printf("Size:  %ju\n", (uintmax_t)m->map_size);
+
+	if (show_human) {
+		meat_show("Start", (uintmax_t)(m->map_start * gd->secsz));
+		meat_show("Size", (uintmax_t)(m->map_size * gd->secsz));
+	} else {
+		printf("Start: %ju\n", (uintmax_t)m->map_start);
+		printf("Size:  %ju\n", (uintmax_t)m->map_size);
+	}
 
 	uuid_dec_le(&ent->ent_type, &type);
 	s1 = friendly(&type, 0);
@@ -290,7 +303,7 @@ cmd_show(int argc, char *argv[])
 	int flags = 0;
 	gd_t gd;
 
-	while ((ch = getopt(argc, argv, "gi:lu")) != -1) {
+	while ((ch = getopt(argc, argv, "ghi:lu")) != -1) {
 		switch(ch) {
 		case 'g':
 			show_guid = 1;
@@ -301,6 +314,9 @@ cmd_show(int argc, char *argv[])
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
 				usage_show();
+			break;
+		case 'h':
+			show_human = 1;
 			break;
 		case 'l':
 			show_label = 1;

@@ -504,7 +504,7 @@ If the
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
 .\" ==== show ====
-.It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc Ar device ...
+.It Nm Ic show Oo Fl ghlu Oc Oo Fl i Ar index Oc Ar device ...
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
@@ -521,6 +521,9 @@ With the
 .Fl u
 option the GPT partition type is displayed as an UUID instead of in a
 user friendly form.
+The
+.Fl h
+option tries to create a more "Human-readable" output.
 With the
 .Fl i
 option, all the details of a particular GPT partition will be displayed.
@@ -548,10 +551,6 @@ option does exactly the same but for backup header.
 .El
 .Sh FILES
 .Bl -tag -width ".Pa /etc/defaults/uuids"
-.It Pa /boot/boot0
-The default
-.Sq boot0
-image.
 .It Pa /boot/pmbr
 The default protective MBR image used to start
 the gptboot loader in boot partition.
