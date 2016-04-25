@@ -222,7 +222,7 @@ h2read(struct hammer2_fs *hfs, void *buf, size_t nbytes, off_t off)
 		rc = -1;
 #elif defined(LIBSTAND)
 	rc = hfs->f->f_dev->dv_strategy(hfs->f->f_devdata, F_READ,
-					off >> DEV_BSHIFT, nbytes,
+					off >> DEV_BSHIFT, 0, nbytes,
 					buf, &rlen);
 	if (rc || rlen != nbytes)
 		rc = -1;

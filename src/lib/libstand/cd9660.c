@@ -29,7 +29,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * $NetBSD: cd9660.c,v 1.5 1997/06/26 19:11:33 drochner Exp $
- * $FreeBSD: src/lib/libstand/cd9660.c,v 1.4.2.4 2001/12/21 22:17:44 jhb Exp $
+ * $FreeBSD: head/lib/libstand/cd9660.c 298230 2016-04-18 23:09:22Z allanjude $
  */
 
 /*
@@ -141,7 +141,7 @@ susp_lookup_record(struct open_file *f, const char *identifier,
 		if (bcmp(sh->type, SUSP_CONTINUATION, 2) == 0) {
 			shc = (ISO_RRIP_CONT *)sh;
 			error = f->f_dev->dv_strategy(f->f_devdata, F_READ,
-			    cdb2devb(isonum_733(shc->location)),
+			    cdb2devb(isonum_733(shc->location)), 0,
 			    ISO_DEFAULT_BLOCK_SIZE, susp_buffer, &read);
 
 			/* Bail if it fails. */
@@ -149,9 +149,14 @@ susp_lookup_record(struct open_file *f, const char *identifier,
 				return (NULL);
 			p = susp_buffer + isonum_733(shc->offset);
 			end = p + isonum_733(shc->length);
-		} else
+		} else {
 			/* Ignore this record and skip to the next. */
 			p += isonum_711(sh->length);
+
+			/* Avoid infinite loops with corrupted file systems */
+			if (isonum_711(sh->length) == 0)
+				return (NULL);
+		}
 	}
 	return (NULL);
 }
@@ -247,10 +252,8 @@ dirmatch(struct open_file *f, const char *path, struct iso_directory_record *dp,
 	}
 	if (*path && *path != '/')
 		return 0;
-
 	/*
 	 * Allow stripping of trailing dots and the version number.
-	 *
 	 * Note that this will find the first instead of the last version
 	 * of a file unless explicitly specified.
 	 *
@@ -288,7 +291,7 @@ cd9660_open(const char *path, struct open_file *f)
 	for (bno = 16;; bno++) {
 		twiddle();
 		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
-					   ISO_DEFAULT_BLOCK_SIZE, buf, &read);
+					0, ISO_DEFAULT_BLOCK_SIZE, buf, &read);
 		if (rc)
 			goto out;
 		if (read != ISO_DEFAULT_BLOCK_SIZE) {
@@ -322,7 +325,7 @@ cd9660_open(const char *path, struct open_file *f)
 				twiddle();
 				rc = f->f_dev->dv_strategy
 					(f->f_devdata, F_READ,
-					 cdb2devb(bno + boff),
+					 cdb2devb(bno + boff), 0,
 					 ISO_DEFAULT_BLOCK_SIZE,
 					 buf, &read);
 				if (rc)
@@ -387,7 +390,7 @@ cd9660_open(const char *path, struct open_file *f)
 		bno = isonum_733(rec.extent) + isonum_711(rec.ext_attr_length);
 		twiddle();
 		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ, cdb2devb(bno),
-		    ISO_DEFAULT_BLOCK_SIZE, buf, &read);
+		    0, ISO_DEFAULT_BLOCK_SIZE, buf, &read);
 		if (rc)
 			goto out;
 		if (read != ISO_DEFAULT_BLOCK_SIZE) {
@@ -446,7 +449,8 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 
 		twiddle();
 		rc = f->f_dev->dv_strategy(f->f_devdata, F_READ,
-		    cdb2devb(blkno), ISO_DEFAULT_BLOCK_SIZE, fp->f_buf, &read);
+		    cdb2devb(blkno), 0, ISO_DEFAULT_BLOCK_SIZE,
+		    fp->f_buf, &read);
 		if (rc)
 			return (rc);
 		if (read != ISO_DEFAULT_BLOCK_SIZE)

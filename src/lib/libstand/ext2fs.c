@@ -349,7 +349,7 @@ ext2fs_open(const char *upath, struct open_file *f)
 	fp->f_fs = fs;
 	twiddle();
 	error = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-	    EXT2_SBLOCK, EXT2_SBSIZE, (char *)fs, &buf_size);
+	    EXT2_SBLOCK, 0, EXT2_SBSIZE, (char *)fs, &buf_size);
 	if (error)
 		goto out;
 
@@ -391,7 +391,7 @@ ext2fs_open(const char *upath, struct open_file *f)
 	fp->f_bg = malloc(len);
 	twiddle();
 	error = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-	    EXT2_SBLOCK + EXT2_SBSIZE / DEV_BSIZE, len,
+	    EXT2_SBLOCK + EXT2_SBSIZE / DEV_BSIZE, 0, len,
 	    (char *)fp->f_bg, &buf_size);
 	if (error)
 		goto out;
@@ -503,7 +503,7 @@ ext2fs_open(const char *upath, struct open_file *f)
 
 				twiddle();
 				error = (f->f_dev->dv_strategy)(f->f_devdata,
-				    F_READ, fsb_to_db(fs, disk_block),
+				    F_READ, fsb_to_db(fs, disk_block), 0,
 				    fs->fs_bsize, buf, &buf_size);
 				if (error)
 					goto out;
@@ -565,7 +565,7 @@ read_inode(ino_t inumber, struct open_file *f)
 	buf = malloc(fs->fs_bsize);
 	twiddle();
 	error = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-	    ino_to_db(fs, fp->f_bg, inumber), fs->fs_bsize, buf, &rsize);
+	    ino_to_db(fs, fp->f_bg, inumber), 0, fs->fs_bsize, buf, &rsize);
 	if (error)
 		goto out;
 	if (rsize != fs->fs_bsize) {
@@ -662,7 +662,7 @@ block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
 					malloc(fs->fs_bsize);
 			twiddle();
 			error = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-			    fsb_to_db(fp->f_fs, ind_block_num), fs->fs_bsize,
+			    fsb_to_db(fp->f_fs, ind_block_num), 0, fs->fs_bsize,
 			    fp->f_blk[level], &fp->f_blksize[level]);
 			if (error)
 				return (error);
@@ -720,7 +720,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 		} else {
 			twiddle();
 			error = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-			    fsb_to_db(fs, disk_block), block_size,
+			    fsb_to_db(fs, disk_block), 0, block_size,
 			    fp->f_buf, &fp->f_buf_size);
 			if (error)
 				goto done;

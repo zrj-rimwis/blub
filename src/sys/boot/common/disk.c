@@ -176,7 +176,7 @@ ptblread(void *d, void *buf, size_t blocks, off_t offset)
 
 	dev = (struct disk_devdesc *)d;
 	od = (struct open_disk *)dev->d_opendata;
-	return (dev->d_dev->dv_strategy(dev, F_READ, offset,
+	return (dev->d_dev->dv_strategy(dev, F_READ, offset, 0,
 	    blocks * od->sectorsize, (char *)buf, NULL));
 }
 

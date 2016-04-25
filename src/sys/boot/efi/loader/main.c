@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/sys/boot/efi/loader/main.c 295408 2016-02-08 19:34:17Z imp $");
+__FBSDID("$FreeBSD: head/sys/boot/efi/loader/main.c 298230 2016-04-18 23:09:22Z allanjude $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -197,6 +197,11 @@ main(int argc, CHAR16 *argv[])
 	 * printf() etc. once this is done.
 	 */
 	cons_probe();
+
+	/*
+	 * Initialise the block cache. Set the upper limit.
+	 */
+	bcache_init(32768, 512);
 
 	/*
 	 * Parse the args to set the console settings, etc
