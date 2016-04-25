@@ -30,13 +30,11 @@
 #include "xreadorg.h"
 #endif
 
-#ifdef GPT
 static struct edd_params params;
 
 uint64_t
 drvsize(struct dsk *dskp)
 {
-
 	params.len = sizeof(struct edd_params);
 	v86.ctl = V86_FLAGS;
 	v86.addr = 0x13;
@@ -51,7 +49,6 @@ drvsize(struct dsk *dskp)
 	}
 	return (params.sectors);
 }
-#endif	/* GPT */
 
 #ifndef USE_XREAD
 static struct edd_packet packet;

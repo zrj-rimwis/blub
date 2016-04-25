@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/boot/common/gpt.h 213136 2010-09-24 19:49:12Z pjd $
+ * $FreeBSD: head/sys/boot/common/gpt.h 296963 2016-03-16 23:12:19Z allanjude $
  */
 
 #ifndef _GPT_H_
@@ -31,6 +31,8 @@
 
 #include <uuid.h>
 #include <drv.h>
+
+#define	MAXTBLENTS	128
 
 int gptread(const uuid_t *uuid, struct dsk *dskp, char *buf);
 int gptfind(const uuid_t *uuid, struct dsk *dskp, int part);

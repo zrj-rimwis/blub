@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/boot/common/gpt.c 234176 2012-04-12 12:37:53Z ae $
+ * $FreeBSD: head/sys/boot/common/gpt.c 296963 2016-03-16 23:12:19Z allanjude $
  */
 
 #include <sys/cdefs.h>
@@ -39,8 +39,6 @@
 #include "drv.h"
 #include "util.h"
 #include "gpt.h"
-
-#define	MAXTBLENTS	128
 
 static struct gpt_hdr hdr_primary, hdr_backup, *gpthdr;
 static uint64_t hdr_primary_lba, hdr_backup_lba;

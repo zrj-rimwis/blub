@@ -119,6 +119,8 @@ const struct boot2_fsapi *fsapi;
 
 #endif
 
+#include "gpt.c"
+
 static inline int
 xfsread(boot2_ino_t inode, void *buf, size_t nbyte)
 {
@@ -501,5 +503,9 @@ dskprobe(void)
 int
 dskread(void *buf, daddr_t lba, unsigned nblk)
 {
-	return drvread(&dsk, buf, lba + dsk.start, nblk);
+	int err;
+
+	err = drvread(&dsk, buf, lba + dsk.start, nblk);
+
+	return (err);
 }

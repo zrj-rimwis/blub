@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/boot/common/disk.c 291402 2015-11-27 18:17:53Z zbb $
+ * $FreeBSD: head/sys/boot/common/disk.c 298230 2016-04-18 23:09:22Z allanjude $
  */
 
 #include <sys/queue.h>
@@ -168,7 +168,7 @@ display_size(uint64_t size, u_int sectorsize)
 	return (buf);
 }
 
-static int
+int
 ptblread(void *d, void *buf, size_t blocks, off_t offset)
 {
 	struct disk_devdesc *dev;

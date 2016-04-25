@@ -297,6 +297,7 @@ static int
 bd_open(struct open_file *f, ...)
 {
 	struct disk_devdesc *dev;
+	int err;
 	va_list ap;
 
 	va_start(ap, f);
@@ -306,9 +307,11 @@ bd_open(struct open_file *f, ...)
 	if (dev->d_unit < 0 || dev->d_unit >= nbdinfo)
 		return (EIO);
 
-	return (disk_open(dev, BD(dev).bd_sectors * BD(dev).bd_sectorsize,
+	err = disk_open(dev, BD(dev).bd_sectors * BD(dev).bd_sectorsize,
 	    BD(dev).bd_sectorsize, (BD(dev).bd_flags & BD_FLOPPY) ?
-	    DISK_F_NOCACHE : 0));
+	    DISK_F_NOCACHE : 0);
+
+	return (err);
 }
 
 static int
