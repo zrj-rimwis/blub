@@ -88,6 +88,7 @@ static const char *kenv_vars[] = {
 	"kernel_options",
 	"kernelname",
 	"loaddev",
+	"local_modules",
 	"module_path",
 	"num_ide_disks",
 	"prompt",
