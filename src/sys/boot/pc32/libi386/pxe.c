@@ -74,7 +74,7 @@ static void	bangpxe_call(int func);
 
 static int	pxe_init(void);
 static int	pxe_strategy(void *devdata, int flag, daddr_t dblk,
-			     size_t offset, size_t size, char *buf, size_t *rsize);
+			     size_t size, char *buf, size_t *rsize);
 static int	pxe_open(struct open_file *f, ...);
 static int	pxe_close(struct open_file *f);
 static void	pxe_print(int verbose);
@@ -243,8 +243,7 @@ pxe_init(void)
 
 static int
 pxe_strategy(void *devdata __unused, int flag __unused, daddr_t dblk __unused,
-	     size_t offset __unused, size_t size __unused, char *buf __unused,
-	     size_t *rsize __unused)
+	     size_t size __unused, char *buf __unused, size_t *rsize __unused)
 {
 	return (EIO);
 }

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/boot/i386/libi386/biosmem.c 298230 2016-04-18 23:09:22Z allanjude $
+ * $FreeBSD: head/sys/boot/i386/libi386/biosmem.c 292486 2015-12-20 02:46:51Z ngie $
  */
 /*
  * Obtain memory configuration information from the BIOS
@@ -54,7 +54,7 @@ static uint8_t b_bios_probed;
 /*
  * The minimum amount of memory to reserve in bios_extmem for the heap.
  */
-#define	HEAP_MIN	(64 * 1024 * 1024)
+#define	HEAP_MIN	(3 * 1024 * 1024)
 
 /*
  * Products in this list need quirks to detect

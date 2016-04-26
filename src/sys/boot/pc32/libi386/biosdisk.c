@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/boot/i386/libi386/biosdisk.c 298230 2016-04-18 23:09:22Z allanjude $
+ * $FreeBSD: head/sys/boot/i386/libi386/biosdisk.c 241809 2012-10-21 12:14:58Z ae $
  */
 
 /*
@@ -84,8 +84,6 @@ static struct bdinfo
 	int		bd_type;	/* BIOS 'drive type' (floppy only) */
 	uint16_t	bd_sectorsize;	/* Sector size */
 	uint64_t	bd_sectors;	/* Disk size */
-	int		bd_open;	/* reference counter */
-	void		*bd_bcache;	/* buffer cache data */
 } bdinfo [MAXBDDEV];
 static int nbdinfo = 0;
 
@@ -98,9 +96,9 @@ static int bd_write(struct disk_devdesc *dev, daddr_t dblk, int blks,
 static int bd_int13probe(struct bdinfo *bd);
 
 static int bd_init(void);
-static int bd_strategy(void *devdata, int flag, daddr_t dblk, size_t offset,
-    size_t size, char *buf, size_t *rsize);
-static int bd_realstrategy(void *devdata, int flag, daddr_t dblk, size_t offset,
+static int bd_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+    char *buf, size_t *rsize);
+static int bd_realstrategy(void *devdata, int flag, daddr_t dblk,
     size_t size, char *buf, size_t *rsize);
 static int bd_open(struct open_file *f, ...);
 static int bd_close(struct open_file *f);
@@ -163,8 +161,6 @@ bd_init(void)
 			    (nfd >= *(unsigned char *)PTOV(BIOS_NUMDRIVES)))
 				break;
 
-			bdinfo[nbdinfo].bd_open = 0;
-			bdinfo[nbdinfo].bd_bcache = NULL;
 			bdinfo[nbdinfo].bd_unit = unit;
 			bdinfo[nbdinfo].bd_flags = (unit < 0x80) ? BD_FLOPPY : 0;
 			if (!bd_int13probe(&bdinfo[nbdinfo]))
@@ -178,7 +174,6 @@ bd_init(void)
 				nfd++;
 		}
 	}
-	bcache_add_dev(nbdinfo);
 	return (0);
 }
 
@@ -311,9 +306,7 @@ bd_open(struct open_file *f, ...)
 
 	if (dev->d_unit < 0 || dev->d_unit >= nbdinfo)
 		return (EIO);
-	BD(dev).bd_open++;
-	if (BD(dev).bd_bcache == NULL)
-	    BD(dev).bd_bcache = bcache_allocate();
+
 	err = disk_open(dev, BD(dev).bd_sectors * BD(dev).bd_sectorsize,
 	    BD(dev).bd_sectorsize, (BD(dev).bd_flags & BD_FLOPPY) ?
 	    DISK_F_NOCACHE : 0);
@@ -327,11 +320,6 @@ bd_close(struct open_file *f)
 	struct disk_devdesc *dev;
 
 	dev = (struct disk_devdesc *)f->f_devdata;
-	BD(dev).bd_open--;
-	if (BD(dev).bd_open == 0) {
-	    bcache_free(BD(dev).bd_bcache);
-	    BD(dev).bd_bcache = NULL;
-	}
 	return (disk_close(dev));
 }
 
@@ -356,8 +344,8 @@ bd_close(struct open_file *f __unused)
 #endif
 
 static int
-bd_strategy(void *devdata, int rw, daddr_t dblk, size_t offset, size_t size,
-    char *buf, size_t *rsize)
+bd_strategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf,
+    size_t *rsize)
 {
 	struct bcache_devdata bcd;
 	struct disk_devdesc *dev;
@@ -365,14 +353,13 @@ bd_strategy(void *devdata, int rw, daddr_t dblk, size_t offset, size_t size,
 	dev = (struct disk_devdesc *)devdata;
 	bcd.dv_strategy = bd_realstrategy;
 	bcd.dv_devdata = devdata;
-	bcd.dv_cache = BD(dev).bd_bcache;
-	return (bcache_strategy(&bcd, rw, dblk + dev->d_offset, offset,
+	return (bcache_strategy(&bcd, BD(dev).bd_unit, rw, dblk + dev->d_offset,
 	    size, buf, rsize));
 }
 
 static int
-bd_realstrategy(void *devdata, int rw, daddr_t dblk, size_t offset __unused,
-    size_t size, char *buf, size_t *rsize)
+bd_realstrategy(void *devdata, int rw, daddr_t dblk, size_t size, char *buf,
+    size_t *rsize)
 {
     struct disk_devdesc *dev = (struct disk_devdesc *)devdata;
     int			blks;

@@ -78,7 +78,7 @@ static int	net_init(void);
 static int	net_open(struct open_file *, ...);
 static int	net_close(struct open_file *);
 static void	net_cleanup(void);
-static int	net_strategy(void *, int, daddr_t, size_t , size_t, char *, size_t *);
+static int	net_strategy(void *, int, daddr_t, size_t , char *, size_t *);
 static void	net_print(int);
 
 static int net_getparams(int sock);
@@ -201,8 +201,7 @@ net_cleanup(void)
 
 static int
 net_strategy(void *a __unused, int b __unused, daddr_t c __unused,
-	     size_t d __unused, size_t d1 __unused, char *e __unused,
-	     size_t *f __unused)
+	     size_t d __unused, char *e __unused, size_t *f __unused)
 {
 	return (EIO);
 }

@@ -126,7 +126,7 @@ hread(struct hfs *hfs, hammer_off_t off)
 #else	// libstand
 		size_t rlen;
 		int rv = hfs->f->f_dev->dv_strategy(hfs->f->f_devdata, F_READ,
-			boff >> DEV_BSHIFT, 0, HAMMER_BUFSIZE,
+			boff >> DEV_BSHIFT, HAMMER_BUFSIZE,
 			be->data, &rlen);
 		if (rv || rlen != HAMMER_BUFSIZE)
 			return (NULL);
