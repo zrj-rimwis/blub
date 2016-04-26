@@ -50,6 +50,13 @@
 #define ELF_TARG_MACH   EM_X86_64
 #endif
 
+#if defined(__i386__) || defined(__x86_64__)
+/* XXX should be in system headers */
+#ifndef SHT_X86_64_UNWIND
+#define	SHT_X86_64_UNWIND	0x70000001	/* unwind information */
+#endif
+#endif
+
 typedef struct elf_file {
 	Elf_Ehdr	hdr;
 	Elf_Shdr	*e_shdr;
@@ -219,11 +226,16 @@ __elfN(obj_loadimage)(struct preloaded_file *fp, elf_file_t ef, u_int64_t off)
 	 */
 	for (i = 0; i < hdr->e_shnum; i++) {
 		shdr[i].sh_addr = 0;
+	}
+	for (i = 0; i < hdr->e_shnum; i++) {
 		if (shdr[i].sh_size == 0)
 			continue;
 		switch (shdr[i].sh_type) {
 		case SHT_PROGBITS:
 		case SHT_NOBITS:
+#if defined(__i386__) || defined(__x86_64__)
+		case SHT_X86_64_UNWIND:
+#endif
 			lastaddr = roundup(lastaddr, shdr[i].sh_addralign);
 			shdr[i].sh_addr = (Elf_Addr)lastaddr;
 			lastaddr += shdr[i].sh_size;
